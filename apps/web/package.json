@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@primeuix/themes": "^2.0.3",
+    "@procurement/validators": "*",
     "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.13.4",
     "lucide-vue-next": "^0.563.0",

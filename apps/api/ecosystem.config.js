@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "backend-proc",
-      script: "./src/server.js",
+      script: "./dist/server.js",
       instances: "max", // Use all available CPU cores
       exec_mode: "cluster", // Enable cluster mode for load balancing
       env_production: {

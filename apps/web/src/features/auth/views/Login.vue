@@ -57,6 +57,7 @@ import Password from 'primevue/password'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import { showSuccess } from '../../../services/notification'
+import { getErrorMessage } from '../../../utils/errorHandler'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -75,7 +76,7 @@ const handleLogin = async () => {
     showSuccess('You have successfully logged in!')
     router.push({ name: 'dashboard' })
   } catch (error) {
-    errorMessage.value = error.errors[0].message
+    errorMessage.value = getErrorMessage(error)
   } finally {
     isLoading.value = false
   }
