@@ -116,13 +116,13 @@ import { loginSchema, createVesselSchema } from '@procurement/validators';
 #### API (Backend)
 - [apps/api/package.json](./apps/api/package.json) - Dependencies and scripts
 - [apps/api/ecosystem.config.js](./apps/api/ecosystem.config.js) - PM2 configuration
-- [apps/api/.env.example](./apps/api/.env.example) - Environment variables template
+- [.env.example](./.env.example) - Environment variables template (workspace root)
 
 #### Web (Frontend)
 - [apps/web/package.json](./apps/web/package.json) - Dependencies and scripts
 - [apps/web/vite.config.js](./apps/web/vite.config.js) - Vite build configuration
 - [apps/web/jsconfig.json](./apps/web/jsconfig.json) - JavaScript project configuration
-- [apps/web/.env.example](./apps/web/.env.example) - Environment variables template
+- [ENV_CONFIGURATION.md](./ENV_CONFIGURATION.md) - Centralized environment configuration guide
 
 ---
 

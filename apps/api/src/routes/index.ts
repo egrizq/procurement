@@ -1,4 +1,5 @@
 import express, { Router } from 'express';
+import healthRoutes from './health.ts';
 import tokenRoutes from '#modules/api-token/token.routes.ts';
 import authRoutes from '#modules/auth/auth.routes.ts';
 import profileRoutes from '#modules/profile/profile.routes.ts';
@@ -7,6 +8,7 @@ import vesselRequestRoutes from '#modules/vessel-request/vessel-request.routes.t
 
 const router: Router = express.Router();
 
+router.use('/', healthRoutes);
 router.use('/token', tokenRoutes);
 router.use('/auth', authRoutes);
 router.use('/profile', profileRoutes);

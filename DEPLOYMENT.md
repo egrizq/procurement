@@ -14,6 +14,31 @@ Complete guide for deploying the Procurement application using Docker on various
 
 ---
 
+## Environment Configuration in Docker
+
+**Important:** Docker containers receive environment variables differently:
+
+- **Local Development**: The API loads `.env` file from workspace root
+- **Docker**: Environment variables are injected by `docker-compose.yml` (no `.env` file in container)
+
+The application automatically detects which method to use:
+
+```typescript
+// env.ts checks if .env exists
+if (existsSync(envPath)) {
+  dotenvConfig({ path: envPath });  // Local dev
+} else {
+  // Use environment variables from docker-compose
+}
+```
+
+This means:
+- ✅ No need to copy `.env` into Docker images
+- ✅ Sensitive values stay in your local `.env` (not in images)
+- ✅ Same code works in both local and Docker environments
+
+---
+
 ## Prerequisites
 
 ### Required Software

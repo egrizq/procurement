@@ -13,4 +13,6 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // Load .env from workspace root (../../.env)
+  envDir: '../..',
 })

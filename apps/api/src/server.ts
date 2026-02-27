@@ -1,4 +1,6 @@
-import 'dotenv/config';
+// Load environment variables FIRST before any other imports
+import './env.ts';
+
 import type { Server } from 'http';
 import app from './app.ts';
 import db from './config/database.ts';

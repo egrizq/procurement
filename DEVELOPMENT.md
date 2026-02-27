@@ -53,8 +53,7 @@ nvm use
 npm install
 
 # 4. Set up environment variables
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env
+cp .env.example .env
 # Edit .env files with your configuration
 
 # 5. Set up database
@@ -1316,7 +1315,7 @@ test('user can login', async ({ page }) => {
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/apps/api/src/server.js",
       "cwd": "${workspaceFolder}/apps/api",
-      "envFile": "${workspaceFolder}/apps/api/.env",
+      "envFile": "${workspaceFolder}/.env",
       "console": "integratedTerminal"
     }
   ]
@@ -1616,7 +1615,7 @@ services.msc  # Find MySQL service
 mysql -u procurement_user -p procurement
 
 # Check .env DATABASE_URL
-cat apps/api/.env | grep DATABASE_URL
+cat .env | grep DATABASE_URL
 ```
 
 ### Module Not Found

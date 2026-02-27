@@ -110,8 +110,7 @@ cd Procurement
 npm install
 
 # 3. Set up environment variables
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env
+cp .env.example .env
 
 # Edit .env files with your configuration:
 # - Database connection details
