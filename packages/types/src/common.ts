@@ -9,10 +9,12 @@ export interface ApiResponse<T = unknown> {
 }
 
 export interface PaginationMeta {
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  itemsPerPage: number;
+  current_page: number;
+  per_page: number;
+  total_pages: number;
+  total_items: number;
+  has_next_page: boolean;
+  has_prev_page: boolean;
 }
 
 export interface PaginatedResponse<T> extends ApiResponse<T> {

@@ -3,15 +3,15 @@
   "version": "1.0.0",
   "description": "Procurement Vessel Management API",
   "private": true,
-  "main": "src/server.js",
+  "main": "src/server.ts",
   "engines": {
     "node": ">=20.19.0",
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "start": "node --import tsx src/server.js",
-    "dev": "nodemon --exec \"node --import tsx\" src/server.js",
-    "dev:ts": "tsx watch src/server.js",
+    "start": "node --import tsx src/server.ts",
+    "dev": "nodemon --exec \"node --import tsx\" src/server.ts",
+    "dev:ts": "tsx watch src/server.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:ui": "vitest --ui",

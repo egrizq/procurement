@@ -1,5 +1,3 @@
-import type { PaginationMeta } from '@procurement/types/common';
-
 /**
  * Generate pagination metadata for API responses
  * @param page - Current page number
