@@ -1,0 +1,45 @@
+import { defineStore } from 'pinia'
+import * as requestAPI from './api'
+
+export const useRequestStore = defineStore('request', {
+  state: () => ({
+    requests: [],
+    pagination: {},
+    error: null,
+  }),
+  actions: {
+    async fetchRequests(page, limit, search) {
+      try {
+        const data = await requestAPI.getRequests(page, limit, search)
+        this.requests = data.requests
+        this.pagination = data.pagination
+      } catch (error) {
+        this.error = error.error || 'Failed to fetch requests.'
+      }
+    },
+    async fetchRequestById(id) {
+      try {
+        const request = await requestAPI.getRequestsById(id)
+        return request
+      } catch (error) {
+        this.error = error.error || 'Failed to fetch request details.'
+        return null
+      } finally {
+        this.error = null
+      }
+    },
+    async createRequest(requestData) {
+      try {
+        await requestAPI.createRequest(requestData)
+        await this.fetchRequests()
+      } catch (error) {
+        this.error = error.error || 'Failed to create request.'
+      } finally {
+        this.error = null
+      }
+    },
+    clearError() {
+      this.error = null
+    },
+  },
+})

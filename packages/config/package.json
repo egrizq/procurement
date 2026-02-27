@@ -1,0 +1,17 @@
+{
+  "name": "@procurement/config",
+  "version": "1.0.0",
+  "description": "Shared configuration files for Procurement monorepo",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./eslint": "./eslint.config.js",
+    "./prettier": "./.prettierrc.json",
+    "./tsconfig": "./tsconfig.base.json"
+  },
+  "files": [
+    "eslint.config.js",
+    ".prettierrc.json",
+    "tsconfig.base.json"
+  ]
+}

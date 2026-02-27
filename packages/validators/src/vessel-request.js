@@ -1,0 +1,74 @@
+import { z } from 'zod';
+
+export const vesselRequestSchema = z.object({
+  body: z.object({
+    vesselId: z.number('Vessel is not found').int().positive(),
+    status: z.enum(
+      ['Waiting', 'Approved', 'Rejected'],
+      'Status must be either Waiting, Approved, or Rejected'
+    ),
+    priority: z.enum(['Low', 'Medium', 'High'], 'Priority must be either Low, Medium, or High'),
+    justification: z.string().optional(),
+    requestDate: z.string('Request date must is not valid'),
+    items: z.array(
+      z.object({
+        itemId: z.number('Item is not found').int().positive(),
+        qtyRequested: z.number('Quantity requested is not valid').int().positive(),
+        unit: z.enum(
+          ['Pcs', 'Box', 'Liter', 'Meter', 'Kg'],
+          'Unit must be either Pcs, Box, Liter, Meter, or Kg'
+        ),
+        status: z.enum(
+          ['Waiting', 'Approved', 'Rejected'],
+          'Status must be either Waiting, Approved, or Rejected'
+        ),
+        priority: z.enum(['Low', 'Medium', 'High'], 'Priority must be either Low, Medium, or High'),
+        justification: z.string().optional(),
+      }),
+      'Items is required'
+    ),
+  }),
+});
+
+export const vesselRequestListSchema = z.object({
+  body: z.object({
+    page: z.number().int().positive().default(1),
+    limit: z.number().int().positive().default(10),
+    search: z.string().optional(),
+  }),
+});
+
+export const vesselRequestByIdSchema = z.object({
+  params: z.object({
+    id: z.string(),
+  }),
+});
+
+export const updateVesselRequestSchema = z.object({
+  params: z.object({
+    id: z.string(),
+  }),
+  body: z.object({
+    vesselId: z.number('Vessel is not found').int().positive(),
+    status: z.enum(
+      ['Waiting', 'Approved', 'Rejected'],
+      'Status must be either Waiting, Approved, or Rejected'
+    ),
+    items: z.array(
+      z.object({
+        itemId: z.number('Item is not found').int().positive(),
+        qtyApproved: z.number('Quantity approved is not valid').int().positive(),
+        unit: z.enum(
+          ['Pcs', 'Box', 'Liter', 'Meter', 'Kg'],
+          'Unit must be either Pcs, Box, Liter, Meter, or Kg'
+        ),
+        status: z.enum(
+          ['Waiting', 'Approved', 'Rejected'],
+          'Status must be either Waiting, Approved, or Rejected'
+        ),
+        justification: z.string().optional(),
+      }),
+      'Items is required'
+    ),
+  }),
+});

@@ -1,0 +1,216 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model ApiToken {
+  id         Int      @id @default(autoincrement())
+  deviceId   String   @map("device_id") @db.VarChar(255)
+  deviceName String?  @map("device_name") @db.VarChar(255)
+  token      String   @unique @db.VarChar(255)
+  userId     Int?     @map("user_id")
+  expiredAt  DateTime @map("expired_at") @db.Timestamp(0)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  @@index([deviceId, userId], map: "idx_device_user")
+  @@map("api_tokens")
+}
+
+model MstVendor {
+  id        Int            @id @default(autoincrement())
+  name      String         @db.VarChar(255)
+  category  CategoryVendor
+  address   String?        @db.Text
+  phone     String?        @db.VarChar(50)
+  email     String?        @db.VarChar(100)
+  city      String?        @db.VarChar(100)
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  @@map("mst_vendors")
+}
+
+model MstItem {
+  id                 Int                 @id @default(autoincrement())
+  itemCode           String              @map("item_code") @db.VarChar(100)
+  name               String              @db.VarChar(255)
+  unit               Unit
+  categoryId         Int                 @map("category_id")
+  status             Status
+  description        String?             @db.Text
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  category           MstItemCategory     @relation(fields: [categoryId], references: [id])
+  vesselRequestItems VesselRequestItem[]
+  vesselStocks       VesselStock[]
+
+  @@index([itemCode], map: "idx_item_code")
+  @@index([categoryId], map: "idx_category_id")
+  @@index([status], map: "idx_status")
+  @@map("mst_items")
+}
+
+model MstItemCategory {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(255)
+  status    Status    @default(Publish)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  mstItems  MstItem[]
+
+  @@map("mst_item_categories")
+}
+
+model MstVessel {
+  id             Int             @id @default(autoincrement())
+  imoNumber      String?         @map("imo_number") @db.VarChar(100)
+  name           String          @db.VarChar(255)
+  flag           String?         @db.VarChar(100)
+  type           String?         @db.VarChar(100)
+  status         Status          @default(Publish)
+  imgUrl         String?         @map("img_url") @db.VarChar(255)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  vesselRequests VesselRequest[]
+  vesselStocks   VesselStock[]
+  users          User[]
+
+  @@index([status], map: "idx_status")
+  @@map("mst_vessels")
+}
+
+model User {
+  id             Int             @id @default(autoincrement())
+  username       String          @unique @db.VarChar(100)
+  email          String          @unique @db.VarChar(100)
+  password       String          @db.VarChar(255)
+  fullName       String?         @map("full_name") @db.VarChar(255)
+  type           UserType
+  department     Department
+  vesselId       Int             @map("vessel_id")
+  vessel         MstVessel       @relation(fields: [vesselId], references: [id])
+  position       String?         @db.VarChar(100)
+  status         UserStatus      @default(Contract)
+  leaveDate      DateTime?       @map("leave_date") @db.Date
+  imgUrl         String?         @map("img_url") @db.VarChar(255)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  vesselRequests VesselRequest[]
+
+  @@map("users")
+}
+
+model VesselStock {
+  id           Int       @id @default(autoincrement())
+  vesselId     Int       @map("vessel_id")
+  itemId       Int       @map("item_id")
+  stockOnHand  Int       @map("stock_on_hand")
+  stockMinimal Int       @map("stock_minimal")
+  lastUpdate   DateTime  @map("last_update") @db.Date
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  item         MstItem   @relation(fields: [itemId], references: [id])
+  vessel       MstVessel @relation(fields: [vesselId], references: [id])
+
+  @@index([vesselId], map: "idx_vessel_id")
+  @@index([itemId], map: "idx_item_id")
+  @@map("vessel_stocks")
+}
+
+model VesselRequest {
+  id                 Int                 @id @default(autoincrement())
+  requestCode        String              @map("request_code") @db.VarChar(100)
+  requestedBy        Int                 @map("requested_by")
+  vesselId           Int                 @map("vessel_id")
+  status             RequestStatus       @default(Waiting)
+  priority           Priority            @default(Medium)
+  justification      String?             @db.Text
+  requestDate        DateTime            @map("request_date") @db.Date
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  vesselRequestItems VesselRequestItem[]
+  user               User                @relation(fields: [requestedBy], references: [id])
+  vessel             MstVessel           @relation(fields: [vesselId], references: [id])
+
+  @@index([vesselId], map: "idx_vessel_id")
+  @@index([status], map: "idx_status")
+  @@index([requestedBy], map: "vessel_requests_requested_by_fkey")
+  @@map("vessel_requests")
+}
+
+model VesselRequestItem {
+  id              Int           @id @default(autoincrement())
+  vesselRequestId Int           @map("vessel_request_id")
+  itemId          Int           @map("item_id")
+  qtyRequested    Int           @map("qty_requested")
+  qtyApproved     Int?          @map("qty_approved")
+  unit            Unit
+  status          RequestStatus @default(Waiting)
+  priority        Priority      @default(Medium)
+  justification   String?       @db.Text
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt       DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  item            MstItem       @relation(fields: [itemId], references: [id])
+  vesselRequest   VesselRequest @relation(fields: [vesselRequestId], references: [id])
+
+  @@index([vesselRequestId], map: "idx_vessel_request_id")
+  @@index([itemId], map: "idx_item_id")
+  @@map("vessel_request_items")
+}
+
+enum CategoryVendor {
+  Jasa
+  Sparepart
+  Fuel
+  Engine
+}
+
+enum Unit {
+  Pcs
+  Box
+  Liter
+  Meter
+  Kg
+}
+
+enum Status {
+  Publish
+  Unpublish
+}
+
+enum UserType {
+  Admin
+  Office
+  Crew
+}
+
+enum Department {
+  IT
+  HR
+  Finance
+  Deck
+  Engine
+}
+
+enum UserStatus {
+  Contract
+  Permanent
+  Intern
+  Leave
+}
+
+enum RequestStatus {
+  Waiting
+  Approved
+  Rejected
+}
+
+enum Priority {
+  Low
+  Medium
+  High
+}

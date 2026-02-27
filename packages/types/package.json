@@ -1,0 +1,34 @@
+{
+  "name": "@procurement/types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types for Procurement monorepo",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./auth": {
+      "types": "./src/auth.ts",
+      "default": "./src/auth.ts"
+    },
+    "./token": {
+      "types": "./src/token.ts",
+      "default": "./src/token.ts"
+    },
+    "./vessel-request": {
+      "types": "./src/vessel-request.ts",
+      "default": "./src/vessel-request.ts"
+    },
+    "./common": {
+      "types": "./src/common.ts",
+      "default": "./src/common.ts"
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
