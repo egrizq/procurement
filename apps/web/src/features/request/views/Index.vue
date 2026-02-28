@@ -26,6 +26,7 @@
       :items-per-page="itemsPerPage"
       :pagination="pagination"
       @update:current-page="currentPage = $event"
+      @row-click="handleRowClick"
     >
       <template #cell-status="{ value }">
         <span class="px-2 py-1 text-xs font-medium rounded-full" :class="getStatusColor(value)">
@@ -46,43 +47,30 @@
       <template #cell-_count.vesselRequestItems="{ value }">
         <span class="text-gray-700">{{ value }} items</span>
       </template>
-
-      <template #cell-actions="{ row }">
-        <div class="flex items-center gap-2">
-          <button
-            @click="viewRequest(row)"
-            class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
-            title="View"
-          >
-            <Eye :size="16" />
-          </button>
-          <button
-            @click="editRequest(row)"
-            class="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors"
-            title="Edit"
-          >
-            <Edit :size="16" />
-          </button>
-          <button
-            @click="deleteRequest(row)"
-            class="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
-            title="Delete"
-          >
-            <Trash2 :size="16" />
-          </button>
-        </div>
-      </template>
     </DataTable>
+
+    <!-- View Dialog -->
+    <ViewRequest :is-open="isViewOpen" :request="selectedRequest" @close="closeView" />
+
+    <!-- Form Dialog -->
+    <FormRequest
+      :is-open="isFormOpen"
+      :request="selectedRequest"
+      @close="closeForm"
+      @submit="handleFormSubmit"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { Plus, Edit, Eye, Trash2 } from 'lucide-vue-next'
+import { Plus } from 'lucide-vue-next'
 import SearchFilter from '@/components/base/data-table/SearchFilter.vue'
 import DataTable from '@/components/base/data-table/DataTable.vue'
+import ViewRequest from '../component/ViewRequest.vue'
+import FormRequest from '../component/FormRequest.vue'
 import { useRequestStore } from '../store.js'
-import { showInfo } from '@/services/notification.js'
+import { showInfo, showSuccess, showError } from '@/services/notification.js'
 
 const requestStore = useRequestStore()
 const requests = ref([])
@@ -92,6 +80,13 @@ const isLoading = ref(false)
 const searchQuery = ref('')
 const currentPage = ref(1)
 const itemsPerPage = 10
+
+// Form state
+const isFormOpen = ref(false)
+const selectedRequest = ref(null)
+
+// View state
+const isViewOpen = ref(false)
 
 // Fetch requests function
 const fetchRequests = async () => {
@@ -136,7 +131,6 @@ const columns = [
   { key: 'priority', label: 'Priority' },
   { key: 'requestDate', label: 'Request Date', cellClass: 'text-gray-700' },
   { key: '_count.vesselRequestItems', label: 'Items' },
-  { key: 'actions', label: 'Actions' },
 ]
 
 const getStatusColor = (status) => {
@@ -170,24 +164,42 @@ const formatDate = (dateString) => {
 }
 
 const openAddDialog = () => {
-  // TODO: Implement add request dialog
-  console.log('Open add dialog')
+  selectedRequest.value = null
+  isFormOpen.value = true
 }
 
-const viewRequest = (request) => {
-  // TODO: Implement view request
-  console.log('View request:', request)
+const handleRowClick = async (request) => {
+  try {
+    // Fetch full request details including items
+    const fullRequest = await requestStore.fetchRequestById(request.id)
+    if (fullRequest) {
+      selectedRequest.value = fullRequest
+      isViewOpen.value = true
+    }
+  } catch (error) {
+    showError('Failed to load request details')
+  }
 }
 
-const editRequest = (request) => {
-  // TODO: Implement edit request
-  console.log('Edit request:', request)
+const closeView = () => {
+  isViewOpen.value = false
+  selectedRequest.value = null
 }
 
-const deleteRequest = (request) => {
-  if (confirm(`Are you sure you want to delete request ${request.requestCode}?`)) {
-    // TODO: Implement delete request
-    console.log('Delete request:', request)
+const closeForm = () => {
+  isFormOpen.value = false
+  selectedRequest.value = null
+}
+
+const handleFormSubmit = async (formData) => {
+  try {
+    // Create new request
+    await requestStore.createRequest(formData)
+    showSuccess('Request created successfully')
+    closeForm()
+    await fetchRequests()
+  } catch (error) {
+    showError('Failed to create request')
   }
 }
 </script>

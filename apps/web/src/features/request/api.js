@@ -17,3 +17,11 @@ export async function getRequestsById(id) {
 export async function createRequest(requestData) {
   await http.post('/vessel-requests', requestData)
 }
+
+export async function updateRequest(id, requestData) {
+  await http.put(`/vessel-requests/${id}`, requestData)
+}
+
+export async function deleteRequest(id) {
+  await http.delete(`/vessel-requests/${id}`)
+}

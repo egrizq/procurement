@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-lg shadow overflow-hidden">
+  <div class="bg-white rounded-lg shadow overflow-hidden ">
     <div class="overflow-x-auto">
       <table class="w-full">
         <thead class="bg-gray-50 border-b border-gray-200">
@@ -18,6 +18,8 @@
             v-for="(row, index) in displayData"
             :key="row[rowKey] || index"
             class="hover:bg-gray-50 transition-colors"
+            :class="{ 'cursor-pointer': clickable }"
+            @click="clickable && emit('row-click', row)"
           >
             <td
               v-for="column in columns"
@@ -100,6 +102,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  clickable: {
+    type: Boolean,
+    default: true,
+  },
   // Server-side pagination object
   pagination: {
     type: Object,
@@ -107,7 +113,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:currentPage'])
+const emit = defineEmits(['update:currentPage', 'row-click'])
 
 // Helper function to access nested properties using dot notation
 const getNestedValue = (obj, path) => {

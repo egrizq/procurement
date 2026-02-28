@@ -36,7 +36,7 @@
                 <h3 class="text-xl font-semibold text-gray-900">{{ title }}</h3>
                 <button
                   @click="close"
-                  class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  class="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                   type="button"
                 >
                   <X :size="20" />

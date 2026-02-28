@@ -34,6 +34,29 @@ export const useRequestStore = defineStore('request', {
         await this.fetchRequests()
       } catch (error) {
         this.error = error.error || 'Failed to create request.'
+        throw error
+      } finally {
+        this.error = null
+      }
+    },
+    async updateRequest(id, requestData) {
+      try {
+        await requestAPI.updateRequest(id, requestData)
+        await this.fetchRequests()
+      } catch (error) {
+        this.error = error.error || 'Failed to update request.'
+        throw error
+      } finally {
+        this.error = null
+      }
+    },
+    async deleteRequest(id) {
+      try {
+        await requestAPI.deleteRequest(id)
+        await this.fetchRequests()
+      } catch (error) {
+        this.error = error.error || 'Failed to delete request.'
+        throw error
       } finally {
         this.error = null
       }
