@@ -1,12 +1,12 @@
 export const masterDataRoutes = [
-  {
-    path: '/master-data/vessels',
-    name: 'master-data-vessels',
-    component: () => import('./vessels/views/Index.vue'),
-    meta: {
-      title: 'Vessels',
-    },
-  },
+  // {
+  //   path: '/master-data/vessels',
+  //   name: 'master-data-vessels',
+  //   component: () => import('./vessels/views/Index.vue'),
+  //   meta: {
+  //     title: 'Vessels',
+  //   },
+  // },
   {
     path: '/master-data/items',
     name: 'master-data-items',
