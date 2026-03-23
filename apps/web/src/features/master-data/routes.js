@@ -31,4 +31,12 @@ export const masterDataRoutes = [
       title: 'Category Items',
     },
   },
+  {
+    path: '/master-data/vessel-stocks',
+    name: 'master-data-vessel-stocks',
+    component: () => import('./vessel-stocks/views/Index.vue'),
+    meta: {
+      title: 'Vessel Stock',
+    },
+  },
 ]

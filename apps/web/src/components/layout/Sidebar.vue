@@ -78,6 +78,15 @@
               <Tags :size="18" />
               <span>Category Items</span>
             </router-link>
+
+            <router-link
+              to="/master-data/vessel-stocks"
+              class="flex items-center gap-3 px-4 py-2 rounded-lg transition-colors hover:bg-gray-700 text-sm"
+              :class="isActive('/master-data/vessel-stocks') ? 'bg-gray-700' : ''"
+            >
+              <Warehouse :size="18" />
+              <span>Vessel Stock</span>
+            </router-link>
           </div>
         </transition>
       </div>
@@ -139,6 +148,7 @@ import {
   Package,
   Building,
   Tags,
+  Warehouse,
   FileText,
   GitCompare,
   ShoppingCart,
