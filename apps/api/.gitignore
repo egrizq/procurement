@@ -28,5 +28,3 @@ out/
 *.war
 *.ear
 
-/prisma/migrations/
-/prisma/generated/

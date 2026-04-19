@@ -1,0 +1,8 @@
+export const categoryVendorEnum = ['Jasa', 'Sparepart', 'Fuel', 'Engine'] as const;
+export const unitEnum = ['Pcs', 'Box', 'Liter', 'Meter', 'Kg'] as const;
+export const statusEnum = ['Publish', 'Unpublish'] as const;
+export const departmentEnum = ['IT', 'HR', 'Finance', 'Deck', 'Engine'] as const;
+export const userStatusEnum = ['Contract', 'Permanent', 'Intern', 'Leave'] as const;
+export const requestStatusEnum = ['Waiting', 'Approved', 'Rejected'] as const;
+export const priorityEnum = ['Low', 'Medium', 'High'] as const;
+export const usersTypeEnum = ['Admin', 'Staff', 'Manager', 'Crew'] as const;
