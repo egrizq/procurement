@@ -1,4 +1,5 @@
 import prisma from '#config/prisma.ts';
+import type { Prisma } from '@prisma/client';
 
 class MstVendorRepository {
 	async getMasterVendors(page: number = 1, limit: number = 10, search: string = '') {
@@ -31,6 +32,29 @@ class MstVendorRepository {
 		]);
 
 		return { vendors, total };
+	}
+
+	async createVendor(data: Prisma.MstVendorCreateInput) {
+		return prisma.mstVendor.create({ data });
+	}
+
+	async getVendorById(id: number) {
+		return prisma.mstVendor.findUnique({
+			where: { id },
+		});
+	}
+
+	async updateVendor(id: number, data: Prisma.MstVendorUpdateInput) {
+		return prisma.mstVendor.update({
+			where: { id },
+			data,
+		});
+	}
+
+	async deleteVendor(id: number) {
+		return prisma.mstVendor.delete({
+			where: { id },
+		});
 	}
 }
 

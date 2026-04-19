@@ -29,6 +29,54 @@ const getMasterVendors = asyncHandler(async (req: Request, res: Response) => {
 	});
 });
 
+const createVendor = asyncHandler(async (req: Request, res: Response) => {
+	const mstVendorRepo = new MstVendorRepository();
+	const vendor = await mstVendorRepo.createVendor(req.body);
+
+	return success(res, vendor, 201);
+});
+
+const getVendorById = asyncHandler(async (req: Request, res: Response) => {
+	const mstVendorRepo = new MstVendorRepository();
+	const vendor = await mstVendorRepo.getVendorById(Number(req.params.id));
+
+	if (!vendor) {
+		throw new AppError('Vendor not found', 404);
+	}
+
+	return success(res, vendor);
+});
+
+const updateVendor = asyncHandler(async (req: Request, res: Response) => {
+	const mstVendorRepo = new MstVendorRepository();
+	
+	const existing = await mstVendorRepo.getVendorById(Number(req.params.id));
+	if (!existing) {
+		throw new AppError('Vendor not found', 404);
+	}
+
+	const vendor = await mstVendorRepo.updateVendor(Number(req.params.id), req.body);
+
+	return success(res, vendor);
+});
+
+const deleteVendor = asyncHandler(async (req: Request, res: Response) => {
+	const mstVendorRepo = new MstVendorRepository();
+	
+	const existing = await mstVendorRepo.getVendorById(Number(req.params.id));
+	if (!existing) {
+		throw new AppError('Vendor not found', 404);
+	}
+
+	await mstVendorRepo.deleteVendor(Number(req.params.id));
+
+	return success(res, { message: 'Vendor deleted successfully' });
+});
+
 export default {
 	getMasterVendors,
+	createVendor,
+	getVendorById,
+	updateVendor,
+	deleteVendor,
 };
