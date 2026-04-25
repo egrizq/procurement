@@ -41,7 +41,7 @@ dotenvConfig({ path: resolve(__dirname, '../../../.env') })
 - `PORT` - Server port (default: 3000)
 - `HOST` - Server host (default: localhost)
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT` - Database config
-- `DATABASE_URL` - Prisma connection string
+- `DATABASE_URL` - Drizzle connection string
 - `JWT_SECRET` - JWT signing secret
 - `API_TOKEN_SECRET` - API token header name
 - `LOG_LEVEL` - Logging level (info/debug/error)

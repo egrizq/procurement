@@ -33,7 +33,7 @@
 - **MySQL/MariaDB:** v8.0+ / v10.5+
 - **Git:** Latest version
 - **Code Editor:** VS Code (recommended) with extensions:
-  - Prisma
+  - Drizzle
   - Vue - Official
   - ESLint
   - Prettier
@@ -58,8 +58,8 @@ cp .env.example .env
 
 # 5. Set up database
 cd apps/api
-npx prisma migrate dev
-npx prisma generate
+npx drizzle-kit push
+npx drizzle-kit generate
 cd ../..
 
 # 6. Start development servers
@@ -129,7 +129,7 @@ FLUSH PRIVILEGES;
 1. Open VS Code
 2. Press `Ctrl+Shift+X` (Windows/Linux) or `Cmd+Shift+X` (macOS)
 3. Search and install:
-   - Prisma
+   - Drizzle
    - Vue - Official
    - ESLint
    - Prettier - Code formatter
@@ -190,8 +190,8 @@ Procurement/
 │   │   │   ├── routes/             # Route aggregation
 │   │   │   ├── app.js              # Express app
 │   │   │   └── server.js           # Server entry point
-│   │   ├── prisma/
-│   │   │   ├── schema.prisma       # Database schema
+│   │   ├── drizzle/
+│   │   │   ├── schema.drizzle       # Database schema
 │   │   │   └── migrations/         # Migration history
 │   │   ├── logs/                   # Application logs
 │   │   ├── package.json
@@ -392,7 +392,7 @@ git commit -m "feat(api): add vessel request approval endpoint"
 git commit -m "fix(web): resolve token expiration handling"
 git commit -m "docs(readme): update development setup instructions"
 git commit -m "refactor(validators): extract common pagination schema"
-git commit -m "chore(deps): update Prisma to v7.3.1"
+git commit -m "chore(deps): update Drizzle to v7.3.1"
 ```
 
 ---
@@ -540,7 +540,7 @@ mkdir purchase-order
 
 **Step 2: Create Repository** (`purchase-order.repository.js`)
 ```javascript
-import prisma from '#config/prisma.js';
+import drizzle from '#config/drizzle.js';
 
 export const findAll = async ({ page, limit, search }) => {
   const skip = (page - 1) * limit;
@@ -553,41 +553,41 @@ export const findAll = async ({ page, limit, search }) => {
   } : {};
   
   const [data, total] = await Promise.all([
-    prisma.purchaseOrder.findMany({
+    drizzle.purchaseOrder.findMany({
       where,
       skip,
       take: limit,
       orderBy: { createdAt: 'desc' },
     }),
-    prisma.purchaseOrder.count({ where }),
+    drizzle.purchaseOrder.count({ where }),
   ]);
   
   return { data, total };
 };
 
 export const findById = async (id) => {
-  return prisma.purchaseOrder.findUnique({
+  return drizzle.purchaseOrder.findUnique({
     where: { id },
     include: { items: true },
   });
 };
 
 export const create = async (data) => {
-  return prisma.purchaseOrder.create({
+  return drizzle.purchaseOrder.create({
     data,
     include: { items: true },
   });
 };
 
 export const update = async (id, data) => {
-  return prisma.purchaseOrder.update({
+  return drizzle.purchaseOrder.update({
     where: { id },
     data,
   });
 };
 
 export const remove = async (id) => {
-  return prisma.purchaseOrder.delete({
+  return drizzle.purchaseOrder.delete({
     where: { id },
   });
 };
@@ -1028,15 +1028,15 @@ const routes = [
 
 ## Database Management
 
-### Prisma Workflow
+### Drizzle Workflow
 
-**Location:** `apps/api/prisma/schema.prisma`
+**Location:** `apps/api/src/db/schema/index.ts`
 
 ### Schema Changes
 
 **Step 1: Edit Schema**
-```prisma
-// apps/api/prisma/schema.prisma
+```drizzle
+// apps/api/src/db/schema/index.ts
 
 model PurchaseOrder {
   id           String   @id @default(uuid())
@@ -1068,17 +1068,17 @@ enum OrderStatus {
 **Step 2: Create Migration**
 ```bash
 cd apps/api
-npx prisma migrate dev --name add_purchase_order_model
+npx drizzle-kit push --name add_purchase_order_model
 
 # This will:
-# 1. Create migration file in prisma/migrations/
+# 1. Create migration file in drizzle/migrations/
 # 2. Apply migration to database
-# 3. Regenerate Prisma Client
+# 3. Regenerate Drizzle Client
 ```
 
 **Step 3: Review Migration**
 ```bash
-cat prisma/migrations/<timestamp>_add_purchase_order_model/migration.sql
+cat drizzle/migrations/<timestamp>_add_purchase_order_model/migration.sql
 
 # Should show:
 # CREATE TABLE purchase_orders ...
@@ -1087,52 +1087,52 @@ cat prisma/migrations/<timestamp>_add_purchase_order_model/migration.sql
 
 **Step 4: Commit Migration**
 ```bash
-git add prisma/schema.prisma prisma/migrations/
+git add src/db/schema/index.ts drizzle/migrations/
 git commit -m "feat(db): add purchase order model"
 ```
 
-### Common Prisma Commands
+### Common Drizzle Commands
 
 ```bash
-# Generate Prisma Client
-npx prisma generate
+# Generate Drizzle Client
+npx drizzle-kit generate
 
 # Create and apply migration
-npx prisma migrate dev --name <migration_name>
+npx drizzle-kit push --name <migration_name>
 
 # Apply pending migrations (production)
-npx prisma migrate deploy
+npm run db:push
 
 # Check migration status
-npx prisma migrate status
+npx drizzle migrate status
 
 # Create migration without applying (preview)
-npx prisma migrate dev --create-only
+npx drizzle-kit push --create-only
 
 # Reset database (⚠️ deletes all data)
-npx prisma migrate reset
+npx drizzle migrate reset
 
-# Open Prisma Studio (database GUI)
-npx prisma studio
+# Open Drizzle Studio (database GUI)
+npx drizzle-kit studio
 
 # Format schema file
-npx prisma format
+npx drizzle format
 
 # Validate schema
-npx prisma validate
+npx drizzle validate
 ```
 
 ### Database Seeding
 
-**Create Seed File:** `apps/api/prisma/seed.js`
+**Create Seed File:** `apps/api/drizzle/seed.js`
 ```javascript
-import { PrismaClient } from '@prisma/client';
+import { Drizzle } from '@drizzle/client';
 
-const prisma = new PrismaClient();
+const drizzle = new Drizzle();
 
 async function main() {
   // Create admin user
-  const admin = await prisma.user.upsert({
+  const admin = await drizzle.user.upsert({
     where: { username: 'admin' },
     update: {},
     create: {
@@ -1150,7 +1150,7 @@ async function main() {
   
   // Create sample vessels
   const vessels = await Promise.all([
-    prisma.vessel.create({
+    drizzle.vessel.create({
       data: {
         vesselName: 'MV Ocean Star',
         vesselType: 'Container',
@@ -1159,7 +1159,7 @@ async function main() {
         status: 'ACTIVE',
       },
     }),
-    prisma.vessel.create({
+    drizzle.vessel.create({
       data: {
         vesselName: 'MV Pacific Wind',
         vesselType: 'Tanker',
@@ -1179,15 +1179,15 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await drizzle.$disconnect();
   });
 ```
 
 **Add to package.json:**
 ```json
 {
-  "prisma": {
-    "seed": "node prisma/seed.js"
+  "drizzle": {
+    "seed": "node drizzle/seed.js"
   }
 }
 ```
@@ -1195,7 +1195,7 @@ main()
 **Run Seed:**
 ```bash
 cd apps/api
-npx prisma db seed
+npm run db:seed
 ```
 
 ---
@@ -1512,10 +1512,10 @@ onMounted(async () => {
 ```bash
 # 1. Edit schema
 cd apps/api
-vim prisma/schema.prisma
+vim src/db/schema/index.ts
 
 # 2. Create migration
-npx prisma migrate dev --name add_field_to_vessel
+npx drizzle-kit push --name add_field_to_vessel
 
 # 3. Update types (if using TypeScript)
 cd ../../packages/types
@@ -1636,11 +1636,11 @@ rm -rf packages/*/.turbo
 npm run build
 ```
 
-### Prisma Client Not Generated
+### Drizzle Client Not Generated
 
 ```bash
 cd apps/api
-npx prisma generate
+npx drizzle-kit generate
 ```
 
 ### Vite Build Fails
@@ -1657,7 +1657,7 @@ npm run build
 ## Additional Resources
 
 - **Turborepo Docs:** https://turbo.build/repo/docs
-- **Prisma Docs:** https://www.prisma.io/docs
+- **Drizzle Docs:** https://www.drizzle.io/docs
 - **Vue 3 Docs:** https://vuejs.org/
 - **Vite Docs:** https://vitejs.dev/
 - **PrimeVue Docs:** https://primevue.org/

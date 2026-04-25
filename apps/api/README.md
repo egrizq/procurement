@@ -22,8 +22,8 @@ cp .env.example .env
 
 3. Run database migrations:
 ```bash
-npx prisma migrate dev --name create_migration
-npx prisma generate
+npx drizzle-kit push --name create_migration
+npx drizzle-kit generate
 ```
 
 4. Start development server:
@@ -55,10 +55,10 @@ cp .env.example .env
 nano .env  # Edit with production values
 ```
 
-4. Run Prisma migrations:
+4. Run Drizzle migrations:
 ```bash
-npx prisma migrate deploy
-npx prisma generate
+npm run db:push
+npx drizzle-kit generate
 ```
 
 ### PM2 Commands
@@ -140,7 +140,7 @@ Base URL: `http://your-domain:3000/api`
 See `.env.example` for all required environment variables:
 - `NODE_ENV` - Environment (development/production)
 - `PORT` - Server port (default: 3000)
-- `DATABASE_URL` - Prisma database connection string
+- `DATABASE_URL` - Drizzle database connection string
 - `JWT_SECRET` - JWT signing secret
 - `API_TOKEN_SECRET` - API token secret
 
@@ -155,8 +155,8 @@ backend-proc/
 │   ├── modules/            # Feature modules
 │   ├── routes/             # Route definitions
 │   └── shared/             # Shared utilities
-├── prisma/
-│   ├── schema.prisma       # Database schema
+├── drizzle/
+│   ├── schema.drizzle       # Database schema
 │   └── migrations/         # Database migrations
 ├── ecosystem.config.js     # PM2 configuration
 ├── .env.example            # Environment template

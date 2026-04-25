@@ -264,8 +264,8 @@ cat .env | grep -v PASSWORD
 # MySQL/MariaDB
 mysqldump -h ${DB_HOST} -u ${DB_USER} -p ${DB_NAME} > backup_$(date +%Y%m%d).sql
 
-# Or use Prisma (if existing deployment)
-docker exec procurement-api-prod npx prisma db execute --stdin < /dev/null > backup.sql
+# Or use Drizzle (if existing deployment)
+docker exec procurement-api-prod npx drizzle db execute --stdin < /dev/null > backup.sql
 ```
 
 #### 4. Run Migrations
@@ -491,14 +491,14 @@ docker inspect procurement-api-prod | grep Health -A 10
 ```bash
 # Check migration status
 cd apps/api
-npx prisma migrate status
+npx drizzle migrate status
 
 # Reset if needed (CAUTION: data loss)
-npx prisma migrate reset
+npx drizzle migrate reset
 
 # Or manually fix
-npx prisma migrate resolve --rolled-back <migration-name>
-npx prisma migrate deploy
+npx drizzle migrate resolve --rolled-back <migration-name>
+npm run db:push
 ```
 
 ### Logging and Debugging
@@ -692,7 +692,7 @@ Procurement/
 ├── apps/
 │   ├── api/
 │   │   ├── Dockerfile           # API container config
-│   │   ├── prisma/              # Database schema
+│   │   ├── drizzle/              # Database schema
 │   │   └── src/                 # Source code
 │   └── web/
 │       ├── Dockerfile           # Web container config

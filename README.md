@@ -32,7 +32,7 @@ The Procurement Vessel Management System is a comprehensive solution for managin
 #### Backend (API)
 - **Runtime:** Node.js v20.19.0 (ESM)
 - **Framework:** Express v5.2.1
-- **Database:** MySQL/MariaDB with Prisma ORM v7.3.0
+- **Database:** MySQL/MariaDB with Drizzle ORM v7.3.0
 - **Validation:** Zod v4.3.6
 - **Logging:** Pino v10.3.0 (structured logging)
 - **Security:** bcrypt v6.0.0
@@ -62,7 +62,7 @@ Procurement/
 │   │   │   ├── config/         # Configuration
 │   │   │   ├── shared/         # Shared utilities
 │   │   │   └── routes/         # Route aggregation
-│   │   ├── prisma/             # Database schema & migrations
+│   │   ├── drizzle/             # Database schema & migrations
 │   │   └── package.json
 │   │
 │   └── web/                    # Frontend application
@@ -120,9 +120,9 @@ cp .env.example .env
 
 # 4. Set up the database
 cd apps/api
-npx prisma migrate dev
-npx prisma generate
-npx prisma db seed  # Optional: seed with sample data
+npx drizzle-kit push
+npx drizzle-kit generate
+npm run db:seed  # Optional: seed with sample data
 cd ../..
 
 # 5. Start development servers
@@ -164,11 +164,11 @@ npm run build        # Build for production
 npm run preview      # Preview production build
 
 # Database (from apps/api/)
-npx prisma migrate dev      # Create and apply migration
-npx prisma migrate deploy   # Apply migrations (production)
-npx prisma studio           # Open database GUI
-npx prisma generate         # Generate Prisma Client
-npx prisma db seed          # Seed database
+npx drizzle-kit push      # Create and apply migration
+npm run db:push   # Apply migrations (production)
+npx drizzle-kit studio           # Open database GUI
+npx drizzle-kit generate         # Generate Drizzle Client
+npm run db:seed          # Seed database
 ```
 
 ### Development Workflow
@@ -293,7 +293,7 @@ npx prisma db seed          # Seed database
 - **Unit:** PCS, KG, LITER, BOX, BOTTLE, PACK, METER, SET
 - **CategoryVendor:** FOOD, SPARE_PART, CHEMICAL, EQUIPMENT, SERVICE, OTHER
 
-See [prisma/schema.prisma](apps/api/prisma/schema.prisma) for full schema definition.
+See [src/db/schema/index.ts](apps/api/src/db/schema/index.ts) for full schema definition.
 
 ---
 
@@ -459,7 +459,7 @@ feat(api): add vessel approval endpoint
 fix(web): resolve token expiration handling
 docs(readme): update installation instructions
 refactor(validators): extract common schemas
-chore(deps): upgrade Prisma to v7.3.1
+chore(deps): upgrade Drizzle to v7.3.1
 ```
 
 ---
@@ -546,10 +546,10 @@ rm -rf apps/*/node_modules packages/*/node_modules
 npm install
 ```
 
-**Prisma Client Not Generated:**
+**Drizzle Client Not Generated:**
 ```bash
 cd apps/api
-npx prisma generate
+npx drizzle-kit generate
 ```
 
 For more troubleshooting, see [DEVELOPMENT.md](./DEVELOPMENT.md#troubleshooting).
@@ -574,7 +574,7 @@ For questions, issues, or contributions:
 ## Acknowledgments
 
 - **Turborepo** - Monorepo management
-- **Prisma** - Database ORM
+- **Drizzle** - Database ORM
 - **Vue.js** - Frontend framework
 - **PrimeVue** - UI components
 - **Express** - Backend framework

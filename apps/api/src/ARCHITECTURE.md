@@ -8,7 +8,7 @@ src/
 ├── server.js                   # Server entry point
 ├── config/                     # Configuration files
 │   ├── database.js            # MySQL database pool
-│   ├── prisma.js              # Prisma client configuration
+│   ├── drizzle.js              # Drizzle client configuration
 │   └── logger.js              # Pino logger setup
 ├── shared/                     # Shared utilities & middlewares
 │   ├── middlewares/
@@ -116,7 +116,7 @@ const AppError = require("../../shared/utils/error");
 
 ### Import dari Config
 ```javascript
-const prisma = require("../../config/prisma");
+const drizzle = require("../../config/drizzle");
 ```
 
 ### Import dari Module Lain

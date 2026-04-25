@@ -39,10 +39,10 @@ Procurement/
 ├── be/                          # Backend application (Node.js/Express)
 │   ├── src/
 │   │   ├── modules/             # Feature modules (auth, vessel-request, master-data)
-│   │   ├── config/              # Configuration (database, logger, prisma)
+│   │   ├── config/              # Configuration (database, logger, drizzle)
 │   │   ├── shared/              # Shared utilities and middleware
 │   │   └── routes/              # Route aggregation
-│   ├── prisma/                  # Database schema and migrations
+│   ├── drizzle/                  # Database schema and migrations
 │   ├── logs/                    # PM2 and application logs
 │   ├── package.json
 │   ├── ecosystem.config.js      # PM2 configuration
@@ -66,7 +66,7 @@ Procurement/
 - **Runtime:** Node.js v18+
 - **Framework:** Express v5.2.1
 - **Language:** JavaScript (CommonJS)
-- **Database:** MySQL/MariaDB via Prisma v7.3.0 + mysql2 v3.16.2
+- **Database:** MySQL/MariaDB via Drizzle v7.3.0 + mysql2 v3.16.2
 - **Validation:** Zod v4.3.6
 - **Logging:** Pino v10.3.0 (structured logging)
 - **Security:** bcrypt v6.0.0 (password hashing)
@@ -78,8 +78,8 @@ Procurement/
 ```json
 {
   "express": "^5.2.1",
-  "@prisma/adapter-mariadb": "^7.3.0",
-  "@prisma/client": "^7.3.0",
+  "@drizzle/adapter-mariadb": "^7.3.0",
+  "@drizzle/client": "^7.3.0",
   "mysql2": "^3.16.2",
   "zod": "^4.3.6",
   "pino": "^10.3.0",
@@ -127,7 +127,7 @@ Each feature module is self-contained:
 ```
 modules/{feature}/
 ├── {feature}.controller.js     # HTTP request handlers
-├── {feature}.repository.js     # Database operations (Prisma + raw MySQL)
+├── {feature}.repository.js     # Database operations (Drizzle + raw MySQL)
 ├── {feature}.routes.js         # Express route definitions
 ├── {feature}.validation.js     # Zod validation schemas
 └── {feature}.middleware.js     # Optional feature-specific middleware
@@ -199,7 +199,7 @@ features/{feature}/
 - **Solution:** Create shared packages in Phase 3
 
 #### 4. Database Migrations Not Version Controlled ⚠️
-- `be/prisma/migrations/` is in `.gitignore`
+- `be/drizzle/migrations/` is in `.gitignore`
 - **Impact:** Migration history lost, deployment issues
 - **Solution:** Remove from `.gitignore`, commit migration history
 
@@ -228,7 +228,7 @@ Procurement/                     # Monorepo root
 │   │   │   ├── config/          # Configuration
 │   │   │   ├── shared/          # Shared utilities
 │   │   │   └── routes/
-│   │   ├── prisma/              # Database schema
+│   │   ├── drizzle/              # Database schema
 │   │   ├── logs/
 │   │   ├── package.json         # Name: @procurement/api
 │   │   ├── ecosystem.config.js
@@ -396,11 +396,11 @@ Thumbs.db
 # PM2
 .pm2/
 
-# Prisma
-prisma/migrations/ # REMOVE THIS - migrations should be version controlled
+# Drizzle
+drizzle/migrations/ # REMOVE THIS - migrations should be version controlled
 ```
 
-**Note:** After Phase 1, remove `prisma/migrations/` from `.gitignore` and commit existing migrations.
+**Note:** After Phase 1, remove `drizzle/migrations/` from `.gitignore` and commit existing migrations.
 
 ### Step 1.2: Create Turborepo Configuration
 
@@ -912,33 +912,33 @@ import { readFileSync } from 'fs';
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
 ```
 
-### Step 2.6: Update Prisma Client Import
+### Step 2.6: Update Drizzle Client Import
 
-**File:** `apps/api/src/config/prisma.js`
+**File:** `apps/api/src/config/drizzle.js`
 
 **Before:**
 ```javascript
-const { PrismaClient } = require('@prisma/client');
-const { createPrismaClient } = require('@prisma/adapter-mariadb');
+const { Drizzle } = require('@drizzle/client');
+const { createDrizzle } = require('@drizzle/adapter-mariadb');
 const pool = require('./database');
 
-// ... prisma client setup
+// ... drizzle client setup
 
-module.exports = prisma;
+module.exports = drizzle;
 ```
 
 **After:**
 ```javascript
-import { PrismaClient } from '@prisma/client';
-import { createPrismaClient } from '@prisma/adapter-mariadb';
+import { Drizzle } from '@drizzle/client';
+import { createDrizzle } from '@drizzle/adapter-mariadb';
 import pool from './database.js';
 
-// ... prisma client setup
+// ... drizzle client setup
 
-export default prisma;
+export default drizzle;
 ```
 
-**Note:** Prisma Client fully supports ESM, no additional configuration needed.
+**Note:** Drizzle Client fully supports ESM, no additional configuration needed.
 
 ### Step 2.7: Update Express App Setup
 
@@ -1016,7 +1016,7 @@ export { login };
 
 **Before:**
 ```javascript
-const prisma = require('@config/prisma');
+const drizzle = require('@config/drizzle');
 
 const findUser = async (username) => {
   // ... implementation
@@ -1030,7 +1030,7 @@ module.exports = {
 
 **After:**
 ```javascript
-import prisma from '#config/prisma.js';
+import drizzle from '#config/drizzle.js';
 
 export const findUser = async (username) => {
   // ... implementation
@@ -1178,11 +1178,11 @@ npm run pm2:logs
 npm run pm2:delete
 ```
 
-7. **Prisma operations:**
+7. **Drizzle operations:**
 ```bash
 cd apps/api
-npx prisma migrate status
-npx prisma generate
+npx drizzle migrate status
+npx drizzle-kit generate
 # Should work without errors
 ```
 
@@ -1193,7 +1193,7 @@ npx prisma generate
 - ✅ All API endpoints functional
 - ✅ Frontend can communicate with backend
 - ✅ PM2 deployment works
-- ✅ Prisma migrations and client work
+- ✅ Drizzle migrations and client work
 - ✅ No runtime errors in logs
 
 **Common Issues & Solutions:**
@@ -1320,7 +1320,7 @@ npm install -D -w typescript @types/node
 }
 ```
 
-**Create Type Files Based on Prisma Schema:**
+**Create Type Files Based on Drizzle Schema:**
 
 **File:** `packages/types/src/user.ts`
 ```typescript
@@ -2295,16 +2295,16 @@ npm run dev
 ### 1. Version Control Cleanup
 
 **Actions:**
-1. **Remove `prisma/migrations/` from `.gitignore`:**
+1. **Remove `drizzle/migrations/` from `.gitignore`:**
 ```bash
 # Edit apps/api/.gitignore
-# Remove line: prisma/migrations/
+# Remove line: drizzle/migrations/
 ```
 
 2. **Commit migration history:**
 ```bash
-git add apps/api/prisma/migrations/
-git commit -m "chore: add Prisma migration history to version control"
+git add apps/api/drizzle/migrations/
+git commit -m "chore: add Drizzle migration history to version control"
 ```
 
 3. **Create comprehensive `.gitignore`:**
@@ -2730,7 +2730,7 @@ type(scope): description
 
 feat(api): add vessel request approval endpoint
 fix(web): resolve token expiration handling
-chore(deps): update Prisma to v7.3.1
+chore(deps): update Drizzle to v7.3.1
 docs(readme): add monorepo setup instructions
 refactor(validators): extract common schemas
 ```
@@ -2801,7 +2801,7 @@ refactor(validators): extract common schemas
 - [ ] Add `.js` extensions to all relative imports
 - [ ] Test API starts without errors
 - [ ] Test all API endpoints work
-- [ ] Test Prisma operations work
+- [ ] Test Drizzle operations work
 - [ ] Test PM2 deployment works
 - [ ] Run format: `npm run format`
 - [ ] Git commit: "refactor: migrate API to ESM"
@@ -2836,8 +2836,8 @@ refactor(validators): extract common schemas
 - [ ] Git commit: "feat: add shared packages for types, config, validators"
 
 ### Post-Migration
-- [ ] Remove `prisma/migrations/` from `.gitignore`
-- [ ] Commit Prisma migrations to version control
+- [ ] Remove `drizzle/migrations/` from `.gitignore`
+- [ ] Commit Drizzle migrations to version control
 - [ ] Update root README.md with monorepo docs
 - [ ] Update API README.md
 - [ ] Update Web README.md

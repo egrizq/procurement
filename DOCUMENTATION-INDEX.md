@@ -61,7 +61,7 @@ This project includes comprehensive documentation to support development, migrat
 
 | Document | Description | Audience |
 |----------|-------------|----------|
-| [apps/api/prisma/schema.prisma](./apps/api/prisma/schema.prisma) | Complete database schema, models, relationships, enums | Full-stack developers, DBAs |
+| [apps/api/src/db/schema/index.ts](./apps/api/src/db/schema/index.ts) | Complete database schema, models, relationships, enums | Full-stack developers, DBAs |
 | Database ER Diagram | (To be created) Visual representation of database structure | All developers |
 
 ### API Reference
@@ -197,7 +197,7 @@ import { loginSchema, createVesselSchema } from '@procurement/validators';
 1. [README.md](./README.md) - Project overview
 2. [DEVELOPMENT.md](./DEVELOPMENT.md) - Development guide
 3. [apps/api/src/ARCHITECTURE.md](./apps/api/src/ARCHITECTURE.md) - Backend architecture
-4. [apps/api/prisma/schema.prisma](./apps/api/prisma/schema.prisma) - Database schema
+4. [apps/api/src/db/schema/index.ts](./apps/api/src/db/schema/index.ts) - Database schema
 
 **Reference:**
 - [DEVELOPMENT.md](./DEVELOPMENT.md) - API Development section
@@ -260,7 +260,7 @@ import { loginSchema, createVesselSchema } from '@procurement/validators';
 
 **Reference:**
 - [README.md](./README.md) - Core Modules section
-- [apps/api/prisma/schema.prisma](./apps/api/prisma/schema.prisma) - Data models
+- [apps/api/src/db/schema/index.ts](./apps/api/src/db/schema/index.ts) - Data models
 
 ---
 
@@ -277,7 +277,7 @@ import { loginSchema, createVesselSchema } from '@procurement/validators';
 ### 🔄 Existing (From Original Project)
 - [x] apps/api/src/ARCHITECTURE.md - Backend architecture
 - [x] apps/web/IMPLEMENTATION.md - Frontend implementation
-- [x] apps/api/prisma/schema.prisma - Database schema
+- [x] apps/api/src/db/schema/index.ts - Database schema
 
 ### 📋 Planned (To Be Created)
 - [ ] API-REFERENCE.md - Complete API documentation
@@ -298,7 +298,7 @@ import { loginSchema, createVesselSchema } from '@procurement/validators';
 | Event | Documents to Update |
 |-------|---------------------|
 | New feature added | README.md (features), DEVELOPMENT.md (workflow), API-REFERENCE.md |
-| Database schema changed | prisma/schema.prisma, DATABASE-ER-DIAGRAM.md, Package types |
+| Database schema changed | src/db/schema/index.ts, DATABASE-ER-DIAGRAM.md, Package types |
 | New API endpoint | API-REFERENCE.md, @procurement/config routes |
 | Configuration changed | Relevant .config.js files, DEVELOPMENT.md |
 | Deployment process changed | README.md (deployment), DEPLOYMENT-GUIDE.md |
@@ -322,7 +322,7 @@ import { loginSchema, createVesselSchema } from '@procurement/validators';
 
 - **Turborepo:** https://turbo.build/repo/docs
 - **Node.js:** https://nodejs.org/docs
-- **Prisma:** https://www.prisma.io/docs
+- **Drizzle:** https://orm.drizzle.team/docs/overview
 - **Express:** https://expressjs.com/
 - **Vue.js:** https://vuejs.org/
 - **Vite:** https://vitejs.dev/

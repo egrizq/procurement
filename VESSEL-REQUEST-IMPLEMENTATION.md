@@ -60,7 +60,7 @@ The Vessel Request module enables users to create and manage procurement request
 
 **Backend:**
 - Express.js (REST API)
-- Prisma ORM (Database)
+- Drizzle ORM (Database)
 - Zod (Validation)
 - TypeScript
 
@@ -105,9 +105,9 @@ Shared (packages):
 
 ## Backend Implementation
 
-### 1. Database Schema (Prisma)
+### 1. Database Schema (Drizzle)
 
-```prisma
+```drizzle
 model VesselRequest {
   id                  Int                  @id @default(autoincrement())
   requestCode         String               @unique
@@ -214,14 +214,14 @@ export const vesselRequestListSchema = z.object({
 class VesselRequestRepository {
   // Create vessel request header
   async createVesselRequest(data: any) {
-    return await prisma.vesselRequest.create({
+    return await drizzle.vesselRequest.create({
       data: data,
     });
   }
 
   // Create request items in bulk
   async createVesselRequestItems(data: any[]) {
-    return await prisma.vesselRequestItem.createMany({
+    return await drizzle.vesselRequestItem.createMany({
       data: data,
     });
   }
@@ -237,7 +237,7 @@ class VesselRequestRepository {
     } : {};
 
     const [items, total] = await Promise.all([
-      prisma.vesselRequest.findMany({
+      drizzle.vesselRequest.findMany({
         where,
         skip: (page - 1) * limit,
         take: limit,
@@ -250,7 +250,7 @@ class VesselRequestRepository {
         },
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.vesselRequest.count({ where }),
+      drizzle.vesselRequest.count({ where }),
     ]);
 
     return { items, total };
@@ -258,7 +258,7 @@ class VesselRequestRepository {
 
   // Get single request with all items
   async getVesselRequestById(id: number) {
-    return await prisma.vesselRequest.findUnique({
+    return await drizzle.vesselRequest.findUnique({
       where: { id },
       include: {
         vessel: true,
@@ -275,7 +275,7 @@ class VesselRequestRepository {
 
 **Design Decisions:**
 - ✅ Separation of concerns: Repository handles all database operations
-- ✅ Prisma relations for eager loading (vessel, user, items)
+- ✅ Drizzle relations for eager loading (vessel, user, items)
 - ✅ Case-insensitive search across multiple fields
 - ✅ Pagination at database level for performance
 - ✅ Count aggregation for item numbers
