@@ -20,7 +20,7 @@ export const mstItems = mysqlTable(
     itemCode: varchar('item_code', { length: 100 }).notNull(),
     name: varchar('name', { length: 255 }).notNull(),
     unit: mysqlEnum('unit', unitEnum).notNull(),
-    categoryId: int('category_id').notNull(),
+    categoryId: int('category_id').notNull().references(() => mstItemCategories.id),
     status: mysqlEnum('status', statusEnum).notNull(),
     description: text('description'),
     createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),

@@ -7,8 +7,8 @@ export const vesselStocks = mysqlTable(
   'vessel_stocks',
   {
     id: int('id').primaryKey().autoincrement(),
-    vesselId: int('vessel_id').notNull(),
-    itemId: int('item_id').notNull(),
+    vesselId: int('vessel_id').notNull().references(() => mstVessels.id),
+    itemId: int('item_id').notNull().references(() => mstItems.id),
     stockOnHand: int('stock_on_hand').notNull(),
     stockMinimal: int('stock_minimal').notNull(),
     lastUpdate: date('last_update', { mode: 'date' }).notNull(),

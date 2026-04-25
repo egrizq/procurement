@@ -14,7 +14,7 @@ export const users = mysqlTable(
     fullName: varchar('full_name', { length: 255 }),
     type: mysqlEnum('type', usersTypeEnum).notNull(),
     department: mysqlEnum('department', departmentEnum).notNull(),
-    vesselId: int('vessel_id').notNull(),
+    vesselId: int('vessel_id').notNull().references(() => mstVessels.id),
     position: varchar('position', { length: 100 }),
     status: mysqlEnum('status', userStatusEnum).default('Contract').notNull(),
     leaveDate: date('leave_date', { mode: 'date' }),

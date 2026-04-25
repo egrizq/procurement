@@ -10,8 +10,8 @@ export const vesselRequests = mysqlTable(
   {
     id: int('id').primaryKey().autoincrement(),
     requestCode: varchar('request_code', { length: 100 }).notNull(),
-    requestedBy: int('requested_by').notNull(),
-    vesselId: int('vessel_id').notNull(),
+    requestedBy: int('requested_by').notNull().references(() => users.id),
+    vesselId: int('vessel_id').notNull().references(() => mstVessels.id),
     status: mysqlEnum('status', requestStatusEnum).default('Waiting').notNull(),
     priority: mysqlEnum('priority', priorityEnum).default('Medium').notNull(),
     justification: text('justification'),
@@ -22,7 +22,7 @@ export const vesselRequests = mysqlTable(
       .onUpdateNow()
       .notNull(),
     reviewedAt: timestamp('reviewed_at', { mode: 'date', fsp: 0 }),
-    reviewedBy: int('reviewed_by'),
+    reviewedBy: int('reviewed_by').references(() => users.id),
   },
   (table) => ({
     vesselIdIdx: index('idx_vessel_id').on(table.vesselId),
@@ -36,8 +36,8 @@ export const vesselRequestItems = mysqlTable(
   'vessel_request_items',
   {
     id: int('id').primaryKey().autoincrement(),
-    vesselRequestId: int('vessel_request_id').notNull(),
-    itemId: int('item_id').notNull(),
+    vesselRequestId: int('vessel_request_id').notNull().references(() => vesselRequests.id),
+    itemId: int('item_id').notNull().references(() => mstItems.id),
     qtyRequested: int('qty_requested').notNull(),
     qtyApproved: int('qty_approved'),
     unit: mysqlEnum('unit', unitEnum).notNull(),

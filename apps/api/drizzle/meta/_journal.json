@@ -15,6 +15,13 @@
       "when": 1777095627063,
       "tag": "0001_bored_blob",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1777097276747,
+      "tag": "0002_amusing_bloodstorm",
+      "breakpoints": true
     }
   ]
 }
