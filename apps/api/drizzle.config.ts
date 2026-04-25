@@ -10,4 +10,7 @@ export default {
         password: process.env.DB_PASSWORD || 'root',
         database: process.env.DB_NAME || 'procurement',
     },
+    migrations: {
+        table: 'migrations',
+    }
 } satisfies Config;
