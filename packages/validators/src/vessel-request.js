@@ -10,23 +10,33 @@ export const vesselRequestSchema = z.object({
     priority: z.enum(['Low', 'Medium', 'High'], 'Priority must be either Low, Medium, or High'),
     justification: z.string().optional(),
     requestDate: z.string('Request date must is not valid'),
-    items: z.array(
-      z.object({
-        itemId: z.number('Item is not found').int().positive(),
-        qtyRequested: z.number('Quantity requested is not valid').int().positive(),
-        unit: z.enum(
-          ['Pcs', 'Box', 'Liter', 'Meter', 'Kg'],
-          'Unit must be either Pcs, Box, Liter, Meter, or Kg'
-        ),
-        status: z.enum(
-          ['Waiting', 'Approved', 'Rejected'],
-          'Status must be either Waiting, Approved, or Rejected'
-        ),
-        priority: z.enum(['Low', 'Medium', 'High'], 'Priority must be either Low, Medium, or High'),
-        justification: z.string().optional(),
-      }),
-      'Items is required'
-    ),
+    items: z
+      .array(
+        z.object({
+          itemId: z.number('Item is not found').int().positive(),
+          qtyRequested: z.number('Quantity requested is not valid').int().positive(),
+          unit: z.enum(
+            ['Pcs', 'Box', 'Liter', 'Meter', 'Kg'],
+            'Unit must be either Pcs, Box, Liter, Meter, or Kg'
+          ),
+          status: z.enum(
+            ['Waiting', 'Approved', 'Rejected'],
+            'Status must be either Waiting, Approved, or Rejected'
+          ),
+          priority: z.enum(['Low', 'Medium', 'High'], 'Priority must be either Low, Medium, or High'),
+          justification: z.string().optional(),
+        })
+      )
+      .min(1, 'Items are required')
+      .refine(
+        (items) => {
+          const itemIds = items.map((item) => item.itemId);
+          return new Set(itemIds).size === itemIds.length;
+        },
+        {
+          message: 'Items must be unique within a single request',
+        }
+      ),
   }),
 });
 

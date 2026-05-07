@@ -19,6 +19,13 @@ router.post(
 );
 
 router.post(
+    '/validate',
+    apiAuth(),
+	validate(vesselRequestSchema),
+	vesselRequestController.validate
+);
+
+router.post(
 	'/list/:id',
 	apiAuth(),
 	validate(vesselRequestByIdSchema),

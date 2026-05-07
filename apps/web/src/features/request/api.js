@@ -25,3 +25,8 @@ export async function updateRequest(id, requestData) {
 export async function deleteRequest(id) {
   await http.delete(`/vessel-requests/${id}`)
 }
+
+export async function validateRequestForm(requestData) {
+  const { data } = await http.post('/vessel-requests/validate', requestData)
+  return data
+}

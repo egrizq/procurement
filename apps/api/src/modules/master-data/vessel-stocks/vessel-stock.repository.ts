@@ -1,6 +1,6 @@
 import db from '../../../config/drizzle';
-import { vesselStocks, mstVessels, mstItems } from '../../../db/schema/index.ts';
-import { like, desc, eq, sql, or, inArray } from 'drizzle-orm';
+import { vesselStocks, mstVessels, mstItems, vesselItemStandards } from '../../../db/schema/index.ts';
+import { like, desc, eq, sql, or, inArray, and } from 'drizzle-orm';
 
 class VesselStockRepository {
         async getVesselStocks(page: number = 1, limit: number = 10, search: string = '') {
@@ -24,26 +24,27 @@ class VesselStockRepository {
 
                 const condition = matchingIds ? inArray(vesselStocks.id, matchingIds) : undefined;
 
-                const itemsQuery = db.query.vesselStocks.findMany({
-                        where: condition,
-                        columns: {
-                                id: true,
-                                stockOnHand: true,
-                                stockMinimal: true,
-                                lastUpdate: true,
-                        },
-                        with: {
-                                vessel: {
-                                        columns: { id: true, name: true }
-                                },
-                                item: {
-                                        columns: { id: true, itemCode: true, name: true, unit: true }
-                                }
-                        },
-                        offset: (page - 1) * limit,
-                        limit: limit,
-                        orderBy: [desc(vesselStocks.lastUpdate)],
-                });
+                const itemsRecordsQuery = db.select({
+                     id: vesselStocks.id,
+                     vesselId: vesselStocks.vesselId,
+                     itemId: vesselStocks.itemId,
+                     stockOnHand: vesselStocks.stockOnHand,
+                     lastUpdate: vesselStocks.lastUpdate,
+                     vessel: { id: mstVessels.id, name: mstVessels.name },
+                     item: { id: mstItems.id, itemCode: mstItems.itemCode, name: mstItems.name, unit: mstItems.unit },
+                     minStock: vesselItemStandards.minStock
+                })
+                .from(vesselStocks)
+                .leftJoin(mstVessels, eq(vesselStocks.vesselId, mstVessels.id))
+                .leftJoin(mstItems, eq(vesselStocks.itemId, mstItems.id))
+                .leftJoin(vesselItemStandards, and(
+                     eq(vesselItemStandards.vesselId, vesselStocks.vesselId),
+                     eq(vesselItemStandards.itemId, vesselStocks.itemId)
+                ))
+                .where(condition)
+                .limit(limit)
+                .offset((page - 1) * limit)
+                .orderBy(desc(vesselStocks.lastUpdate));
 
                 const countQuery = db
                         .select({ count: sql<number>`count(*)` })
@@ -51,7 +52,7 @@ class VesselStockRepository {
                         .where(condition)
                         .then((res) => Number(res[0]?.count || 0));
 
-                const [items, total] = await Promise.all([itemsQuery, countQuery]);
+                const [items, total] = await Promise.all([itemsRecordsQuery, countQuery]);
                 return { items, total };
         }
 
@@ -63,7 +64,7 @@ class VesselStockRepository {
                 return result || null;
         }
 
-        async create(data: { vesselId: number; itemId: number; stockOnHand: number; stockMinimal: number; lastUpdate: Date; }) {
+        async create(data: { vesselId: number; itemId: number; stockOnHand: number; lastUpdate: Date; }) {
                 const inserted = await db.insert(vesselStocks).values(data);
                 return this.findById(inserted[0].insertId);
         }

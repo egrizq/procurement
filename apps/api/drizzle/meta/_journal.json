@@ -22,6 +22,13 @@
       "when": 1777097276747,
       "tag": "0002_amusing_bloodstorm",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1778139538936,
+      "tag": "0003_fat_rocket_racer",
+      "breakpoints": true
     }
   ]
 }

@@ -50,7 +50,7 @@ const getById = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const create = asyncHandler(async (req: Request, res: Response) => {
-	const { vesselId, itemId, stockOnHand, stockMinimal, lastUpdate } = req.body;
+	const { vesselId, itemId, stockOnHand, lastUpdate } = req.body;
 
 	// Validate vessel exists
 	const vessel = await mstVesselRepo.findVessel({ id: vesselId });
@@ -68,7 +68,6 @@ const create = asyncHandler(async (req: Request, res: Response) => {
 		vesselId,
 		itemId,
 		stockOnHand,
-		stockMinimal,
 		lastUpdate: new Date(lastUpdate),
 	});
 
@@ -87,7 +86,7 @@ const update = asyncHandler(async (req: Request, res: Response) => {
 		throw new AppError('Vessel stock not found', 404);
 	}
 
-	const { vesselId, itemId, stockOnHand, stockMinimal, lastUpdate } = req.body;
+	const { vesselId, itemId, stockOnHand, lastUpdate } = req.body;
 
 	// Validate vessel if changed
 	if (vesselId) {
@@ -109,7 +108,6 @@ const update = asyncHandler(async (req: Request, res: Response) => {
 	if (vesselId !== undefined) updateData.vesselId = vesselId;
 	if (itemId !== undefined) updateData.itemId = itemId;
 	if (stockOnHand !== undefined) updateData.stockOnHand = stockOnHand;
-	if (stockMinimal !== undefined) updateData.stockMinimal = stockMinimal;
 	if (lastUpdate !== undefined) updateData.lastUpdate = new Date(lastUpdate);
 
 	const vesselStock = await vesselStockRepo.update(id, updateData);

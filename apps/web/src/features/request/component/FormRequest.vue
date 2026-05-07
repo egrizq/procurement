@@ -476,10 +476,16 @@ const handleSubmit = async () => {
     return
   }
 
+  const validItemIds = formData.value.items.filter(i => i.itemId).map(i => i.itemId)
+  const hasDuplicates = new Set(validItemIds).size !== validItemIds.length
+  if (hasDuplicates) {
+    showError('Terdapat item duplikat di dalam request. Gabungkan qty jika item sama.')
+    return
+  }
+
   loading.value = true
   try {
     emit('submit', { ...formData.value })
-    showSuccess('Request submitted successfully')
   } catch (error) {
     showError('Failed to submit request')
   } finally {

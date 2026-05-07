@@ -1,6 +1,6 @@
 import db from '../../config/drizzle';
-import { vesselRequests, vesselRequestItems, users } from '../../db/schema/index.ts';
-import { desc, eq, like, sql, inArray } from 'drizzle-orm';
+import { vesselRequests, vesselRequestItems, users, vesselStocks, vesselItemStandards } from '../../db/schema/index.ts';
+import { desc, eq, like, sql, inArray, and, gte } from 'drizzle-orm';
 
 class VesselRequestRepository {
         async createVesselRequest(data: any) {
@@ -29,8 +29,7 @@ class VesselRequestRepository {
                 if (search) {
                      const results = await db.select({ id: vesselRequests.id })
                           .from(vesselRequests)
-                          .leftJoin(users, eq(vesselRequests.requestedBy, users.id))
-                          .where(like(users.fullName, searchPattern));
+                          .where(like(vesselRequests.requestCode, searchPattern));
                      matchingUserIds = results.map(r => r.id);
                 }
 
@@ -137,6 +136,59 @@ class VesselRequestRepository {
                      vesselRequestItems: result.items,
                      items: undefined
                 };
+        }
+
+        async findRecentRequestedItems(vesselId: number, itemIds: number[], days = 30) {
+                if (!itemIds || itemIds.length === 0) return [];
+                const dateLimit = new Date();
+                dateLimit.setDate(dateLimit.getDate() - days);
+
+                const results = await db
+                        .select({
+                                itemId: vesselRequestItems.itemId,
+                                requestDate: vesselRequests.requestDate,
+                                requestCode: vesselRequests.requestCode,
+                        })
+                        .from(vesselRequestItems)
+                        .innerJoin(vesselRequests, eq(vesselRequestItems.vesselRequestId, vesselRequests.id))
+                        .where(
+                                and(
+                                        eq(vesselRequests.vesselId, vesselId),
+                                        inArray(vesselRequestItems.itemId, itemIds),
+                                        gte(vesselRequests.requestDate, dateLimit)
+                                )
+                        )
+                        .orderBy(desc(vesselRequests.requestDate));
+
+                return results;
+        }
+
+        async getVesselItemStandards(vesselId: number, itemIds: number[]) {
+                if (!itemIds || itemIds.length === 0) return [];
+                const results = await db
+                        .select()
+                        .from(vesselItemStandards)
+                        .where(
+                                and(
+                                        eq(vesselItemStandards.vesselId, vesselId),
+                                        inArray(vesselItemStandards.itemId, itemIds)
+                                )
+                        );
+                return results;
+        }
+
+        async getVesselStocks(vesselId: number, itemIds: number[]) {
+                if (!itemIds || itemIds.length === 0) return [];
+                const results = await db
+                        .select()
+                        .from(vesselStocks)
+                        .where(
+                                and(
+                                        eq(vesselStocks.vesselId, vesselId),
+                                        inArray(vesselStocks.itemId, itemIds)
+                                )
+                        );
+                return results;
         }
 }
 

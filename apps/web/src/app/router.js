@@ -8,6 +8,7 @@ import { requestRoutes } from '../features/request/routes.js'
 import { mocRoutes } from '../features/moc/routes.js'
 import { purchaseOrderRoutes } from '../features/purchase-order/routes.js'
 import { goodReceiptRoutes } from '../features/good-receipt/routes.js'
+import { settingsRoutes } from '../features/settings/routes.js'
 import MainLayout from '../components/layout/MainLayout.vue'
 
 const routes = [
@@ -24,6 +25,7 @@ const routes = [
       ...mocRoutes,
       ...purchaseOrderRoutes,
       ...goodReceiptRoutes,
+      ...settingsRoutes,
     ],
   },
 ]

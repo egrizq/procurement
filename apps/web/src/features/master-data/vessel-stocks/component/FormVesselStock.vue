@@ -83,7 +83,7 @@
       </div>
 
       <!-- Stock On Hand and Stock Minimal Row -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <!-- Stock On Hand -->
         <div>
           <label for="stockOnHand" class="block text-sm font-medium text-gray-700 mb-1">
@@ -101,20 +101,29 @@
           />
         </div>
 
+        <!-- Unit -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Unit {{ formData.unit }}
+          </label>
+          <input
+            :value="formData.unit"
+            type="text"
+            disabled
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+          />
+        </div>
+
         <!-- Stock Minimal -->
         <div>
           <label for="stockMinimal" class="block text-sm font-medium text-gray-700 mb-1">
             Minimum Stock <span v-if="mode !== 'view'" class="text-red-500">*</span>
           </label>
           <input
-            id="stockMinimal"
-            v-model.number="formData.stockMinimal"
-            type="number"
-            min="0"
-            :required="mode !== 'view'"
-            :disabled="mode === 'view'"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-            placeholder="0"
+            :value="formData.minimumStock"
+            type="text"
+            disabled
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
           />
         </div>
       </div>
@@ -173,8 +182,9 @@ const items = ref([])
 const formData = ref({
   vesselId: '',
   itemId: '',
+  unit: {},
   stockOnHand: 0,
-  stockMinimal: 0,
+  minimumStock: 0,
   lastUpdate: new Date().toISOString().split('T')[0],
 })
 
@@ -196,8 +206,9 @@ const resetForm = () => {
   formData.value = {
     vesselId: '',
     itemId: '',
+    unit: {},
     stockOnHand: 0,
-    stockMinimal: 0,
+    minimumStock: 0,
     lastUpdate: new Date().toISOString().split('T')[0],
   }
   errorMessage.value = ''
@@ -226,13 +237,14 @@ watch(
   (newStock) => {
     if (newStock) {
       formData.value = {
-        vesselId: newStock.vessel?.id || '',
-        itemId: newStock.item?.id || '',
-        stockOnHand: newStock.stockOnHand || 0,
-        stockMinimal: newStock.stockMinimal || 0,
+        vesselId: newStock?.vesselId || '',
+        itemId: newStock?.itemId || '',
+        stockOnHand: newStock?.stockOnHand || 0,
+        minimumStock: newStock?.minStock || 0,
         lastUpdate: newStock.lastUpdate
           ? new Date(newStock.lastUpdate).toISOString().split('T')[0]
           : new Date().toISOString().split('T')[0],
+        unit: newStock?.item.unit || '',
       }
     } else {
       resetForm()
@@ -265,7 +277,6 @@ const handleSubmit = async () => {
       vesselId: Number(formData.value.vesselId),
       itemId: Number(formData.value.itemId),
       stockOnHand: Number(formData.value.stockOnHand),
-      stockMinimal: Number(formData.value.stockMinimal),
       lastUpdate: formData.value.lastUpdate,
     }
     emit('submit', submitData)

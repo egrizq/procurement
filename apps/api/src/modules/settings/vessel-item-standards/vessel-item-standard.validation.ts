@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { periodEnum } from '../../../db/schema/enums.ts';
 
-export const getMasterSchema = z.object({
+export const getStandardsSchema = z.object({
 	body: z.object({
 		page: z.number().min(1, 'Page number must be at least 1').optional(),
 		limit: z.number().min(1, 'Limit must be at least 1').optional(),
@@ -8,28 +9,30 @@ export const getMasterSchema = z.object({
 	}),
 });
 
-export const createVesselStockSchema = z.object({
+export const createStandardSchema = z.object({
 	body: z.object({
 		vesselId: z.number('Vessel is required').positive(),
 		itemId: z.number('Item is required').positive(),
-		stockOnHand: z.number('Stock on hand is required').min(0, 'Stock on hand cannot be negative'),
-		lastUpdate: z.string('Last update date is required'),
+		periode: z.enum(periodEnum, { message: 'Periode is required' }),
+		minStock: z.number('Min stock is required').min(0),
+		maxStock: z.number('Max stock is required').min(0),
 	}),
 });
 
-export const updateVesselStockSchema = z.object({
+export const updateStandardSchema = z.object({
 	params: z.object({
 		id: z.string(),
 	}),
 	body: z.object({
 		vesselId: z.number().int().positive().optional(),
 		itemId: z.number().int().positive().optional(),
-		stockOnHand: z.number().int().min(0).optional(),
-		lastUpdate: z.string().optional(),
+		periode: z.enum(periodEnum).optional(),
+		minStock: z.number().min(0).optional(),
+		maxStock: z.number().min(0).optional(),
 	}),
 });
 
-export const vesselStockByIdSchema = z.object({
+export const standardByIdSchema = z.object({
 	params: z.object({
 		id: z.string(),
 	}),

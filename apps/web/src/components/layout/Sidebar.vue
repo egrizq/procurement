@@ -130,6 +130,45 @@
         <ClipboardCheck :size="20" />
         <span>Good Receipt</span>
       </router-link>
+
+      <!-- Settings -->
+      <div class="space-y-1">
+        <button
+          @click="toggleSettings"
+          class="flex items-center justify-between w-full px-4 py-3 rounded-lg transition-colors hover:bg-gray-700"
+          :class="isActive('/settings') ? 'bg-gray-700' : ''"
+        >
+          <div class="flex items-center gap-3">
+            <Settings :size="20" />
+            <span>Settings</span>
+          </div>
+          <ChevronDown
+            :size="16"
+            class="transition-transform duration-200"
+            :class="{ 'rotate-180': settingsOpen }"
+          />
+        </button>
+
+        <transition
+          enter-active-class="transition-all duration-200 ease-out"
+          enter-from-class="opacity-0 max-h-0"
+          enter-to-class="opacity-100 max-h-96"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="opacity-100 max-h-96"
+          leave-to-class="opacity-0 max-h-0"
+        >
+          <div v-if="settingsOpen" class="ml-4 space-y-1 overflow-hidden">
+            <router-link
+              to="/settings/vessel-item-standard"
+              class="flex items-center gap-3 px-4 py-2 rounded-lg transition-colors hover:bg-gray-700 text-sm"
+              :class="isActive('/settings/vessel-item-standard') ? 'bg-gray-700' : ''"
+            >
+              <Scale :size="18" />
+              <span>Vessel Item Standard</span>
+            </router-link>
+          </div>
+        </transition>
+      </div>
     </nav>
   </aside>
 
@@ -153,6 +192,8 @@ import {
   GitCompare,
   ShoppingCart,
   ClipboardCheck,
+  Settings,
+  Scale
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -183,6 +224,23 @@ watch(
   (newPath) => {
     if (newPath.startsWith('/master-data')) {
       masterDataOpen.value = true
+    }
+  },
+  { immediate: true },
+)
+
+const settingsOpen = ref(false)
+
+const toggleSettings = () => {
+  settingsOpen.value = !settingsOpen.value
+}
+
+// Auto-open settings if we're on a settings route
+watch(
+  () => route.path,
+  (newPath) => {
+    if (newPath.startsWith('/settings')) {
+      settingsOpen.value = true
     }
   },
   { immediate: true },

@@ -28,6 +28,16 @@ export const useRequestStore = defineStore('request', {
         this.error = null
       }
     },
+    async validateRequest(requestData) {
+      try {
+        return await requestAPI.validateRequestForm(requestData)
+      } catch (error) {
+        this.error = error.error || 'Failed to validate request.'
+        throw error
+      } finally {
+        this.error = null
+      }
+    },
     async createRequest(requestData) {
       try {
         await requestAPI.createRequest(requestData)

@@ -59,16 +59,70 @@
       @close="closeForm"
       @submit="handleFormSubmit"
     />
+
+    <!-- Validation Warnings Dialog -->
+    <FormDialog
+      :is-open="isValidationOpen"
+      title="Validation Warnings"
+      size="lg"
+      @close="closeValidation"
+    >
+      <template #default>
+        <div class="space-y-4">
+          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <AlertTriangle class="h-5 w-5 text-yellow-400" />
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                  Beberapa catatan peringatan ditemukan pada permintaan. Harap perhatikan sebelum mengirimkan:
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div v-for="item in validationWarnings" :key="item.itemId" class="border rounded-md p-4">
+            <h4 class="font-medium text-gray-900 border-b pb-2 mb-2">{{ item.itemName }}</h4>
+            <ul class="list-disc pl-5 space-y-1">
+              <li v-for="(warning, idx) in item.warnings" :key="idx" class="text-sm text-gray-600">
+                {{ warning }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
+          <button
+            @click="closeValidation"
+            type="button"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Go Back & Edit
+          </button>
+          <button
+            @click="confirmFormSubmit"
+            type="button"
+            class="px-4 py-2 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors"
+          >
+            Tetap Ajukan Request
+          </button>
+        </div>
+      </template>
+    </FormDialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { Plus } from 'lucide-vue-next'
+import { Plus, AlertTriangle } from 'lucide-vue-next'
 import SearchFilter from '@/components/base/data-table/SearchFilter.vue'
 import DataTable from '@/components/base/data-table/DataTable.vue'
 import ViewRequest from '../component/ViewRequest.vue'
 import FormRequest from '../component/FormRequest.vue'
+import FormDialog from '@/components/base/form/Form.vue'
 import { useRequestStore } from '../store.js'
 import { showInfo, showSuccess, showError } from '@/services/notification.js'
 
@@ -191,7 +245,43 @@ const closeForm = () => {
   selectedRequest.value = null
 }
 
+const isValidationOpen = ref(false)
+const validationWarnings = ref([])
+const pendingFormData = ref(null)
+
 const handleFormSubmit = async (formData) => {
+  try {
+    const response = await requestStore.validateRequest(formData)
+    
+    // Filter items that actually have warnings
+    const itemsWithWarnings = response.items.filter(i => i.warnings.length > 0)
+    
+    if (itemsWithWarnings.length > 0) {
+      validationWarnings.value = itemsWithWarnings
+      pendingFormData.value = formData
+      isValidationOpen.value = true
+    } else {
+      // Proceed directly if no warnings
+      await proceedCreate(formData)
+    }
+  } catch (error) {
+    showError(error.message || 'Gagal memvalidasi request')
+  }
+}
+
+const confirmFormSubmit = async () => {
+  isValidationOpen.value = false
+  if (pendingFormData.value) {
+    await proceedCreate(pendingFormData.value)
+  }
+}
+
+const closeValidation = () => {
+  isValidationOpen.value = false
+  pendingFormData.value = null
+}
+
+const proceedCreate = async (formData) => {
   try {
     // Create new request
     await requestStore.createRequest(formData)

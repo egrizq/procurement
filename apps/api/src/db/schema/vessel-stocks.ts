@@ -10,7 +10,6 @@ export const vesselStocks = mysqlTable(
     vesselId: int('vessel_id').notNull().references(() => mstVessels.id),
     itemId: int('item_id').notNull().references(() => mstItems.id),
     stockOnHand: int('stock_on_hand').notNull(),
-    stockMinimal: int('stock_minimal').notNull(),
     lastUpdate: date('last_update', { mode: 'date' }).notNull(),
     createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { mode: 'date', fsp: 0 })

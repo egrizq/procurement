@@ -42,14 +42,14 @@
       </template>
 
       <template #cell-stockOnHand="{ row }">
-        <span class="font-semibold" :class="row.stockOnHand < row.stockMinimal ? 'text-red-600' : 'text-gray-900'">
+        <span class="font-semibold" :class="row.stockOnHand < row.minStock ? 'text-red-600' : 'text-gray-900'">
           {{ row.stockOnHand }}
         </span>
         <span class="text-xs text-gray-500 ml-1">{{ row.item?.unit }}</span>
       </template>
 
-      <template #cell-stockMinimal="{ row }">
-        <span class="text-gray-700">{{ row.stockMinimal }}</span>
+      <template #cell-minStock="{ row }">
+        <span class="text-gray-700">{{ row.minStock }}</span>
         <span class="text-xs text-gray-500 ml-1">{{ row.item?.unit }}</span>
       </template>
 
@@ -168,21 +168,21 @@ const columns = [
   { key: 'vessel.name', label: 'Vessel' },
   { key: 'item.name', label: 'Item' },
   { key: 'stockOnHand', label: 'Stock On Hand' },
-  { key: 'stockMinimal', label: 'Min. Stock' },
+  { key: 'minStock', label: 'Min. Stock' },
   { key: 'lastUpdate', label: 'Last Update' },
   { key: 'status', label: 'Status' },
   { key: 'actions', label: 'Actions' },
 ]
 
 const getStockStatusColor = (row) => {
-  if (row.stockOnHand < row.stockMinimal) {
+  if (row.stockOnHand < row.minStock) {
     return 'bg-red-100 text-red-800'
   }
   return 'bg-green-100 text-green-800'
 }
 
 const getStockStatusLabel = (row) => {
-  if (row.stockOnHand < row.stockMinimal) {
+  if (row.stockOnHand < row.minStock) {
     return 'Low Stock'
   }
   return 'In Stock'
