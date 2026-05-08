@@ -49,8 +49,8 @@
       </template>
 
       <template #cell-minStock="{ row }">
-        <span class="text-gray-700">{{ row.minStock }}</span>
-        <span class="text-xs text-gray-500 ml-1">{{ row.item?.unit }}</span>
+        <span class="text-gray-700">{{ row.minStock}}</span>
+        <span class="text-xs text-gray-500 ml-1">{{ !row.minStock ? 'N/A' : row.item?.unit }}</span>
       </template>
 
       <template #cell-lastUpdate="{ row }">
@@ -175,6 +175,7 @@ const columns = [
 ]
 
 const getStockStatusColor = (row) => {
+  if (row.minStock == null) return 'bg-gray-100 text-gray-800'
   if (row.stockOnHand < row.minStock) {
     return 'bg-red-100 text-red-800'
   }
@@ -182,9 +183,8 @@ const getStockStatusColor = (row) => {
 }
 
 const getStockStatusLabel = (row) => {
-  if (row.stockOnHand < row.minStock) {
-    return 'Low Stock'
-  }
+  if (row.minStock == null) return 'No Standard'
+  if (row.stockOnHand < row.minStock) return 'Low Stock'
   return 'In Stock'
 }
 

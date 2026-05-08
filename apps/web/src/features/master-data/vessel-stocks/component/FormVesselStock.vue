@@ -83,7 +83,10 @@
       </div>
 
       <!-- Stock On Hand and Stock Minimal Row -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div :class="[
+          'grid grid-cols-1 gap-4',
+          !formData.unit ? 'md:grid-cols-2' : 'md:grid-cols-3'
+        ]">
         <!-- Stock On Hand -->
         <div>
           <label for="stockOnHand" class="block text-sm font-medium text-gray-700 mb-1">
@@ -102,9 +105,9 @@
         </div>
 
         <!-- Unit -->
-        <div>
+        <div v-if="formData.unit">
           <label class="block text-sm font-medium text-gray-700 mb-1">
-            Unit {{ formData.unit }}
+            Unit
           </label>
           <input
             :value="formData.unit"
@@ -182,7 +185,7 @@ const items = ref([])
 const formData = ref({
   vesselId: '',
   itemId: '',
-  unit: {},
+  unit: '',
   stockOnHand: 0,
   minimumStock: 0,
   lastUpdate: new Date().toISOString().split('T')[0],
@@ -206,7 +209,7 @@ const resetForm = () => {
   formData.value = {
     vesselId: '',
     itemId: '',
-    unit: {},
+    unit: '',
     stockOnHand: 0,
     minimumStock: 0,
     lastUpdate: new Date().toISOString().split('T')[0],
