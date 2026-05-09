@@ -7,13 +7,13 @@
         <p class="text-gray-600 mt-1">Manage your inventory items</p>
       </div>
       <!-- todo: implement add item -->
-      <!-- <button
+      <button
         @click="openAddDialog"
         class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
       >
         <Plus :size="20" />
         <span>Add Item</span>
-      </button> -->
+      </button>
     </div>
 
     <!-- Filters and Search -->
@@ -198,21 +198,21 @@ const closeForm = () => {
   selectedItem.value = null
 }
 
-const handleFormSubmit = (formData) => {
-  // if (selectedItem.value) {
-  //   // Update existing item
-  //   const index = items.value.findIndex((item) => item.id === formData.id)
-  //   if (index !== -1) {
-  //     items.value[index] = formData
-  //   }
-  // } else {
-  //   // Add new item
-  //   const newItem = {
-  //     id: items.value.length + 1,
-  //     ...formData,
-  //   }
-  //   items.value.push(newItem)
-  // }
+const handleFormSubmit = async (formData) => {
+  try {
+    if (selectedItem.value) {
+      // Update existing item
+      await itemStore.updateItem(selectedItem.value.id, formData)
+      showInfo('Item updated successfully', 'Success')
+    } else {
+      // Add new item
+      await itemStore.addItem(formData)
+      showInfo('Item added successfully', 'Success')
+    }
+    fetchItems()
+  } catch (error) {
+    showInfo(itemStore.error || 'Failed to save item', 'Error')
+  }
 }
 
 const viewItem = (item) => {
@@ -221,11 +221,14 @@ const viewItem = (item) => {
   isFormOpen.value = true
 }
 
-const deleteItem = (item) => {
+const deleteItem = async (item) => {
   if (confirm(`Are you sure you want to delete ${item.name}?`)) {
-    const index = items.value.findIndex((i) => i.id === item.id)
-    if (index !== -1) {
-      items.value.splice(index, 1)
+    try {
+      await itemStore.deleteItem(item.id)
+      showInfo('Item deleted successfully', 'Success')
+      fetchItems()
+    } catch (error) {
+      showInfo(itemStore.error || 'Failed to delete item', 'Error')
     }
   }
 }

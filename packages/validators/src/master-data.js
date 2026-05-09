@@ -18,3 +18,15 @@ export const addVendorSchema = z.object({
     city: z.string().optional(),
   }),
 });
+
+export const addItemSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, 'Name is required'),
+    categoryId: z.number().int().positive('Category is required'),
+    unit: z.enum(['Pcs', 'Box', 'Liter', 'Meter', 'Kg']),
+    status: z.enum(['Publish', 'Unpublish']).optional().default('Publish'),
+    description: z.string().optional().nullable(),
+  }),
+});
+
+export const updateItemSchema = addItemSchema;

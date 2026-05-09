@@ -3,6 +3,7 @@ import vendorRoutes from './vendors/vendor.routes.ts';
 import itemRoutes from './items/item.routes.ts';
 import vesselRoutes from './vessels/vessel.routes.ts';
 import vesselStockRoutes from './vessel-stocks/vessel-stock.routes.ts';
+import categoryRoutes from './category-items/category.routes.ts';
 
 const router = express.Router();
 
@@ -11,5 +12,6 @@ router.use('/vendors', vendorRoutes);
 router.use('/items', itemRoutes);
 router.use('/vessels', vesselRoutes);
 router.use('/vessel-stocks', vesselStockRoutes);
+router.use('/category-items', categoryRoutes);
 
 export default router;

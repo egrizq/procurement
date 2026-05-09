@@ -29,6 +29,54 @@ const getMasterItems = asyncHandler(async (req: Request, res: Response) => {
 	});
 });
 
+const addMasterItem = asyncHandler(async (req: Request, res: Response) => {
+	const mstItemRepo = new MstItemRepository();
+	const newItem = await mstItemRepo.addMasterItem(req.body);
+
+	return success(res, {
+		item: newItem,
+	});
+});
+
+const updateMasterItem = asyncHandler(async (req: Request, res: Response) => {
+	let { id } = req.params;
+	if (!id) {
+		throw new AppError('Item ID is required', 400);
+	}
+
+  const mstItemRepo = new MstItemRepository();
+	const updatedItem = await mstItemRepo.updateMasterItem(Number(id), req.body);
+
+	if (!updatedItem) {
+		throw new AppError('Master item not found', 404);
+	}
+
+	return success(res, {
+		item: updatedItem,
+	});
+});
+
+const deleteMasterItem = asyncHandler(async (req: Request, res: Response) => {
+	const { id } = req.params;
+	if (!id) {
+		throw new AppError('Item ID is required', 400);
+	}
+
+	const mstItemRepo = new MstItemRepository();
+	const deleted = await mstItemRepo.deleteMasterItem(Number(id));
+
+	if (!deleted) {
+		throw new AppError('Master item not found', 404);
+	}
+
+	return success(res, {
+		message: 'Master item deleted successfully',
+	});
+});
+
 export default {
 	getMasterItems,
+	addMasterItem,
+	updateMasterItem,
+	deleteMasterItem,
 };

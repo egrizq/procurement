@@ -20,18 +20,17 @@
 
     <form @submit.prevent="handleSubmit" class="space-y-4">
       <!-- Item Code -->
-      <div>
+      <div v-if="mode !== 'add'">
         <label for="itemCode" class="block text-sm font-medium text-gray-700 mb-1">
-          Item Code <span v-if="mode !== 'view'" class="text-red-500">*</span>
+          Item Code
         </label>
         <input
           id="itemCode"
           v-model="formData.itemCode"
           type="text"
-          :required="mode !== 'view'"
-          :disabled="mode === 'view'"
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          placeholder="ITM-001"
+          disabled
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+          placeholder="ITM-0001"
         />
       </div>
 
@@ -55,31 +54,29 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Category -->
         <div>
-          <label for="categoryName" class="block text-sm font-medium text-gray-700 mb-1">
+          <label for="categoryId" class="block text-sm font-medium text-gray-700 mb-1">
             Category <span v-if="mode !== 'view'" class="text-red-500">*</span>
           </label>
+          <select
+            v-if="mode !== 'view'"
+            id="categoryId"
+            v-model="formData.categoryId"
+            required
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="" disabled>Select Category</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+              {{ cat.name }}
+            </option>
+          </select>
           <input
-            v-if="mode === 'view'"
-            id="categoryName"
-            v-model="formData.categoryName"
+            v-else
+            id="categoryId"
+            :value="categories.find(c => c.id === formData.categoryId)?.name || formData.categoryId"
             type="text"
             disabled
             class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
           />
-          <select
-            v-else
-            id="categoryName"
-            v-model="formData.categoryName"
-            required
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">Select Category</option>
-            <option value="Engine Parts">Engine Parts</option>
-            <option value="Mechanical">Mechanical</option>
-            <option value="Safety">Safety</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Tools">Tools</option>
-          </select>
         </div>
 
         <!-- Unit -->
@@ -102,13 +99,11 @@
             required
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
-            <option value="">Select Unit</option>
+            <option value="" disabled>Select Unit</option>
             <option value="Pcs">Pcs</option>
-            <option value="Unit">Unit</option>
+            <option value="Box">Box</option>
             <option value="Liter">Liter</option>
             <option value="Meter">Meter</option>
-            <option value="Set">Set</option>
-            <option value="Box">Box</option>
             <option value="Kg">Kg</option>
           </select>
         </div>
@@ -159,8 +154,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import FormDialog from '@/components/base/form/Form.vue'
+import { getMstCategoryItems } from '../category-items/api.js'
 
 const props = defineProps({
   isOpen: {
@@ -181,14 +177,24 @@ const props = defineProps({
 const emit = defineEmits(['close', 'submit'])
 
 const loading = ref(false)
+const categories = ref([])
 
 const formData = ref({
   itemCode: '',
   name: '',
-  categoryName: '',
+  categoryId: '',
   unit: '',
   status: 'Publish',
   description: '',
+})
+
+onMounted(async () => {
+  try {
+    const response = await getMstCategoryItems(1, 100, '') // Fetch up to 100 categories
+    categories.value = response.items || []
+  } catch (error) {
+    console.error('Failed to load categories', error)
+  }
 })
 
 const formTitle = computed(() => {
@@ -200,7 +206,7 @@ const resetForm = () => {
   formData.value = {
     itemCode: '',
     name: '',
-    categoryName: '',
+    categoryId: '',
     unit: '',
     status: 'Publish',
     description: '',
@@ -212,10 +218,11 @@ watch(
   () => props.item,
   (newItem) => {
     if (newItem) {
+      console.log('Populating form with item:', newItem)
       formData.value = {
         itemCode: newItem.itemCode || '',
         name: newItem.name || '',
-        categoryName: newItem.category?.name || '',
+        categoryId: newItem.category.id || '',
         unit: newItem.unit || '',
         status: newItem.status || 'Publish',
         description: newItem.description || '',
@@ -234,12 +241,13 @@ const handleClose = () => {
 
 const handleSubmit = async () => {
   loading.value = true
-
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  emit('submit', { ...formData.value })
-  loading.value = false
-  handleClose()
+  try {
+    await emit('submit', { ...formData.value })
+    handleClose()
+  } catch (error) {
+    console.error('Form submission failed', error)
+  } finally {
+    loading.value = false
+  }
 }
 </script>

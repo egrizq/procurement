@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import * as apiMasterVendor from './api.js'
+import * as apiMasterItem from './api.js'
 
 export const useItemStore = defineStore('item', {
   state: () => ({
@@ -10,11 +10,36 @@ export const useItemStore = defineStore('item', {
   actions: {
     async fetchItems(page, limit, search) {
       try {
-        const response = await apiMasterVendor.getMstItems(page, limit, search)
+        const response = await apiMasterItem.getMstItems(page, limit, search)
         this.items = response.items
         this.pagination = response.pagination
       } catch (error) {
         this.error = error.error
+        throw error
+      }
+    },
+    async addItem(itemData) {
+      try {
+        await apiMasterItem.addMstItem(itemData)
+      } catch (error) {
+        this.error = error.error
+        throw error
+      }
+    },
+    async updateItem(id, itemData) {
+      try {
+        await apiMasterItem.updateMstItem(id, itemData)
+      } catch (error) {
+        this.error = error.error
+        throw error
+      }
+    },
+    async deleteItem(id) {
+      try {
+        await apiMasterItem.deleteMstItem(id)
+      } catch (error) {
+        this.error = error.error
+        throw error
       }
     },
     clearError() {
