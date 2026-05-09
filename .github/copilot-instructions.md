@@ -43,8 +43,6 @@ Description: A web application for managing procurement processes efficiently. B
 - Write clear, concise comments detailing the "why" for complex business logic.
 - Use meaningful, domain-driven variable and function names.
 - Ensure functional purity where applicable and write modular, reusable code.
-- Use consistent formatting (indentation, spacing) as enforced by Prettier and ESLint configurations in `packages/config`.
-- Use meaningful variable and function names that reflect their purpose and the domain context instead commenting.
 
 ## Frontend Best Practices (Vue 3)
 
@@ -54,7 +52,6 @@ Description: A web application for managing procurement processes efficiently. B
 - Optimize Vue components for performance and reactivity.
 - Break UI into granular, reusable `components/base` and `components/layout`.
 - Ensure responsive design for all components.
-- Ensure pattern consistency across the app by following project conventions.
 
 ## Backend Best Practices (Express & Drizzle)
 
