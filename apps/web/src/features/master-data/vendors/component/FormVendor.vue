@@ -58,11 +58,11 @@
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">Select Category</option>
-            <option value="Engine">Engine</option>
-            <option value="Electrical">Electrical</option>
-            <option value="Safety">Safety</option>
-            <option value="Mechanical">Mechanical</option>
-            <option value="General">General</option>
+            <option value=0>Engine</option>
+            <option value=1>Electrical</option>
+            <option value=2>Safety</option>
+            <option value=3>Mechanical</option>
+            <option value=4>General</option>
           </select>
         </div>
 
@@ -109,7 +109,7 @@
           <input
             id="phone"
             v-model="formData.phone"
-            type="tel"
+            type="text"
             :required="mode !== 'view'"
             :disabled="mode === 'view'"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -213,12 +213,14 @@ const handleClose = () => {
 
 const handleSubmit = async () => {
   loading.value = true
+  try {
+    console.log('Submitting form with data:', formData.value)
+    await emit('submit', { ...formData.value })
+    handleClose()
+  } catch (error) {
 
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  emit('submit', { ...formData.value })
-  loading.value = false
-  handleClose()
+  } finally {
+    loading.value = false
+  }
 }
 </script>

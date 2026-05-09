@@ -7,3 +7,14 @@ export const getMasterSchema = z.object({
     search: z.string().optional(),
   }),
 });
+
+export const addVendorSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, 'Name is required'),
+    category: z.number(),
+    address: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().email('Invalid email format'),
+    city: z.string().optional(),
+  }),
+});

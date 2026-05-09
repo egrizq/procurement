@@ -7,13 +7,13 @@
         <p class="text-gray-600 mt-1">Manage your vendor partners</p>
       </div>
       <!-- todo: implement add vendor -->
-      <!-- <button
+      <button
         @click="openAddDialog"
         class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
       >
         <Plus :size="20" />
         <span>Add Vendor</span>
-      </button> -->
+      </button>
     </div>
 
     <!-- Filters and Search -->
@@ -165,8 +165,20 @@ const closeForm = () => {
   selectedVendor.value = null
 }
 
-const handleFormSubmit = (formData) => {
-  // TODO: Implement submit logic
+const handleFormSubmit = async (formData) => {
+  try {
+    if (formMode.value === 'add') {
+      await vendorStore.addVendor(formData)
+      showInfo('Vendor added successfully', 'Success')
+    } else if (formMode.value === 'edit') {
+      await vendorStore.updateVendor(selectedVendor.value.id, formData)
+      showInfo('Vendor updated successfully', 'Success')
+    }
+    closeForm()
+    fetchVendors()
+  } catch (error) {
+    showInfo(error.error || 'An error occurred', 'Error')
+  }
 }
 
 const viewVendor = (vendor) => {
@@ -175,9 +187,15 @@ const viewVendor = (vendor) => {
   isFormOpen.value = true
 }
 
-const deleteVendor = (vendor) => {
+const deleteVendor = async (vendor) => {
   if (confirm(`Are you sure you want to delete ${vendor.name}?`)) {
-    // TODO: Implement delete logic
+    try {
+      await vendorStore.deleteVendor(vendor.id)
+      showInfo('Vendor deleted successfully', 'Success')
+      fetchVendors()
+    } catch (error) {
+      showInfo(error.error || 'An error occurred', 'Error')
+    } 
   }
 }
 </script>

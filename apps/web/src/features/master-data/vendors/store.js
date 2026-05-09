@@ -17,6 +17,38 @@ export const useVendorStore = defineStore('vendor', {
         this.error = error.error
       }
     },
+
+    async addVendor(vendorData) {
+      try {
+        vendorData.category = parseInt(vendorData.category)
+        await apiMasterVendor.addMstVendor(vendorData)
+      } catch (error) {
+        this.error = error.error
+      }
+    },
+
+    async updateVendor(vendorId, vendorData) {
+      try {
+        vendorData.category = parseInt(vendorData.category)
+        await apiMasterVendor.updateMstVendor(vendorId, vendorData)
+        const index = this.vendors.findIndex(vendor => vendor.id === vendorId)
+        if (index !== -1) {
+          this.vendors[index] = { ...this.vendors[index], ...vendorData }
+        }
+      } catch (error) {
+        this.error = error.error
+      }
+    },
+
+    async deleteVendor(vendorId) {
+      try {
+        await apiMasterVendor.deleteMstVendor(vendorId)
+        this.vendors = this.vendors.filter(vendor => vendor.id !== vendorId)
+      } catch (error) {
+        this.error = error.error
+      }
+    },
+
     clearError() {
       this.error = null
     },
