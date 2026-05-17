@@ -30,3 +30,12 @@ export const addItemSchema = z.object({
 });
 
 export const updateItemSchema = addItemSchema;
+
+export const addCategorySchema = z.object({
+  body: z.object({
+    name: z.string().min(1, 'Name is required'),
+    status: z.enum(['Publish', 'Unpublish']).optional().default('Publish'),
+  }),
+});
+
+export const updateCategorySchema = addCategorySchema;

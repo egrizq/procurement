@@ -30,7 +30,7 @@
     >
       <template #cell-status="{ value }">
         <span class="px-2 py-1 text-xs font-medium rounded-full" :class="getStatusColor(value)">
-          {{ value }}
+          {{ formatStatus(value) }}
         </span>
       </template>
 
@@ -189,6 +189,7 @@ const columns = [
 
 const getStatusColor = (status) => {
   const colors = {
+    Ok: 'bg-emerald-100 text-emerald-800',
     Waiting: 'bg-yellow-100 text-yellow-800',
     Approved: 'bg-green-100 text-green-800',
     Rejected: 'bg-red-100 text-red-800',
@@ -196,6 +197,10 @@ const getStatusColor = (status) => {
     Completed: 'bg-purple-100 text-purple-800',
   }
   return colors[status] || 'bg-gray-100 text-gray-800'
+}
+
+const formatStatus = (status) => {
+  return status === 'Ok' ? 'OK' : status
 }
 
 const getPriorityColor = (priority) => {

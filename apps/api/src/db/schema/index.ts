@@ -7,3 +7,5 @@ export * from './users';
 export * from './vessel-stocks';
 export * from './vessel-requests';
 export * from './vessel-item-standards';
+export * from './role-modules';
+export * from './cities';

@@ -30,6 +30,6 @@ export interface RequestQuery {
 export type UserType = 'Admin' | 'Office' | 'Crew';
 export type Department = 'IT' | 'HR' | 'Finance' | 'Deck' | 'Engine';
 export type UserStatus = 'Contract' | 'Permanent' | 'Intern' | 'Leave';
-export type RequestStatus = 'Waiting' | 'Approved' | 'Rejected';
+export type RequestStatus = 'Ok' | 'Waiting' | 'Approved' | 'Rejected';
 export type Priority = 'Low' | 'Medium' | 'High';
 export type Unit = 'Pcs' | 'Box' | 'Liter' | 'Meter' | 'Kg';

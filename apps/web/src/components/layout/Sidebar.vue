@@ -16,6 +16,7 @@
 
       <!-- Vessels -->
       <router-link
+        v-if="canOpen('vessels')"
         to="/vessels"
         class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-700"
         :class="isActive('/vessels') ? 'bg-gray-700' : ''"
@@ -25,7 +26,7 @@
       </router-link>
 
       <!-- Master Data with Children -->
-      <div class="space-y-1">
+      <div v-if="canOpenMasterData" class="space-y-1">
         <button
           @click="toggleMasterData"
           class="flex items-center justify-between w-full px-4 py-3 rounded-lg transition-colors hover:bg-gray-700"
@@ -53,6 +54,7 @@
         >
           <div v-if="masterDataOpen" class="ml-4 space-y-1 overflow-hidden">
             <router-link
+              v-if="canOpen('master-data/items')"
               to="/master-data/items"
               class="flex items-center gap-3 px-4 py-2 rounded-lg transition-colors hover:bg-gray-700 text-sm"
               :class="isActive('/master-data/items') ? 'bg-gray-700' : ''"
@@ -62,15 +64,7 @@
             </router-link>
 
             <router-link
-              to="/master-data/vendors"
-              class="flex items-center gap-3 px-4 py-2 rounded-lg transition-colors hover:bg-gray-700 text-sm"
-              :class="isActive('/master-data/vendors') ? 'bg-gray-700' : ''"
-            >
-              <Building :size="18" />
-              <span>Vendors</span>
-            </router-link>
-
-            <router-link
+              v-if="canOpen('master-data/category-items')"
               to="/master-data/category-items"
               class="flex items-center gap-3 px-4 py-2 rounded-lg transition-colors hover:bg-gray-700 text-sm"
               :class="isActive('/master-data/category-items') ? 'bg-gray-700' : ''"
@@ -80,6 +74,17 @@
             </router-link>
 
             <router-link
+              v-if="canOpen('master-data/vendors')"
+              to="/master-data/vendors"
+              class="flex items-center gap-3 px-4 py-2 rounded-lg transition-colors hover:bg-gray-700 text-sm"
+              :class="isActive('/master-data/vendors') ? 'bg-gray-700' : ''"
+            >
+              <Building :size="18" />
+              <span>Vendors</span>
+            </router-link>
+
+            <router-link
+              v-if="canOpen('master-data/vessel-stocks')"
               to="/master-data/vessel-stocks"
               class="flex items-center gap-3 px-4 py-2 rounded-lg transition-colors hover:bg-gray-700 text-sm"
               :class="isActive('/master-data/vessel-stocks') ? 'bg-gray-700' : ''"
@@ -93,6 +98,7 @@
 
       <!-- Request -->
       <router-link
+        v-if="canOpen('request')"
         to="/request"
         class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-700"
         :class="isActive('/request') ? 'bg-gray-700' : ''"
@@ -103,6 +109,7 @@
 
       <!-- MOC (Matrix of Comparison) -->
       <router-link
+        v-if="canOpen('moc')"
         to="/moc"
         class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-700"
         :class="isActive('/moc') ? 'bg-gray-700' : ''"
@@ -113,6 +120,7 @@
 
       <!-- Purchase Order -->
       <router-link
+        v-if="canOpen('purchase-order')"
         to="/purchase-order"
         class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-700"
         :class="isActive('/purchase-order') ? 'bg-gray-700' : ''"
@@ -123,6 +131,7 @@
 
       <!-- Good Receipt -->
       <router-link
+        v-if="canOpen('good-receipt')"
         to="/good-receipt"
         class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-700"
         :class="isActive('/good-receipt') ? 'bg-gray-700' : ''"
@@ -132,7 +141,7 @@
       </router-link>
 
       <!-- Settings -->
-      <div class="space-y-1">
+      <div v-if="canOpenSettings" class="space-y-1">
         <button
           @click="toggleSettings"
           class="flex items-center justify-between w-full px-4 py-3 rounded-lg transition-colors hover:bg-gray-700"
@@ -159,6 +168,27 @@
         >
           <div v-if="settingsOpen" class="ml-4 space-y-1 overflow-hidden">
             <router-link
+              v-if="canOpen('settings/users')"
+              to="/settings/users"
+              class="flex items-center gap-3 px-4 py-2 rounded-lg transition-colors hover:bg-gray-700 text-sm"
+              :class="isActive('/settings/users') ? 'bg-gray-700' : ''"
+            >
+              <UserCog :size="18" />
+              <span>Manage Users</span>
+            </router-link>
+
+            <router-link
+              v-if="canOpen('settings/module-access')"
+              to="/settings/module-access"
+              class="flex items-center gap-3 px-4 py-2 rounded-lg transition-colors hover:bg-gray-700 text-sm"
+              :class="isActive('/settings/module-access') ? 'bg-gray-700' : ''"
+            >
+              <ShieldCheck :size="18" />
+              <span>Role Access</span>
+            </router-link>
+
+            <router-link
+              v-if="canOpen('settings/vessel-item-standards')"
               to="/settings/vessel-item-standard"
               class="flex items-center gap-3 px-4 py-2 rounded-lg transition-colors hover:bg-gray-700 text-sm"
               :class="isActive('/settings/vessel-item-standard') ? 'bg-gray-700' : ''"
@@ -177,23 +207,26 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useModuleAccessStore } from '@/features/settings/module-access/store.js'
 import {
   User,
   Ship,
   Database,
   ChevronDown,
   Package,
-  Building,
   Tags,
+  Building,
   Warehouse,
   FileText,
   GitCompare,
   ShoppingCart,
   ClipboardCheck,
   Settings,
-  Scale
+  Scale,
+  ShieldCheck,
+  UserCog
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -206,6 +239,7 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 const route = useRoute()
+const moduleAccessStore = useModuleAccessStore()
 const masterDataOpen = ref(false)
 
 // Check if route is active
@@ -217,6 +251,33 @@ const isActive = (path) => {
 const toggleMasterData = () => {
   masterDataOpen.value = !masterDataOpen.value
 }
+
+const canOpen = (moduleSlug) => {
+  return moduleAccessStore.canOpen(moduleSlug)
+}
+
+const canOpenMasterData = computed(() =>
+  moduleAccessStore.canOpenAny([
+    'master-data',
+    'master-data/items',
+    'master-data/category-items',
+    'master-data/vendors',
+    'master-data/vessel-stocks',
+  ]),
+)
+
+const canOpenSettings = computed(() =>
+  moduleAccessStore.canOpenAny([
+    'settings',
+    'settings/users',
+    'settings/module-access',
+    'settings/vessel-item-standards',
+  ]),
+)
+
+onMounted(() => {
+  moduleAccessStore.fetchMyAccess()
+})
 
 // Auto-open master data if we're on a master data route
 watch(

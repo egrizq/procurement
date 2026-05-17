@@ -29,6 +29,54 @@ const getCategories = asyncHandler(async (req: Request, res: Response) => {
     });
 });
 
+const addCategory = asyncHandler(async (req: Request, res: Response) => {
+    const categoryRepo = new CategoryRepository();
+    const newCategory = await categoryRepo.addCategory(req.body);
+
+    return success(res, {
+        item: newCategory,
+    });
+});
+
+const updateCategory = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    if (!id) {
+        throw new AppError('Category ID is required', 400);
+    }
+
+    const categoryRepo = new CategoryRepository();
+    const updatedCategory = await categoryRepo.updateCategory(Number(id), req.body);
+
+    if (!updatedCategory) {
+        throw new AppError('Category not found', 404);
+    }
+
+    return success(res, {
+        item: updatedCategory,
+    });
+});
+
+const deleteCategory = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    if (!id) {
+        throw new AppError('Category ID is required', 400);
+    }
+
+    const categoryRepo = new CategoryRepository();
+    const deleted = await categoryRepo.deleteCategory(Number(id));
+
+    if (!deleted) {
+        throw new AppError('Category not found', 404);
+    }
+
+    return success(res, {
+        message: 'Category deleted successfully',
+    });
+});
+
 export default {
     getCategories,
+    addCategory,
+    updateCategory,
+    deleteCategory,
 };

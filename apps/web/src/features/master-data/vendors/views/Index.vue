@@ -66,6 +66,7 @@
     <FormVendor
       :is-open="isFormOpen"
       :vendor="selectedVendor"
+      :list-cities="listCities"
       :mode="formMode"
       @close="closeForm"
       @submit="handleFormSubmit"
@@ -84,6 +85,7 @@ import { showInfo } from '@/services/notification.js'
 
 const vendorStore = useVendorStore()
 const mstVendors = ref([])
+const listCities = ref([])
 const pagination = ref(null)
 const isLoading = ref(false)
 
@@ -101,6 +103,9 @@ const fetchVendors = async () => {
     await vendorStore.fetchVendors(currentPage.value, itemsPerPage, searchQuery.value)
     mstVendors.value = vendorStore.vendors
     pagination.value = vendorStore.pagination
+
+    await vendorStore.fetchCities()
+    listCities.value = vendorStore.cities
 
     if (vendorStore.error) {
       showInfo(`No vendors found for "${searchQuery.value}"`, 'No Results')

@@ -6,6 +6,8 @@ import profileRoutes from '#modules/profile/profile.routes.ts';
 import masterDataRoutes from '#modules/master-data/index.ts';
 import vesselRequestRoutes from '#modules/vessel-request/vessel-request.routes.ts';
 import settingsStandardRoutes from '#modules/settings/vessel-item-standards/vessel-item-standard.routes.ts';
+import userRoutes from '#modules/settings/users/user.routes.ts';
+import moduleAccessRoutes from '#modules/settings/module-access/module-access.routes.ts';
 
 const router: Router = express.Router();
 
@@ -16,5 +18,7 @@ router.use('/profile', profileRoutes);
 router.use('/master-data', masterDataRoutes);
 router.use('/vessel-requests', vesselRequestRoutes);
 router.use('/settings/vessel-item-standards', settingsStandardRoutes);
+router.use('/settings/users', userRoutes);
+router.use('/settings/module-access', moduleAccessRoutes);
 
 export default router;

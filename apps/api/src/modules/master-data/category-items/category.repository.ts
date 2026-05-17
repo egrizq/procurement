@@ -1,6 +1,6 @@
 import db from "../../../config/drizzle.ts";
 import { mstItemCategories } from "../../../db/schema/index.ts";
-import { like, desc, sql } from "drizzle-orm";
+import { like, desc, sql, eq } from "drizzle-orm";
 
 class CategoryRepository {
     async getCategories(page: number = 1, limit: number = 10, search: string = "") {
@@ -21,7 +21,31 @@ class CategoryRepository {
 
         const [categories, total] = await Promise.all([categoriesQuery, countQuery]);
 
-        return { categories, total };
+        return {
+            categories,
+            total,
+        };
+    }
+
+    async addCategory(data: any) {
+        const [result] = await db.insert(mstItemCategories).values(data);
+        const newCategory = await db.query.mstItemCategories.findFirst({
+            where: eq(mstItemCategories.id, result.insertId)
+        });
+        return newCategory;
+    }
+
+    async updateCategory(id: number, data: any) {
+        await db.update(mstItemCategories).set(data).where(eq(mstItemCategories.id, id));
+        const updatedCategory = await db.query.mstItemCategories.findFirst({
+            where: eq(mstItemCategories.id, id)
+        });
+        return updatedCategory;
+    }
+
+    async deleteCategory(id: number) {
+        const result = await db.delete(mstItemCategories).where(eq(mstItemCategories.id, id));
+        return result[0].affectedRows > 0;
     }
 }
 

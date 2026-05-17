@@ -71,15 +71,30 @@
           <label for="city" class="block text-sm font-medium text-gray-700 mb-1">
             City <span v-if="mode !== 'view'" class="text-red-500">*</span>
           </label>
-          <input
+          <select
+            v-if="mode === 'view'"
             id="city"
             v-model="formData.city"
-            type="text"
-            :required="mode !== 'view'"
-            :disabled="mode === 'view'"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-            placeholder="Jakarta"
-          />
+            disabled
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+          >
+            <option value="">Select City</option>
+            <option v-for="city in listCities" :key="city.id" :value="city.cityName">
+              {{ city.cityName }}
+            </option>
+          </select>
+          <select
+            v-else
+            id="city"
+            v-model="formData.city"
+            required
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="">Select City</option>
+            <option v-for="city in listCities" :key="city.id" :value="city.cityName">
+              {{ city.cityName }}
+            </option>
+          </select>
         </div>
       </div>
 
@@ -140,6 +155,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import FormDialog from '@/components/base/form/Form.vue'
+import { list } from '@primeuix/themes/aura/autocomplete'
 
 const props = defineProps({
   isOpen: {
@@ -149,6 +165,10 @@ const props = defineProps({
   vendor: {
     type: Object,
     default: null,
+  },
+  listCities: {
+    type: Object,
+    default: () => [],
   },
   mode: {
     type: String,

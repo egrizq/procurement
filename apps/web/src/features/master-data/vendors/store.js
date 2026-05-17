@@ -4,6 +4,7 @@ import * as apiMasterVendor from './api.js'
 export const useVendorStore = defineStore('vendor', {
   state: () => ({
     vendors: [],
+    cities: [],
     pagination: {},
     error: null,
   }),
@@ -46,6 +47,17 @@ export const useVendorStore = defineStore('vendor', {
         this.vendors = this.vendors.filter(vendor => vendor.id !== vendorId)
       } catch (error) {
         this.error = error.error
+      }
+    },
+
+    async fetchCities() {
+      try {
+        const cities = await apiMasterVendor.getMstCity()
+        this.cities = cities
+        console.log('Fetched cities:', cities) // Debug log
+      } catch (error) {
+        this.error = error.error
+        return []
       }
     },
 

@@ -7,7 +7,8 @@ import {
   mstVendors, 
   mstItems, 
   users, 
-  vesselItemStandards
+  vesselItemStandards,
+  roleModules
 } from './schema';
 
 async function seed() {
@@ -17,6 +18,7 @@ async function seed() {
     // 1. DELETE EXISTING DATA (Reverse dependency order to avoid FK errors)
     // We explicitly SKIP apiTokens to keep authentication tokens intact if desired
     console.log('🧹 Clearing existing data...');
+    await db.delete(roleModules);
     await db.delete(vesselItemStandards);
     await db.delete(users);
     await db.delete(mstItems);
@@ -103,6 +105,45 @@ async function seed() {
       { vesselId: 1, itemId: 2, periode: 'monthly', minStock: 1, maxStock: 5 },
       { vesselId: 1, itemId: 3, periode: 'weekly', minStock: 5, maxStock: 20 },
       { vesselId: 2, itemId: 4, periode: 'monthly', minStock: 50, maxStock: 200 }
+    ]);
+
+    // 8. SEED ROLE MODULES (Access control mappings)
+    console.log('🔐 Seeding role modules...');
+    await db.insert(roleModules).values([
+      // Admin - all modules
+      { userType: 'Admin', moduleSlug: 'vessels' },
+      { userType: 'Admin', moduleSlug: 'master-data' },
+      { userType: 'Admin', moduleSlug: 'master-data/items' },
+      { userType: 'Admin', moduleSlug: 'master-data/vendors' },
+      { userType: 'Admin', moduleSlug: 'master-data/vessel-stocks' },
+      { userType: 'Admin', moduleSlug: 'request' },
+      { userType: 'Admin', moduleSlug: 'moc' },
+      { userType: 'Admin', moduleSlug: 'purchase-order' },
+      { userType: 'Admin', moduleSlug: 'good-receipt' },
+      { userType: 'Admin', moduleSlug: 'settings' },
+      { userType: 'Admin', moduleSlug: 'settings/users' },
+      { userType: 'Admin', moduleSlug: 'settings/module-access' },
+      { userType: 'Admin', moduleSlug: 'settings/vessel-item-standards' },
+      // Manager - operational modules
+      { userType: 'Manager', moduleSlug: 'vessels' },
+      { userType: 'Manager', moduleSlug: 'master-data' },
+      { userType: 'Manager', moduleSlug: 'master-data/items' },
+      { userType: 'Manager', moduleSlug: 'master-data/vendors' },
+      { userType: 'Manager', moduleSlug: 'master-data/vessel-stocks' },
+      { userType: 'Manager', moduleSlug: 'request' },
+      { userType: 'Manager', moduleSlug: 'moc' },
+      { userType: 'Manager', moduleSlug: 'purchase-order' },
+      { userType: 'Manager', moduleSlug: 'good-receipt' },
+      { userType: 'Manager', moduleSlug: 'settings' },
+      { userType: 'Manager', moduleSlug: 'settings/vessel-item-standards' },
+      // Staff - basic access
+      { userType: 'Staff', moduleSlug: 'vessels' },
+      { userType: 'Staff', moduleSlug: 'master-data/items' },
+      { userType: 'Staff', moduleSlug: 'request' },
+      { userType: 'Staff', moduleSlug: 'good-receipt' },
+      // Crew - basic access
+      { userType: 'Crew', moduleSlug: 'vessels' },
+      { userType: 'Crew', moduleSlug: 'request' },
     ]);
 
     console.log('✅ Seeding completed successfully!');

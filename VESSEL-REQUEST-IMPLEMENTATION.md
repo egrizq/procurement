@@ -47,7 +47,7 @@ The Vessel Request module enables users to create and manage procurement request
 1. User clicks "New Request" button
 2. Step 1: Select vessel, date, priority, justification
 3. Step 2: Add items with quantities, units, priorities
-4. Submit creates request with "Waiting" status
+4. Submit validates the request and creates it as "Ok" when clean, or "Waiting" when warnings need staff review
 5. User can click any row to view full details
 6. Read-only view shows all information in organized layout
 ```
@@ -176,8 +176,8 @@ export const vesselRequestSchema = z.object({
   body: z.object({
     vesselId: z.number('Vessel is not found').int().positive(),
     status: z.enum(
-      ['Waiting', 'Approved', 'Rejected'],
-      'Status must be either Waiting, Approved, or Rejected'
+      ['Ok', 'Waiting', 'Approved', 'Rejected'],
+      'Status must be either Ok, Waiting, Approved, or Rejected'
     ),
     priority: z.enum(['Low', 'Medium', 'High']),
     justification: z.string().optional(),
@@ -187,7 +187,7 @@ export const vesselRequestSchema = z.object({
         itemId: z.number('Item is not found').int().positive(),
         qtyRequested: z.number().int().positive(),
         unit: z.enum(['Pcs', 'Box', 'Liter', 'Meter', 'Kg']),
-        status: z.enum(['Waiting', 'Approved', 'Rejected']),
+        status: z.enum(['Ok', 'Waiting', 'Approved', 'Rejected']),
         priority: z.enum(['Low', 'Medium', 'High']),
         justification: z.string().optional(),
       })
@@ -549,14 +549,14 @@ const formData = ref({
   vesselId: null,
   requestDate: new Date().toISOString().split('T')[0],
   priority: 'Medium',
-  status: 'Waiting', // Hidden field
+  status: 'Waiting', // Hidden field; API derives final status from validation
   justification: '',
   items: [
     {
       itemId: null,
       qtyRequested: 1,
       unit: 'Pcs',
-      status: 'Waiting', // Hidden field
+      status: 'Waiting', // Hidden field; API derives final status from validation
       priority: 'Medium',
       justification: '',
     },
@@ -625,7 +625,7 @@ const handleSubmit = () => {
 
 **Key Design Decisions:**
 - ✅ Multi-step reduces cognitive load for complex forms
-- ✅ Status always "Waiting" for new requests (hidden from user)
+- ✅ Status is derived by server validation: "Ok" for clean requests, "Waiting" for requests with warnings
 - ✅ Default values provided for better UX
 - ✅ Validation at each step prevents errors
 - ✅ Compact 4-column grid for items (responsive)
@@ -921,13 +921,13 @@ export async function deleteRequest(id) {
 ### Iteration 1: Form Refinements
 
 **User Feedback:**
-- "Status should always be Waiting for new requests"
+- "Status should be derived from server validation for new requests"
 - "Items section too spacious"
 - "Don't need to show item status"
 
 **Changes Made:**
 ```javascript
-// Hidden status field (always "Waiting")
+// Hidden status field (server derives final request status)
 formData.value.status = 'Waiting'; // Not shown in UI
 
 // Compact grid layout
@@ -936,7 +936,7 @@ formData.value.status = 'Waiting'; // Not shown in UI
 <div class="grid grid-cols-4 gap-2 p-3">
 
 // Item status removed from UI but sent in payload
-item.status = 'Waiting'; // Hidden field
+item.status = 'Waiting'; // Hidden field; API derives final item status
 ```
 
 ### Iteration 2: View Separation

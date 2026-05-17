@@ -57,22 +57,20 @@
           <label for="categoryId" class="block text-sm font-medium text-gray-700 mb-1">
             Category <span v-if="mode !== 'view'" class="text-red-500">*</span>
           </label>
-          <select
+          <input
             v-if="mode !== 'view'"
             id="categoryId"
             v-model="formData.categoryId"
+            type="number"
+            min="1"
             required
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="" disabled>Select Category</option>
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-              {{ cat.name }}
-            </option>
-          </select>
+            placeholder="Category ID"
+          />
           <input
             v-else
             id="categoryId"
-            :value="categories.find(c => c.id === formData.categoryId)?.name || formData.categoryId"
+            :value="props.item?.category?.name || formData.categoryId"
             type="text"
             disabled
             class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
@@ -154,9 +152,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import FormDialog from '@/components/base/form/Form.vue'
-import { getMstCategoryItems } from '../category-items/api.js'
 
 const props = defineProps({
   isOpen: {
@@ -177,7 +174,6 @@ const props = defineProps({
 const emit = defineEmits(['close', 'submit'])
 
 const loading = ref(false)
-const categories = ref([])
 
 const formData = ref({
   itemCode: '',
@@ -186,15 +182,6 @@ const formData = ref({
   unit: '',
   status: 'Publish',
   description: '',
-})
-
-onMounted(async () => {
-  try {
-    const response = await getMstCategoryItems(1, 100, '') // Fetch up to 100 categories
-    categories.value = response.items || []
-  } catch (error) {
-    console.error('Failed to load categories', error)
-  }
 })
 
 const formTitle = computed(() => {

@@ -1,0 +1,2 @@
+ALTER TABLE `vessel_request_items` MODIFY COLUMN `status` enum('Ok','Waiting','Approved','Rejected') NOT NULL DEFAULT 'Waiting';--> statement-breakpoint
+ALTER TABLE `vessel_requests` MODIFY COLUMN `status` enum('Ok','Waiting','Approved','Rejected') NOT NULL DEFAULT 'Waiting';

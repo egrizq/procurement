@@ -11,19 +11,125 @@ const vesselRequestRepo = new VesselRequestRepository();
 const mstItemRepo = new MstItemRepository();
 const mstVesselRepo = new MstVesselRepository();
 
-const create = asyncHandler(async (req: Request, res: Response) => {
-	const vessel = await mstVesselRepo.findVessel({ id: req.body.vesselId });
+type RequestValidationItem = {
+	itemId: number;
+	itemName: string;
+	warnings: string[];
+};
+
+const validateVesselRequestPayload = async (body: any) => {
+	const vesselId = body.vesselId;
+	const vessel = await mstVesselRepo.findVessel({ id: vesselId });
 	if (!vessel) {
 		throw new AppError('Vessel is not found!', 400);
 	}
 
-	const itemIds = req.body.items.map((item: any) => item.itemId);
+	const requestItems = body.items;
+	const itemIds = requestItems.map((item: any) => item.itemId);
 
 	const items = await mstItemRepo.findItemByIds(itemIds);
-	if (!items || items.length !== req.body.items.length) {
+	if (!items || items.length !== requestItems.length) {
 		throw new AppError('One or more items are invalid!', 400);
 	}
 
+	const inactiveItems = items.filter((item: any) => item.status !== 'Publish');
+	if (inactiveItems.length > 0) {
+		const names = inactiveItems.map((item: any) => item.name).join(', ');
+		throw new AppError(`Cannot request inactive items: ${names}`, 400);
+	}
+
+	const [historyList, standardsList, stocksList] = await Promise.all([
+		vesselRequestRepo.findRecentRequestedItems(vesselId, itemIds, 30),
+		vesselRequestRepo.getVesselItemStandards(vesselId, itemIds),
+		vesselRequestRepo.getVesselStocks(vesselId, itemIds),
+	]);
+
+	const historyByItem = historyList.reduce((acc: any, curr: any) => {
+		if (!acc[curr.itemId]) acc[curr.itemId] = [];
+		acc[curr.itemId].push(curr);
+		return acc;
+	}, {});
+
+	const standardByItem = standardsList.reduce((acc: any, curr: any) => {
+		acc[curr.itemId] = curr;
+		return acc;
+	}, {});
+
+	const stockByItem = stocksList.reduce((acc: any, curr: any) => {
+		acc[curr.itemId] = curr;
+		return acc;
+	}, {});
+
+	const validations: RequestValidationItem[] = requestItems.map((reqItem: any) => {
+		const warnings: string[] = [];
+		const itemMaster = items.find((item: any) => item.id === reqItem.itemId);
+		const itemName = itemMaster?.name || `Item #${reqItem.itemId}`;
+
+		const history = historyByItem[reqItem.itemId];
+		if (history && history.length > 0) {
+			const mostRecent = history[0];
+			const dateStr = mostRecent.requestDate.toISOString().split('T')[0];
+			warnings.push(
+				`Item ini baru saja diajukan pada request ${mostRecent.requestCode} tanggal ${dateStr}.`
+			);
+		}
+
+		const standard = standardByItem[reqItem.itemId];
+		const stock = stockByItem[reqItem.itemId];
+		if (!standard) {
+			warnings.push(`Item tidak terdaftar pada standard kapal ini.`);
+		} else {
+			const stockOnHand = stock ? stock.stockOnHand : 0;
+			if (reqItem.qtyRequested + stockOnHand > standard.maxStock) {
+				warnings.push(
+					`Request melebihi kapasitas standar simpan batas maksimum (${standard.maxStock}).`
+				);
+			}
+		}
+
+		if (reqItem.priority === 'High' && standard && stock) {
+			if (stock.stockOnHand > standard.minStock) {
+				warnings.push(
+					`Stok aktual (${stock.stockOnHand}) masih di atas batas minimal, disarankan Priority Medium/Low.`
+				);
+			}
+		}
+
+		if (stock && stock.lastUpdate) {
+			const diffTime = Math.abs(
+				new Date().getTime() - new Date(stock.lastUpdate).getTime()
+			);
+			const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+			if (diffDays > 30) {
+				const dateStr = new Date(stock.lastUpdate).toISOString().split('T')[0];
+				warnings.push(
+					`Laporan stok terakhir diupdate pada ${dateStr} (Lebih dari 30 hari). Harap update stok aktual terlebih dahulu.`
+				);
+			}
+		} else if (!stock) {
+			warnings.push(
+				`Belum ada data laporan stok untuk item ini pada kapal. Harap update stok aktual.`
+			);
+		}
+
+		return {
+			itemId: reqItem.itemId,
+			itemName,
+			warnings,
+		};
+	});
+
+	const hasWarnings = validations.some((item) => item.warnings.length > 0);
+
+	return {
+		items: validations,
+		header: [],
+		hasWarnings,
+		status: hasWarnings ? 'Waiting' : 'Ok',
+	};
+};
+
+const create = asyncHandler(async (req: Request, res: Response) => {
 	const userId = req.apiToken!.userId;
 	if (!userId) {
 		throw new AppError('Unauthorized user', 401);
@@ -34,12 +140,17 @@ const create = asyncHandler(async (req: Request, res: Response) => {
 		throw new AppError('Invalid request date format', 400);
 	}
 
+	const validationResult = await validateVesselRequestPayload(req.body);
+	const validationByItem = new Map(
+		validationResult.items.map((item) => [item.itemId, item])
+	);
+
 	const requestCode = `VR-${Date.now()}`;
 	const bodyVesselRequest = {
 		requestCode,
 		user: { connect: { id: userId } },
 		vessel: { connect: { id: req.body.vesselId } },
-		status: req.body.status,
+		status: validationResult.status,
 		priority: req.body.priority,
 		justification: req.body.justification,
 		requestDate: requestDate,
@@ -55,7 +166,10 @@ const create = asyncHandler(async (req: Request, res: Response) => {
 		itemId: item.itemId,
 		qtyRequested: item.qtyRequested,
 		unit: item.unit,
-		status: item.status,
+		status:
+			(validationByItem.get(item.itemId)?.warnings.length ?? 0) > 0
+				? 'Waiting'
+				: 'Ok',
 		priority: item.priority,
 		justification: item.justification,
 	}));
@@ -66,7 +180,11 @@ const create = asyncHandler(async (req: Request, res: Response) => {
 		throw new AppError('Failed to create vessel request items', 500);
 	}
 
-	return success(res, { vesselRequest, vesselRequestItems }, 201);
+	return success(
+		res,
+		{ vesselRequest, vesselRequestItems, validation: validationResult },
+		201
+	);
 });
 
 const getAll = asyncHandler(async (req: Request, res: Response) => {
@@ -128,103 +246,15 @@ const update = asyncHandler(async (req: Request, _res: Response) => {
 });
 
 const validate = asyncHandler(async (req: Request, res: Response) => {
-        const vesselId = req.body.vesselId;
-        const vessel = await mstVesselRepo.findVessel({ id: vesselId });
-        if (!vessel) {
-                throw new AppError('Vessel is not found!', 400);
-        }
+	const validationResult = await validateVesselRequestPayload(req.body);
 
-        const requestItems = req.body.items;
-        const itemIds = requestItems.map((item: any) => item.itemId);
-
-        const items = await mstItemRepo.findItemByIds(itemIds);
-        if (!items || items.length !== requestItems.length) {
-                throw new AppError('One or more items are invalid!', 400);
-        }
-
-        const inactiveItems = items.filter(i => i.status !== 'Publish');
-        if (inactiveItems.length > 0) {
-                const names = inactiveItems.map(i => i.name).join(', ');
-                throw new AppError(`Cannot request inactive items: ${names}`, 400);
-        }
-
-        const [historyList, standardsList, stocksList] = await Promise.all([
-                vesselRequestRepo.findRecentRequestedItems(vesselId, itemIds, 30),
-                vesselRequestRepo.getVesselItemStandards(vesselId, itemIds),
-                vesselRequestRepo.getVesselStocks(vesselId, itemIds)
-        ]);
-
-        const historyByItem = historyList.reduce((acc: any, curr: any) => {
-                if (!acc[curr.itemId]) acc[curr.itemId] = [];
-                acc[curr.itemId].push(curr);
-                return acc;
-        }, {});
-
-        const standardByItem = standardsList.reduce((acc: any, curr: any) => {
-                acc[curr.itemId] = curr;
-                return acc;
-        }, {});
-
-        const stockByItem = stocksList.reduce((acc: any, curr: any) => {
-                acc[curr.itemId] = curr;
-                return acc;
-        }, {});
-
-        const validations = requestItems.map((reqItem: any) => {
-                const warnings: string[] = [];
-                const itemMaster = items.find(i => i.id === reqItem.itemId);
-                const itemName = itemMaster?.name || `Item #${reqItem.itemId}`;
-
-                const history = historyByItem[reqItem.itemId];
-                if (history && history.length > 0) {
-                        const mostRecent = history[0];
-                        const dateStr = mostRecent.requestDate.toISOString().split('T')[0];
-                        warnings.push(`Item ini baru saja diajukan pada request ${mostRecent.requestCode} tanggal ${dateStr}.`);
-                }
-
-                const standard = standardByItem[reqItem.itemId];
-                const stock = stockByItem[reqItem.itemId];
-                console.log('Standard:', standard, 'Stock:', stock);
-                if (!standard) {
-                        warnings.push(`Item tidak terdaftar pada standard kapal ini.`);
-                } else {
-                        const stockOnHand = stock ? stock.stockOnHand : 0;
-                        if (reqItem.qtyRequested + stockOnHand > standard.maxStock) {
-                                warnings.push(`Request melebihi kapasitas standar simpan batas maksimum (${standard.maxStock}).`);
-                        }
-                }
-
-                if (reqItem.priority === 'High' && standard && stock) {
-                        if (stock.stockOnHand > standard.minStock) {
-                                warnings.push(`Stok aktual (${stock.stockOnHand}) masih di atas batas minimal, disarankan Priority Medium/Low.`);
-                        }
-                }
-
-                if (stock && stock.lastUpdate) {
-                        const diffTime = Math.abs(new Date().getTime() - new Date(stock.lastUpdate).getTime());
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        if (diffDays > 30) {
-                                const dateStr = new Date(stock.lastUpdate).toISOString().split('T')[0];
-                                warnings.push(`Laporan stok terakhir diupdate pada ${dateStr} (Lebih dari 30 hari). Harap update stok aktual terlebih dahulu.`);
-                        }
-                } else if (!stock) {
-                        warnings.push(`Belum ada data laporan stok untuk item ini pada kapal. Harap update stok aktual.`);
-                }
-
-                return {
-                        itemId: reqItem.itemId,
-                        itemName,
-                        warnings
-                };
-        });
-
-        return success(res, { items: validations, header: [] }, 200);
+	return success(res, validationResult, 200);
 });
 
 export default {
-        create,
-        getAll,
-        getById,
-        update,
-        validate,
+	create,
+	getAll,
+	getById,
+	update,
+	validate,
 };

@@ -22,7 +22,7 @@
                 class="px-4 py-2 text-sm font-semibold rounded-lg shadow-sm"
                 :class="getStatusColor(request.status)"
               >
-                {{ request.status }}
+                {{ formatStatus(request.status) }}
               </span>
               <span
                 class="px-4 py-2 text-sm font-semibold rounded-lg shadow-sm"
@@ -125,7 +125,7 @@
                 class="inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full"
                 :class="getStatusColor(row.status)"
               >
-                {{ row.status }}
+                {{ formatStatus(row.status) }}
               </span>
             </template>
 
@@ -208,6 +208,7 @@ const formatDate = (dateString) => {
 
 const getStatusColor = (status) => {
   const colors = {
+    Ok: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
     Waiting: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
     Approved: 'bg-green-100 text-green-800 border border-green-200',
     Rejected: 'bg-red-100 text-red-800 border border-red-200',
@@ -215,6 +216,10 @@ const getStatusColor = (status) => {
     Completed: 'bg-purple-100 text-purple-800 border border-purple-200',
   }
   return colors[status] || 'bg-gray-100 text-gray-800 border border-gray-200'
+}
+
+const formatStatus = (status) => {
+  return status === 'Ok' ? 'OK' : status
 }
 
 const getPriorityColor = (priority) => {

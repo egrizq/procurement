@@ -20,3 +20,8 @@ export async function updateMstVendor(vendorId, vendorData) {
 export async function deleteMstVendor(vendorId) {
   await http.delete(`/master-data/vendors/${vendorId}`)
 }
+
+export async function getMstCity() {
+  const { data } = await http.get('/master-data/cities')
+  return data
+}

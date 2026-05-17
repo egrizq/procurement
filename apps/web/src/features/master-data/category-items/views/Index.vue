@@ -16,339 +16,192 @@
     </div>
 
     <!-- Filters and Search -->
-    <div class="bg-white rounded-lg shadow p-4">
-      <div class="flex flex-col sm:flex-row gap-4">
-        <div class="flex-1">
-          <div class="relative">
-            <Search
-              class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              :size="20"
-            />
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search categories..."
-              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-        </div>
-        <select
-          v-model="filterType"
-          class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="">All Types</option>
-          <option value="consumable">Consumable</option>
-          <option value="spare-part">Spare Part</option>
-          <option value="equipment">Equipment</option>
-          <option value="safety">Safety</option>
-        </select>
-      </div>
-    </div>
+    <SearchFilter v-model="searchQuery" placeholder="Search categories..."></SearchFilter>
 
     <!-- Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Category Code
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Name
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Type
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Description
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Item Count
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Status
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr
-              v-for="category in filteredCategories"
-              :key="category.id"
-              class="hover:bg-gray-50 transition-colors"
-            >
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {{ category.code }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                <div class="flex items-center gap-2">
-                  <div
-                    class="w-3 h-3 rounded-full"
-                    :style="{ backgroundColor: category.color }"
-                  ></div>
-                  {{ category.name }}
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                <span
-                  class="px-2 py-1 text-xs font-medium rounded-full"
-                  :class="getTypeColor(category.type)"
-                >
-                  {{ category.type }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                {{ category.description }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                <div class="flex items-center gap-1">
-                  <Package :size="14" class="text-gray-400" />
-                  {{ category.itemCount }}
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <span
-                  class="px-2 py-1 text-xs font-medium rounded-full"
-                  :class="getStatusColor(category.status)"
-                >
-                  {{ category.status }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                <div class="flex items-center gap-2">
-                  <button
-                    @click="editCategory(category)"
-                    class="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors"
-                    title="Edit"
-                  >
-                    <Edit :size="16" />
-                  </button>
-                  <button
-                    @click="viewCategory(category)"
-                    class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
-                    title="View"
-                  >
-                    <Eye :size="16" />
-                  </button>
-                  <button
-                    @click="deleteCategory(category)"
-                    class="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 :size="16" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <DataTable
+      :columns="columns"
+      :data="categoryItems"
+      :current-page="currentPage"
+      :items-per-page="itemsPerPage"
+      :pagination="pagination"
+      @update:current-page="currentPage = $event"
+      @row-click="handleRowClick"
+    >
+      <template #cell-status="{ row }">
+        <span
+          class="px-2 py-1 text-xs font-medium rounded-full"
+          :class="getStatusColor(row.status)"
+        >
+          {{ row.status }}
+        </span>
+      </template>
 
-      <!-- Pagination -->
-      <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-        <div class="text-sm text-gray-600">
-          Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
-          {{ Math.min(currentPage * itemsPerPage, filteredCategories.length) }} of
-          {{ filteredCategories.length }} results
-        </div>
-        <div class="flex gap-2">
+      <template #cell-createdAt="{ row }">
+        {{ new Date(row.createdAt).toLocaleDateString() }}
+      </template>
+
+      <template #cell-actions="{ row }">
+        <div class="flex items-center gap-2">
           <button
-            @click="previousPage"
-            :disabled="currentPage === 1"
-            class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            @click.stop="editCategory(row)"
+            class="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors"
+            title="Edit"
           >
-            Previous
+            <Edit :size="16" />
           </button>
           <button
-            @click="nextPage"
-            :disabled="currentPage >= totalPages"
-            class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            @click.stop="viewCategory(row)"
+            class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+            title="View"
           >
-            Next
+            <Eye :size="16" />
+          </button>
+          <button
+            @click.stop="deleteCategory(row)"
+            class="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+            title="Delete"
+          >
+            <Trash2 :size="16" />
           </button>
         </div>
-      </div>
-    </div>
+      </template>
+    </DataTable>
+
+    <!-- Form Dialog -->
+    <FormCategory
+      :is-open="isFormOpen"
+      :item="selectedCategory"
+      :mode="formMode"
+      @close="closeForm"
+      @submit="handleFormSubmit"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { Plus, Search, Edit, Eye, Trash2, Package } from 'lucide-vue-next'
+import { ref, watch, onMounted } from 'vue'
+import { Plus, Edit, Eye, Trash2 } from 'lucide-vue-next'
+import SearchFilter from '@/components/base/data-table/SearchFilter.vue'
+import DataTable from '@/components/base/data-table/DataTable.vue'
+import FormCategory from '@/features/master-data/component/FormCategory.vue'
+import { useCategoryItemStore } from '../store.js'
+import { showInfo } from '@/services/notification.js'
+
+const categoryStore = useCategoryItemStore()
+const categoryItems = ref([])
+const pagination = ref(null)
+const isLoading = ref(false)
 
 const searchQuery = ref('')
-const filterType = ref('')
 const currentPage = ref(1)
 const itemsPerPage = 10
+const isFormOpen = ref(false)
+const selectedCategory = ref(null)
+const formMode = ref('add')
 
-// Mock data
-const categories = ref([
-  {
-    id: 1,
-    code: 'CAT-001',
-    name: 'Engine Parts',
-    type: 'Spare Part',
-    description: 'Engine components and spare parts',
-    itemCount: 45,
-    color: '#3B82F6',
-    status: 'Active',
-  },
-  {
-    id: 2,
-    code: 'CAT-002',
-    name: 'Safety Equipment',
-    type: 'Safety',
-    description: 'Personal protective equipment and safety gear',
-    itemCount: 32,
-    color: '#EF4444',
-    status: 'Active',
-  },
-  {
-    id: 3,
-    code: 'CAT-003',
-    name: 'Electronic Equipment',
-    type: 'Equipment',
-    description: 'Navigation and communication devices',
-    itemCount: 18,
-    color: '#8B5CF6',
-    status: 'Active',
-  },
-  {
-    id: 4,
-    code: 'CAT-004',
-    name: 'Lubricants & Oils',
-    type: 'Consumable',
-    description: 'Engine oils, hydraulic fluids, and lubricants',
-    itemCount: 28,
-    color: '#F59E0B',
-    status: 'Active',
-  },
-  {
-    id: 5,
-    code: 'CAT-005',
-    name: 'Deck Equipment',
-    type: 'Equipment',
-    description: 'Anchors, chains, and deck machinery',
-    itemCount: 15,
-    color: '#10B981',
-    status: 'Active',
-  },
-  {
-    id: 6,
-    code: 'CAT-006',
-    name: 'Electrical Components',
-    type: 'Spare Part',
-    description: 'Electrical parts and components',
-    itemCount: 52,
-    color: '#F59E0B',
-    status: 'Active',
-  },
-  {
-    id: 7,
-    code: 'CAT-007',
-    name: 'Fire Fighting',
-    type: 'Safety',
-    description: 'Fire extinguishers and fire fighting equipment',
-    itemCount: 12,
-    color: '#DC2626',
-    status: 'Active',
-  },
-  {
-    id: 8,
-    code: 'CAT-008',
-    name: 'Paints & Coatings',
-    type: 'Consumable',
-    description: 'Marine paints, coatings, and sealants',
-    itemCount: 22,
-    color: '#06B6D4',
-    status: 'Active',
-  },
-])
-
-const filteredCategories = computed(() => {
-  let result = categories.value
-
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter(
-      (category) =>
-        category.code.toLowerCase().includes(query) ||
-        category.name.toLowerCase().includes(query) ||
-        category.description.toLowerCase().includes(query),
-    )
+const fetchCategories = async () => {
+  isLoading.value = true
+  try {
+    await categoryStore.fetchCategories(currentPage.value, itemsPerPage, searchQuery.value)
+    categoryItems.value = categoryStore.categories
+    pagination.value = categoryStore.pagination
+    if (categoryStore.error) {
+      showInfo(`No categories found for "${searchQuery.value}"`, 'No Results')
+      categoryStore.clearError()
+    }
+  } catch (error) {
+    console.error('Failed to fetch categories:', error)
+  } finally {
+    isLoading.value = false
   }
+}
 
-  if (filterType.value) {
-    result = result.filter(
-      (category) => category.type.toLowerCase() === filterType.value.toLowerCase(),
-    )
-  }
-
-  return result
+onMounted(() => {
+  fetchCategories()
 })
 
-const totalPages = computed(() => Math.ceil(filteredCategories.value.length / itemsPerPage))
+let searchTimeout = null
+watch(searchQuery, () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1
+    fetchCategories()
+  }, 500)
+})
 
-const getTypeColor = (type) => {
-  const colors = {
-    Consumable: 'bg-orange-100 text-orange-800',
-    'Spare Part': 'bg-blue-100 text-blue-800',
-    Equipment: 'bg-purple-100 text-purple-800',
-    Safety: 'bg-red-100 text-red-800',
-  }
-  return colors[type] || 'bg-gray-100 text-gray-800'
-}
+watch(currentPage, () => {
+  fetchCategories()
+})
+
+const columns = [
+  { key: 'name', label: 'Name', cellClass: 'font-medium text-gray-900' },
+  { key: 'status', label: 'Status' },
+  { key: 'createdAt', label: 'Created At' },
+  { key: 'actions', label: 'Actions' },
+]
 
 const getStatusColor = (status) => {
   const colors = {
-    Active: 'bg-green-100 text-green-800',
-    Inactive: 'bg-gray-100 text-gray-800',
+    Publish: 'bg-green-100 text-green-800',
+    Unpublish: 'bg-gray-100 text-gray-800',
   }
   return colors[status] || 'bg-gray-100 text-gray-800'
 }
 
 const openAddDialog = () => {
-  console.log('Open add category dialog')
+  selectedCategory.value = null
+  formMode.value = 'add'
+  isFormOpen.value = true
 }
 
 const editCategory = (category) => {
-  console.log('Edit category:', category)
+  selectedCategory.value = { ...category }
+  formMode.value = 'edit'
+  isFormOpen.value = true
 }
 
 const viewCategory = (category) => {
-  console.log('View category:', category)
+  selectedCategory.value = { ...category }
+  formMode.value = 'view'
+  isFormOpen.value = true
 }
 
-const deleteCategory = (category) => {
-  console.log('Delete category:', category)
+const handleRowClick = (row) => {
+  if (!row) return
+  viewCategory(row)
 }
 
-const previousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
+const closeForm = () => {
+  isFormOpen.value = false
+  selectedCategory.value = null
+}
+
+const handleFormSubmit = async (formData) => {
+  try {
+    if (selectedCategory.value && formMode.value === 'edit') {
+      await categoryStore.updateCategory(selectedCategory.value.id, formData)
+      showInfo('Category updated successfully', 'Success')
+    } else {
+      await categoryStore.addCategory(formData)
+      showInfo('Category added successfully', 'Success')
+    }
+    closeForm()
+    fetchCategories()
+  } catch (error) {
+    showInfo(categoryStore.error || 'Failed to save category', 'Error')
   }
 }
 
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
+const deleteCategory = async (category) => {
+  if (confirm(`Are you sure you want to delete ${category.name}?`)) {
+    try {
+      await categoryStore.deleteCategory(category.id)
+      showInfo('Category deleted successfully', 'Success')
+      fetchCategories()
+    } catch (error) {
+      showInfo(categoryStore.error || 'Failed to delete category', 'Error')
+    }
   }
 }
 </script>

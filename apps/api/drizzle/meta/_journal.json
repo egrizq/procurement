@@ -29,6 +29,20 @@
       "when": 1778139538936,
       "tag": "0003_fat_rocket_racer",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1778940461956,
+      "tag": "0004_natural_mariko_yashida",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1778987550014,
+      "tag": "0005_woozy_apocalypse",
+      "breakpoints": true
     }
   ]
 }
