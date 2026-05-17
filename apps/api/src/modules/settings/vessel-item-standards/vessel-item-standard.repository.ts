@@ -1,6 +1,6 @@
 import db from '../../../config/drizzle';
 import { vesselItemStandards, mstVessels, mstItems } from '../../../db/schema/index.ts';
-import { like, desc, eq, sql, or, inArray } from 'drizzle-orm';
+import { like, desc, eq, and, sql, or, inArray } from 'drizzle-orm';
 
 class VesselItemStandardRepository {
         async getStandards(page: number = 1, limit: number = 10, search: string = '') {
@@ -53,6 +53,16 @@ class VesselItemStandardRepository {
                 const result = await db.query.vesselItemStandards.findFirst({
                         where: eq(vesselItemStandards.id, id),
                         with: { vessel: true, item: true }
+                });
+                return result || null;
+        }
+
+        async findByVesselAndItem(vesselId: number, itemId: number) {
+                const result = await db.query.vesselItemStandards.findFirst({
+                        where: and(
+                             eq(vesselItemStandards.vesselId, vesselId),
+                             eq(vesselItemStandards.itemId, itemId)
+                        ),
                 });
                 return result || null;
         }

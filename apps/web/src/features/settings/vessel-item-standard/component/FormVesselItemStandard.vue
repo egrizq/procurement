@@ -28,6 +28,13 @@
           {{ errorMessage }}
         </div>
 
+        <div
+          v-if="isDuplicate"
+          class="mb-4 rounded-md bg-yellow-50 p-4 text-sm text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-200"
+        >
+          This item is already set up for this vessel.
+        </div>
+
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <!-- Form fields -->
           <div class="col-span-2 sm:col-span-1">
@@ -155,8 +162,11 @@
             <button
               v-if="mode !== 'view'"
               type="submit"
-              :disabled="loading"
-              class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              :disabled="loading || isDuplicate"
+              :class="[
+                'inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+                isDuplicate || loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
+              ]"
             >
               <Loader2 v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
               {{ mode === 'edit' ? 'Update' : 'Save' }}
@@ -173,6 +183,7 @@ import { ref, watch, computed, onMounted } from 'vue'
 import { X, Loader2 } from 'lucide-vue-next'
 import { useVesselStore } from '../../../vessel/store'
 import { useItemStore } from '../../../master-data/items/store'
+import { useVesselItemStandardStore } from '../store'
 
 const props = defineProps({
   isOpen: {
@@ -193,6 +204,7 @@ const emit = defineEmits(['close', 'submit'])
 
 const vesselStore = useVesselStore()
 const itemStore = useItemStore()
+const standardStore = useVesselItemStandardStore()
 
 const loading = ref(false)
 const errorMessage = ref('')
@@ -219,6 +231,18 @@ const viewVesselName = computed(() => {
 const viewItemName = computed(() => {
   const item = props.standard?.item
   return item ? `${item.name} (${item.itemCode})` : ''
+})
+
+const isDuplicate = computed(() => {
+  if (props.mode !== 'add' && !props.mode) return false;
+  if (!formData.value.vesselId || !formData.value.itemId) return false;
+
+  return standardStore.items.some(
+    (item) =>
+      item.vesselId === Number(formData.value.vesselId) &&
+      item.itemId === Number(formData.value.itemId) &&
+      item.id !== props.standard?.id
+  )
 })
 
 const resetForm = () => {

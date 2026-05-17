@@ -45,6 +45,11 @@ const getById = asyncHandler(async (req: Request, res: Response) => {
 const create = asyncHandler(async (req: Request, res: Response) => {
 	const { vesselId, itemId, periode, minStock, maxStock } = req.body;
 
+	const existingStandard = await standardRepo.findByVesselAndItem(vesselId, itemId);
+	if (existingStandard) {
+        throw new AppError('This item is already set up for this vessel.', 400);
+    }
+
 	const vessel = await mstVesselRepo.findVessel({ id: vesselId });
 	if (!vessel) throw new AppError('Vessel not found', 400);
 
@@ -71,6 +76,16 @@ const update = asyncHandler(async (req: Request, res: Response) => {
 	if (!existing) throw new AppError('Standard not found', 404);
 
 	const { vesselId, itemId, periode, minStock, maxStock } = req.body;
+
+    const newVesselId = vesselId ?? existing.vesselId;
+    const newItemId = itemId ?? existing.itemId;
+
+    if (newVesselId !== existing.vesselId || newItemId !== existing.itemId) {
+        const existingStandard = await standardRepo.findByVesselAndItem(newVesselId, newItemId);
+        if (existingStandard) {
+            throw new AppError('This item is already set up for this vessel.', 400);
+        }
+    }
 
 	if (vesselId) {
 		const vessel = await mstVesselRepo.findVessel({ id: vesselId });
