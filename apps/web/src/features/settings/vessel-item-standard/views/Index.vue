@@ -51,6 +51,7 @@
         :loading="loading"
         :pagination="pagination"
         @page-change="handlePageChange"
+        @row-click="handleRowClick"
       >
         <!-- Vessel Name Cell -->
         <template #cell-vessel.name="{ row }">
@@ -97,21 +98,21 @@
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-2">
             <button
-              @click="openViewDialog(row)"
+              @click.stop="openViewDialog(row)"
               class="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
               title="View Standard"
             >
               <Eye class="h-4 w-4" />
             </button>
             <button
-              @click="openEditDialog(row)"
+              @click.stop="openEditDialog(row)"
               class="rounded-md p-2 text-blue-400 hover:bg-blue-50 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-blue-900/50 dark:hover:text-blue-300"
               title="Edit Standard"
             >
               <Edit class="h-4 w-4" />
             </button>
             <button
-              @click="handleDelete(row)"
+              @click.stop="handleDelete(row)"
               class="rounded-md p-2 text-red-400 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-900/50 dark:hover:text-red-300"
               title="Delete Standard"
             >
@@ -219,6 +220,11 @@ const openViewDialog = (standard) => {
   dialogMode.value = 'view'
   selectedStandard.value = standard
   isDialogOpen.value = true
+}
+
+const handleRowClick = (row) => {
+  if (!row) return
+  openViewDialog(row)
 }
 
 const closeDialog = () => {

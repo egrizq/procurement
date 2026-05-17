@@ -41,6 +41,7 @@
       :items-per-page="itemsPerPage"
       :pagination="pagination"
       @update:current-page="currentPage = $event"
+      @row-click="handleRowClick"
     >
       <template #cell-category.name="{ value }">
         <span class="px-2 py-1 text-xs font-medium rounded-full" :class="getCategoryColor(value)">
@@ -60,21 +61,21 @@
       <template #cell-actions="{ row }">
         <div class="flex items-center gap-2">
           <button
-            @click="editItem(row)"
+            @click.stop="editItem(row)"
             class="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors"
             title="Edit"
           >
             <Edit :size="16" />
           </button>
           <button
-            @click="viewItem(row)"
+            @click.stop="viewItem(row)"
             class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
             title="View"
           >
             <Eye :size="16" />
           </button>
           <button
-            @click="deleteItem(row)"
+            @click.stop="deleteItem(row)"
             class="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
             title="Delete"
           >
@@ -219,6 +220,11 @@ const viewItem = (item) => {
   selectedItem.value = { ...item }
   formMode.value = 'view'
   isFormOpen.value = true
+}
+
+const handleRowClick = (row) => {
+  if (!row) return
+  viewItem(row)
 }
 
 const deleteItem = async (item) => {

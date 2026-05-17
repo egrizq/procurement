@@ -26,6 +26,7 @@
       :items-per-page="itemsPerPage"
       :pagination="pagination"
       @update:current-page="currentPage = $event"
+      @row-click="handleRowClick"
     >
       <template #cell-vessel.name="{ value }">
         <div class="flex items-center gap-2">
@@ -71,21 +72,21 @@
       <template #cell-actions="{ row }">
         <div class="flex items-center gap-2">
           <button
-            @click="editStock(row)"
+            @click.stop="editStock(row)"
             class="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors"
             title="Edit"
           >
             <Edit :size="16" />
           </button>
           <button
-            @click="viewStock(row)"
+            @click.stop="viewStock(row)"
             class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
             title="View"
           >
             <Eye :size="16" />
           </button>
           <button
-            @click="confirmDelete(row)"
+            @click.stop="confirmDelete(row)"
             class="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
             title="Delete"
           >
@@ -196,6 +197,12 @@ const formatDate = (dateStr) => {
     month: 'short',
     year: 'numeric',
   })
+}
+
+// Row click handler
+const handleRowClick = (row) => {
+  if (!row) return
+  viewStock(row)
 }
 
 // CRUD handlers

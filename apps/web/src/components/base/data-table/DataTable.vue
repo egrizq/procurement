@@ -17,8 +17,7 @@
           <tr
             v-for="(row, index) in displayData"
             :key="row[rowKey] || index"
-            class="hover:bg-gray-50 transition-colors"
-            :class="{ 'cursor-pointer': clickable }"
+            :class="{ 'cursor-pointer hover:bg-gray-50 transition-colors': clickable }"
             @click="clickable && emit('row-click', row)"
           >
             <td
