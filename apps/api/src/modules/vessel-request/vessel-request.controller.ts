@@ -188,12 +188,13 @@ const create = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const getAll = asyncHandler(async (req: Request, res: Response) => {
-	const { limit = 10, page = 1, search = '' } = req.body;
+	const { limit = 10, page = 1, search = '', status } = req.body;
 
 	const vesselRequests = await vesselRequestRepo.getVesselRequests(
 		page,
 		limit,
-		search
+		search,
+		status
 	);
 	if (!vesselRequests.items || vesselRequests.items.length === 0) {
 		throw new AppError('Vessel requests not found', 404);

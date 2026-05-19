@@ -1,10 +1,11 @@
 import { http } from '@/services/http'
 
-export async function getRequests(page, limit, search) {
+export async function getRequests(page, limit, search, status) {
   const { data } = await http.post('/vessel-requests/list', {
     page,
     limit,
     search,
+    status
   })
   return data
 }
