@@ -5,6 +5,7 @@ import {
 	vesselRequestListSchema,
 	vesselRequestByIdSchema,
 	updateVesselRequestSchema,
+	reviewVesselRequestSchema,
 } from './vessel-request.validation.ts';
 import vesselRequestController from './vessel-request.controller.ts';
 import apiAuth from '#modules/auth/auth.middleware.ts';
@@ -44,6 +45,13 @@ router.put(
 	apiAuth(),
 	validate(updateVesselRequestSchema),
 	vesselRequestController.update
+);
+
+router.post(
+	'/:id/review',
+	apiAuth(),
+	validate(reviewVesselRequestSchema),
+	vesselRequestController.review
 );
 
 export default router;

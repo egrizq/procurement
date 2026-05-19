@@ -50,7 +50,7 @@
     </DataTable>
 
     <!-- View Dialog -->
-    <ViewRequest :is-open="isViewOpen" :request="selectedRequest" @close="closeView" />
+    <ViewRequest :is-open="isViewOpen" :request="selectedRequest" @close="closeView" @reviewed="handleRefresh" />
 
     <!-- Form Dialog -->
     <FormRequest
@@ -244,6 +244,10 @@ const handleRowClick = async (request) => {
 const closeView = () => {
   isViewOpen.value = false
   selectedRequest.value = null
+}
+
+const handleRefresh = () => {
+  fetchRequests()
 }
 
 const closeForm = () => {

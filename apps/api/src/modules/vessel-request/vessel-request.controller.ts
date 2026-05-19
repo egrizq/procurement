@@ -251,10 +251,38 @@ const validate = asyncHandler(async (req: Request, res: Response) => {
 	return success(res, validationResult, 200);
 });
 
+const review = asyncHandler(async (req: Request, res: Response) => {
+	const id = Number(req.params.id);
+	if (Number.isNaN(id)) throw new AppError('Invalid request ID', 400);
+
+	const vesselRequest = await vesselRequestRepo.getVesselRequestById(id);
+	if (!vesselRequest) throw new AppError('Vessel request not found', 404);
+
+	if (vesselRequest.status !== 'Waiting' && vesselRequest.status !== 'Ok') {
+		throw new AppError('Only Waiting or Ok requests can be reviewed', 400);
+	}
+
+	const userId = req.apiToken!.userId;
+	if (!userId) throw new AppError('Unauthorized', 401);
+
+	const { action, rejectReason, itemsAdjustment } = req.body;
+
+	const updated = await vesselRequestRepo.reviewRequest(
+		id,
+		userId,
+		action,
+		rejectReason,
+		itemsAdjustment
+	);
+
+	return success(res, updated, 200);
+});
+
 export default {
 	create,
 	getAll,
 	getById,
 	update,
 	validate,
+	review,
 };

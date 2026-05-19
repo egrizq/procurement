@@ -1,5 +1,5 @@
 import db from '../../config/drizzle';
-import { vesselRequests, vesselRequestItems, users, vesselStocks, vesselItemStandards } from '../../db/schema/index.ts';
+import { vesselRequests, vesselRequestItems, vesselStocks, vesselItemStandards } from '../../db/schema/index.ts';
 import { desc, eq, like, sql, inArray, and, gte } from 'drizzle-orm';
 
 class VesselRequestRepository {
@@ -85,7 +85,7 @@ class VesselRequestRepository {
                 return { items, total };
         }
 
-        async countVesselRequests(filter: any) {
+        async countVesselRequests(_filter: any) {
                 // To maintain backward compatibility if used later. 
                 // Assumes filter is empty or simple object match natively.
                 const countResult = await db.select({ count: sql<number>`count(*)` }).from(vesselRequests);
@@ -107,6 +107,7 @@ class VesselRequestRepository {
                                 items: {
                                         columns: {
                                                 id: true,
+                                                itemId: true,
                                                 qtyRequested: true,
                                                 qtyApproved: true,
                                                 unit: true,
@@ -189,6 +190,56 @@ class VesselRequestRepository {
                                 )
                         );
                 return results;
+        }
+
+        async reviewRequest(
+                id: number,
+                userId: number,
+                action: 'Approve' | 'Reject',
+                rejectReason?: string,
+                itemsAdjustment?: { itemId: number; qtyApproved: number; staffJustification?: string }[]
+        ) {
+                const headerStatus = action === 'Approve' ? 'Approved' : 'Rejected';
+                
+                await db.transaction(async (tx) => {
+                        // 1. Update header
+                        await tx.update(vesselRequests)
+                                .set({
+                                        status: headerStatus,
+                                        reviewedBy: userId,
+                                        reviewedAt: new Date(),
+                                        rejectReason: action === 'Reject' ? rejectReason : null,
+                                })
+                                .where(eq(vesselRequests.id, id));
+
+                        // 2. Fetch current items to know the baseline
+                        const currentItems = await tx.select().from(vesselRequestItems).where(eq(vesselRequestItems.vesselRequestId, id));
+                        
+                        // 3. Update each item
+                        for (const item of currentItems) {
+                                // Default for approve: qtyApproved = qtyRequested
+                                let qtyApproved = action === 'Approve' ? item.qtyRequested : 0;
+                                let staffJustification: string | null = null;
+                                
+                                if (action === 'Approve' && itemsAdjustment) {
+                                        const adjustment = itemsAdjustment.find(adj => adj.itemId === item.itemId);
+                                        if (adjustment) {
+                                                qtyApproved = adjustment.qtyApproved;
+                                                staffJustification = adjustment.staffJustification || null;
+                                        }
+                                }
+
+                                await tx.update(vesselRequestItems)
+                                        .set({
+                                                status: headerStatus,
+                                                qtyApproved,
+                                                staffJustification
+                                        })
+                                        .where(eq(vesselRequestItems.id, item.id));
+                        }
+                });
+                
+                return await this.getVesselRequestById(id);
         }
 }
 

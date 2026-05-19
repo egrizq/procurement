@@ -23,6 +23,7 @@ export const vesselRequests = mysqlTable(
       .notNull(),
     reviewedAt: timestamp('reviewed_at', { mode: 'date', fsp: 0 }),
     reviewedBy: int('reviewed_by').references(() => users.id),
+    rejectReason: text('reject_reason'),
   },
   (table) => ({
     vesselIdIdx: index('idx_vessel_id').on(table.vesselId),

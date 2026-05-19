@@ -82,3 +82,28 @@ export const updateVesselRequestSchema = z.object({
     ),
   }),
 });
+
+export const reviewVesselRequestSchema = z.object({
+  params: z.object({
+    id: z.string(),
+  }),
+  body: z.object({
+    action: z.enum(['Approve', 'Reject'], 'Action must be either Approve or Reject'),
+    rejectReason: z.string().optional(),
+    itemsAdjustment: z.array(
+      z.object({
+        itemId: z.number('Item is not found').int().positive(),
+        qtyApproved: z.number('Quantity approved is not valid').int().nonnegative(),
+        staffJustification: z.string().optional(),
+      })
+    ).optional(),
+  }).refine((data) => {
+    if (data.action === 'Reject' && !data.rejectReason) {
+      return false;
+    }
+    return true;
+  }, {
+    message: 'Reject reason is required when rejecting a request',
+    path: ['rejectReason'],
+  }),
+});

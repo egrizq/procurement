@@ -60,6 +60,17 @@ export const useRequestStore = defineStore('request', {
         this.error = null
       }
     },
+    async reviewRequest(id, payload) {
+      try {
+        await requestAPI.reviewRequest(id, payload)
+        await this.fetchRequests()
+      } catch (error) {
+        this.error = error.error || 'Failed to review request.'
+        throw error
+      } finally {
+        this.error = null
+      }
+    },
     async deleteRequest(id) {
       try {
         await requestAPI.deleteRequest(id)

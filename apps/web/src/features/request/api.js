@@ -30,3 +30,8 @@ export async function validateRequestForm(requestData) {
   const { data } = await http.post('/vessel-requests/validate', requestData)
   return data
 }
+
+export async function reviewRequest(id, payload) {
+  const { data } = await http.post(`/vessel-requests/${id}/review`, payload)
+  return data
+}

@@ -112,9 +112,37 @@
 
             <!-- Qty Approved Column -->
             <template #cell-qtyApproved="{ row }">
-              <div v-if="row.qtyApproved" class="flex items-center gap-1">
+              <div v-if="isAdjusting" class="flex flex-col gap-2 min-w-[120px]">
+                <div class="flex items-center gap-2">
+                  <button 
+                    @click="decrementQty(row.itemId)"
+                    class="w-6 h-6 rounded flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600"
+                  >-</button>
+                  <input 
+                    type="number" 
+                    min="0"
+                    v-model.number="adjustments[row.itemId].qtyApproved"
+                    class="w-16 text-center border-gray-300 rounded-md py-1 px-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                  <button 
+                    @click="incrementQty(row.itemId)"
+                    class="w-6 h-6 rounded flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600"
+                  >+</button>
+                  <span class="text-xs text-gray-500">{{ row.unit }}</span>
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Justification (optional)"
+                  v-model="adjustments[row.itemId].staffJustification"
+                  class="w-full text-xs border-gray-300 rounded-md py-1 px-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div v-else-if="row.qtyApproved" class="flex items-center gap-1">
                 <span class="text-sm font-semibold text-green-900">{{ row.qtyApproved }}</span>
                 <span class="text-xs text-gray-500">{{ row.unit }}</span>
+                <div v-if="row.staffJustification" class="text-xs italic text-gray-500 block mt-1 ml-1" :title="row.staffJustification">
+                  (Adjusted)
+                </div>
               </div>
               <span v-else class="text-sm text-gray-400">-</span>
             </template>
@@ -146,6 +174,74 @@
             <p class="text-gray-500 font-medium">No items in this request</p>
           </div>
         </div>
+
+        <!-- Staff Action Panel for pending requests -->
+        <div v-if="canReview" class="mt-8 bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+          <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 font-medium text-gray-900 border-l-4 border-l-indigo-500">
+            Staff Actions
+          </div>
+          
+          <div class="p-4 space-y-4">
+            <div v-if="isRejecting" class="space-y-3">
+              <label class="block text-sm font-medium text-gray-700">Reason for Rejection <span class="text-red-500">*</span></label>
+              <textarea 
+                v-model="rejectReason" 
+                rows="3" 
+                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                placeholder="Please provide a detailed reason for rejecting this request..."
+              ></textarea>
+              <div class="flex gap-2 justify-end pt-2">
+                <button 
+                  @click="isRejecting = false; rejectReason = ''" 
+                  class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  :disabled="isSubmitting"
+                >
+                  Cancel
+                </button>
+                <button 
+                  @click="submitReview('Reject')" 
+                  class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                  :disabled="isSubmitting || !rejectReason.trim()"
+                >
+                  Confirm Reject
+                </button>
+              </div>
+            </div>
+            
+            <div v-else class="flex flex-col sm:flex-row justify-between gap-4 items-center">
+              <div class="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="adjustToggle" 
+                  v-model="isAdjusting" 
+                  class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label for="adjustToggle" class="text-sm text-gray-700 font-medium">
+                  Adjust items before approving?
+                </label>
+              </div>
+              
+              <div class="flex gap-2">
+                <button 
+                  @click="isRejecting = true" 
+                  class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50"
+                  :disabled="isSubmitting"
+                >
+                  Reject...
+                </button>
+                <button 
+                  @click="submitReview('Approve')" 
+                  class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center min-w-[100px]"
+                  :disabled="isSubmitting"
+                >
+                  <Loader2 v-if="isSubmitting" class="w-4 h-4 mr-2 animate-spin" />
+                  Approve
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Loading state -->
@@ -159,10 +255,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Ship, User, Package, PackageX, Loader2 } from 'lucide-vue-next'
 import FormDialog from '@/components/base/form/Form.vue'
 import DataTable from '@/components/base/data-table/DataTable.vue'
+import { useRequestStore } from '../store'
+import { showSuccess, showError } from '@/services/notification'
 
 const props = defineProps({
   isOpen: {
@@ -175,7 +273,71 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'reviewed'])
+const requestStore = useRequestStore()
+
+const adjustments = ref({})
+const isAdjusting = ref(false)
+const isRejecting = ref(false)
+const rejectReason = ref('')
+const isSubmitting = ref(false)
+
+const canReview = computed(() => {
+  return props.request && (props.request.status === 'Waiting' || props.request.status === 'Ok')
+})
+
+// Initialize adjustments when request details open
+watch(() => props.request, (newReq) => {
+  isAdjusting.value = false
+  isRejecting.value = false
+  rejectReason.value = ''
+  adjustments.value = {}
+  
+  if (newReq && newReq.vesselRequestItems) {
+    newReq.vesselRequestItems.forEach(item => {
+      adjustments.value[item.itemId] = {
+        qtyApproved: item.qtyRequested,
+        staffJustification: ''
+      }
+    })
+  }
+}, { immediate: true })
+
+const incrementQty = (itemId) => {
+  adjustments.value[itemId].qtyApproved++
+}
+
+const decrementQty = (itemId) => {
+  if (adjustments.value[itemId].qtyApproved > 0) {
+    adjustments.value[itemId].qtyApproved--
+  }
+}
+
+const submitReview = async (action) => {
+  isSubmitting.value = true
+  try {
+    const payload = { action }
+    
+    if (action === 'Reject') {
+      payload.rejectReason = rejectReason.value
+    } else if (action === 'Approve' && isAdjusting.value) {
+      payload.itemsAdjustment = Object.entries(adjustments.value).map(([itemId, data]) => ({
+        itemId: Number(itemId),
+        qtyApproved: data.qtyApproved,
+        staffJustification: data.staffJustification || undefined
+      }))
+    }
+    
+    await requestStore.reviewRequest(props.request.id, payload)
+    showSuccess(`Request successfully ${action.toLowerCase()}ed`)
+    emit('reviewed')
+    handleClose()
+  } catch (error) {
+    showError(error.message || 'Failed to review request')
+  } finally {
+    isSubmitting.value = false
+  }
+}
 
 // Define columns for items table
 const itemColumns = [
