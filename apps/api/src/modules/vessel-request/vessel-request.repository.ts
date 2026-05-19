@@ -22,7 +22,7 @@ class VesselRequestRepository {
                 return { count: data.length };
         }
 
-        async getVesselRequests(page: number = 1, limit: number = 10, search: string = '') {
+        async getVesselRequests(page: number = 1, limit: number = 10, search: string = '', status?: string) {
                 const searchPattern = `%${search}%`;
 
                 let matchingUserIds: number[] | null = null;
@@ -37,7 +37,15 @@ class VesselRequestRepository {
                      return { items: [], total: 0 };
                 }
 
-                const condition = matchingUserIds ? inArray(vesselRequests.id, matchingUserIds) : undefined;
+                const conditions = [];
+                if (matchingUserIds) {
+                    conditions.push(inArray(vesselRequests.id, matchingUserIds));
+                }
+                if (status) {
+                    conditions.push(eq(vesselRequests.status, status));
+                }
+
+                const condition = conditions.length > 0 ? (conditions.length === 1 ? conditions[0] : and(...conditions)) : undefined;
 
                 const itemsQuery = db.query.vesselRequests.findMany({
                         where: condition,
