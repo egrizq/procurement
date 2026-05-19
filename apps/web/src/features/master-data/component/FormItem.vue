@@ -57,20 +57,20 @@
           <label for="categoryId" class="block text-sm font-medium text-gray-700 mb-1">
             Category <span v-if="mode !== 'view'" class="text-red-500">*</span>
           </label>
-          <input
+          <select
             v-if="mode !== 'view'"
             id="categoryId"
             v-model="formData.categoryId"
-            type="number"
-            min="1"
             required
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Category ID"
-          />
+          >
+            <option value="" disabled>Select Category</option>
+            <option v-for="cat in props.categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+          </select>
           <input
             v-else
             id="categoryId"
-            :value="props.item?.category?.name || formData.categoryId"
+            :value="getCategoryName() || props.item?.category?.name || formData.categoryId"
             type="text"
             disabled
             class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
@@ -164,6 +164,10 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  categories: {
+    type: Array,
+    default: () => [],
+  },
   mode: {
     type: String,
     default: 'add',
@@ -209,7 +213,7 @@ watch(
       formData.value = {
         itemCode: newItem.itemCode || '',
         name: newItem.name || '',
-        categoryId: newItem.category.id || '',
+            categoryId: newItem.category?.id ?? newItem.categoryId ?? '',
         unit: newItem.unit || '',
         status: newItem.status || 'Publish',
         description: newItem.description || '',
@@ -220,6 +224,13 @@ watch(
   },
   { immediate: true },
 )
+
+const getCategoryName = () => {
+  const id = formData.value.categoryId
+  if (!id) return ''
+  const found = props.categories.find((c) => c.id === id || c.id === Number(id))
+  return found ? found.name : ''
+}
 
 const handleClose = () => {
   resetForm()

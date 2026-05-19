@@ -89,6 +89,7 @@
     <FormItem
       :is-open="isFormOpen"
       :item="selectedItem"
+      :categories="categories"
       :mode="formMode"
       @close="closeForm"
       @submit="handleFormSubmit"
@@ -102,13 +103,16 @@ import { Plus, Edit, Eye, Trash2 } from 'lucide-vue-next'
 import SearchFilter from '@/components/base/data-table/SearchFilter.vue'
 import DataTable from '@/components/base/data-table/DataTable.vue'
 import FormItem from '@/features/master-data/component/FormItem.vue'
+import { useCategoryItemStore } from '@/features/master-data/category-items/store.js'
 import { useItemStore } from '../store.js'
 import { showInfo } from '@/services/notification.js'
 
 const itemStore = useItemStore()
+const categoryStore = useCategoryItemStore()
 const mstItems = ref([])
 const pagination = ref(null)
 const isLoading = ref(false)
+const categories = ref([])
 
 const searchQuery = ref('')
 const filterCategory = ref('')
@@ -138,7 +142,17 @@ const fetchItems = async () => {
 
 onMounted(() => {
   fetchItems()
+  fetchCategories()
 })
+
+const fetchCategories = async () => {
+  try {
+    await categoryStore.fetchCategories(1, 1000, '')
+    categories.value = categoryStore.categories
+  } catch (error) {
+    console.error('Failed to fetch categories:', error)
+  }
+}
 
 // Debounced search
 let searchTimeout = null
