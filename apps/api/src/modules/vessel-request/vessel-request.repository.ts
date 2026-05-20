@@ -42,7 +42,7 @@ class VesselRequestRepository {
                     conditions.push(inArray(vesselRequests.id, matchingUserIds));
                 }
                 if (status) {
-                    conditions.push(eq(vesselRequests.status, status));
+                    conditions.push(eq(vesselRequests.status, status as any));
                 }
 
                 const condition = conditions.length > 0 ? (conditions.length === 1 ? conditions[0] : and(...conditions)) : undefined;

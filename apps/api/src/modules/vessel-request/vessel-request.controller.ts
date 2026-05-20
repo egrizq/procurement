@@ -6,6 +6,7 @@ import getPaginationMeta from '#shared/utils/paginate.ts';
 import MstItemRepository from '#modules/master-data/items/item.repository.ts';
 import MstVesselRepository from '#modules/master-data/vessels/vessel.repository.ts';
 import VesselRequestRepository from './vessel-request.repository.ts';
+import { generateVesselRequestPdf } from './vessel-request.pdf.ts';
 
 const vesselRequestRepo = new VesselRequestRepository();
 const mstItemRepo = new MstItemRepository();
@@ -279,6 +280,44 @@ const review = asyncHandler(async (req: Request, res: Response) => {
 	return success(res, updated, 200);
 });
 
+const generatePdf = asyncHandler(async (req: Request, res: Response) => {
+	const id = Number(req.params.id);
+	if (Number.isNaN(id)) {
+		throw new AppError('Invalid vessel request ID', 400);
+	}
+
+	const vesselRequest = await vesselRequestRepo.getVesselRequestById(id);
+	if (!vesselRequest) {
+		throw new AppError('Vessel request not found', 404);
+	}
+
+	const itemId = req.query.itemId ? Number(req.query.itemId) : undefined;
+	if (itemId !== undefined && Number.isNaN(itemId)) {
+		throw new AppError('Invalid item ID in query', 400);
+	}
+
+	if (itemId !== undefined) {
+		const filteredItems = vesselRequest.vesselRequestItems.filter(
+			(item: any) => item.id === itemId
+		);
+		if (filteredItems.length === 0) {
+			throw new AppError('Item not found in this request', 404);
+		}
+		vesselRequest.vesselRequestItems = filteredItems;
+	}
+
+	const pdfBuffer = await generateVesselRequestPdf(vesselRequest);
+
+	// Set headers
+	res.setHeader('Content-Type', 'application/pdf');
+	res.setHeader(
+		'Content-Disposition',
+		`attachment; filename=VesselRequest-${vesselRequest.requestCode}${itemId ? '-item' : ''}.pdf`
+	);
+
+	res.send(pdfBuffer);
+});
+
 export default {
 	create,
 	getAll,
@@ -286,4 +325,5 @@ export default {
 	update,
 	validate,
 	review,
+	generatePdf,
 };

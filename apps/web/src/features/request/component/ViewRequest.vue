@@ -17,7 +17,17 @@
                 Created on {{ formatDate(request.requestDate) }}
               </p>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 items-center">
+              <button
+                @click="downloadPDF"
+                class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-indigo-700 bg-white border border-indigo-200 rounded-lg shadow-sm hover:bg-indigo-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="isDownloading"
+                title="Download PDF"
+              >
+                <Loader2 v-if="isDownloading" class="w-4 h-4 animate-spin" />
+                <FileText v-else class="w-4 h-4" />
+                PDF
+              </button>
               <span
                 class="px-4 py-2 text-sm font-semibold rounded-lg shadow-sm"
                 :class="getStatusColor(request.status)"
@@ -166,6 +176,21 @@
                 {{ row.priority }}
               </span>
             </template>
+
+            <!-- Actions Column -->
+            <template #cell-actions="{ row }">
+              <div class="flex items-center justify-end">
+                <button
+                  @click="downloadItemPDF(row)"
+                  class="p-1.5 hover:bg-indigo-50 text-indigo-600 hover:text-indigo-900 rounded transition-colors disabled:opacity-50"
+                  :disabled="downloadingItemId !== null"
+                  title="Download Item PDF"
+                >
+                  <Loader2 v-if="downloadingItemId === row.id" class="w-4 h-4 animate-spin" />
+                  <FileText v-else class="w-4 h-4" />
+                </button>
+              </div>
+            </template>
           </DataTable>
 
           <!-- No items -->
@@ -256,7 +281,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { Ship, User, Package, PackageX, Loader2 } from 'lucide-vue-next'
+import { Ship, User, Package, PackageX, Loader2, FileText } from 'lucide-vue-next'
 import FormDialog from '@/components/base/form/Form.vue'
 import DataTable from '@/components/base/data-table/DataTable.vue'
 import { useRequestStore } from '../store'
@@ -281,6 +306,50 @@ const isAdjusting = ref(false)
 const isRejecting = ref(false)
 const rejectReason = ref('')
 const isSubmitting = ref(false)
+const isDownloading = ref(false)
+const downloadingItemId = ref(null)
+
+const downloadItemPDF = async (row) => {
+  if (downloadingItemId.value !== null) return
+  downloadingItemId.value = row.id
+  try {
+    const blob = await requestStore.downloadPdf(props.request.id, row.id)
+    const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `VesselRequestItem-${props.request.requestCode}-${row.item?.name.replace(/\s+/g, '_')}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    showSuccess('Item PDF downloaded successfully')
+  } catch (error) {
+    showError(error.message || 'Failed to download Item PDF')
+  } finally {
+    downloadingItemId.value = null
+  }
+}
+
+const downloadPDF = async () => {
+  if (isDownloading.value) return
+  isDownloading.value = true
+  try {
+    const blob = await requestStore.downloadPdf(props.request.id)
+    const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `VesselRequest-${props.request.requestCode}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    showSuccess('PDF downloaded successfully')
+  } catch (error) {
+    showError(error.message || 'Failed to download PDF')
+  } finally {
+    isDownloading.value = false
+  }
+}
 
 const canReview = computed(() => {
   return props.request && (props.request.status === 'Waiting' || props.request.status === 'Ok')
@@ -347,6 +416,7 @@ const itemColumns = [
   { key: 'qtyApproved', label: 'Qty Approved' },
   { key: 'status', label: 'Status' },
   { key: 'priority', label: 'Priority' },
+  { key: 'actions', label: '' },
 ]
 
 // Helper to get item index

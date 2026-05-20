@@ -36,3 +36,12 @@ export async function reviewRequest(id, payload) {
   const { data } = await http.post(`/vessel-requests/${id}/review`, payload)
   return data
 }
+
+export async function downloadRequestPdf(id, itemId) {
+  const params = itemId ? { itemId } : {}
+  const data = await http.get(`/vessel-requests/${id}/pdf`, {
+    params,
+    responseType: 'blob',
+  })
+  return data
+}

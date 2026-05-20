@@ -82,6 +82,16 @@ export const useRequestStore = defineStore('request', {
         this.error = null
       }
     },
+    async downloadPdf(id, itemId) {
+      try {
+        return await requestAPI.downloadRequestPdf(id, itemId)
+      } catch (error) {
+        this.error = error.error || 'Failed to download PDF.'
+        throw error
+      } finally {
+        this.error = null
+      }
+    },
     clearError() {
       this.error = null
     },

@@ -54,4 +54,11 @@ router.post(
 	vesselRequestController.review
 );
 
+router.get(
+	'/:id/pdf',
+	apiAuth(),
+	validate(vesselRequestByIdSchema),
+	vesselRequestController.generatePdf
+);
+
 export default router;
