@@ -74,11 +74,9 @@ export const useModuleAccessStore = defineStore('module-access', {
       )
     },
     canOpen(moduleSlug) {
-      const parentSlug = moduleSlug.split('/')[0]
       return (
         this.myModules.length === 0 ||
-        this.myModules.includes(moduleSlug) ||
-        this.myModules.includes(parentSlug)
+        this.myModules.includes(moduleSlug)
       )
     },
     canOpenAny(moduleSlugs) {

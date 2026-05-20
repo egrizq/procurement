@@ -258,7 +258,6 @@ const canOpen = (moduleSlug) => {
 
 const canOpenMasterData = computed(() =>
   moduleAccessStore.canOpenAny([
-    'master-data',
     'master-data/items',
     'master-data/category-items',
     'master-data/vendors',
@@ -268,7 +267,6 @@ const canOpenMasterData = computed(() =>
 
 const canOpenSettings = computed(() =>
   moduleAccessStore.canOpenAny([
-    'settings',
     'settings/users',
     'settings/module-access',
     'settings/vessel-item-standards',

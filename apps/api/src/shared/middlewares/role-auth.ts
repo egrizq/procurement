@@ -27,8 +27,7 @@ const API_ROUTE_TO_MODULE: Record<string, string> = {
 };
 
 const hasModuleAccess = (permittedSlugs: string[], moduleSlug: string) => {
-  const parentSlug = moduleSlug.split('/')[0] || moduleSlug;
-  return permittedSlugs.includes(moduleSlug) || permittedSlugs.includes(parentSlug);
+  return permittedSlugs.includes(moduleSlug);
 };
 
 const roleAuth = () => {
