@@ -6,4 +6,4 @@ export const userStatusEnum = ['Contract', 'Permanent', 'Intern', 'Leave'] as co
 export const requestStatusEnum = ['Ok', 'Waiting', 'Approved', 'Rejected'] as const;
 export const priorityEnum = ['Low', 'Medium', 'High'] as const;
 export const usersTypeEnum = ['Admin', 'Staff', 'Manager', 'Crew'] as const;
-export const periodEnum = ['weekly', 'monthly', 'quarterly', 'yearly', 'occasional'] as const;
+export const periodEnum = ['weekly', 'monthly', 'quarterly'] as const;
