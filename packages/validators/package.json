@@ -10,7 +10,8 @@
     "./auth": "./src/auth.js",
     "./token": "./src/token.js",
     "./vessel-request": "./src/vessel-request.js",
-    "./master-data": "./src/master-data.js"
+    "./master-data": "./src/master-data.js",
+    "./moc": "./src/moc.js"
   },
   "dependencies": {
     "zod": "^4.3.6"

@@ -8,6 +8,7 @@ import vesselRequestRoutes from '#modules/vessel-request/vessel-request.routes.t
 import settingsStandardRoutes from '#modules/settings/vessel-item-standards/vessel-item-standard.routes.ts';
 import userRoutes from '#modules/settings/users/user.routes.ts';
 import moduleAccessRoutes from '#modules/settings/module-access/module-access.routes.ts';
+import mocRoutes from '#modules/moc/moc.routes.ts';
 
 const router: Router = express.Router();
 
@@ -20,5 +21,6 @@ router.use('/vessel-requests', vesselRequestRoutes);
 router.use('/settings/vessel-item-standards', settingsStandardRoutes);
 router.use('/settings/users', userRoutes);
 router.use('/settings/module-access', moduleAccessRoutes);
+router.use('/moc', mocRoutes);
 
 export default router;
