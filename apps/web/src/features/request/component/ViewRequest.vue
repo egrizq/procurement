@@ -19,6 +19,7 @@
             </div>
             <div class="flex gap-2 items-center">
               <button
+                v-if="request.status === 'Approved'"
                 @click="downloadPDF"
                 class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-indigo-700 bg-white border border-indigo-200 rounded-lg shadow-sm hover:bg-indigo-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 :disabled="isDownloading"
@@ -181,6 +182,7 @@
             <template #cell-actions="{ row }">
               <div class="flex items-center justify-end">
                 <button
+                  v-if="request.status === 'Approved'"
                   @click="downloadItemPDF(row)"
                   class="p-1.5 hover:bg-indigo-50 text-indigo-600 hover:text-indigo-900 rounded transition-colors disabled:opacity-50"
                   :disabled="downloadingItemId !== null"
