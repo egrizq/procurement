@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { users, apiTokens, mstItemCategories, mstItems, mstVessels, vesselItemStandard, vesselRequestItems, vesselRequests, vesselStocks } from "./schema";
+import { users, apiTokens, mocs, mocVendors, mstVendors, vesselRequests, vesselRequestItems, mstItemCategories, mstItems, mstVessels, vesselItemStandard, vesselStocks } from "./schema";
 
 export const apiTokensRelations = relations(apiTokens, ({one}) => ({
 	user: one(users, {
@@ -10,6 +10,7 @@ export const apiTokensRelations = relations(apiTokens, ({one}) => ({
 
 export const usersRelations = relations(users, ({one, many}) => ({
 	apiTokens: many(apiTokens),
+	mocs: many(mocs),
 	mstVessel: one(mstVessels, {
 		fields: [users.vesselId],
 		references: [mstVessels.id]
@@ -19,6 +20,68 @@ export const usersRelations = relations(users, ({one, many}) => ({
 	}),
 	vesselRequests_reviewedBy: many(vesselRequests, {
 		relationName: "vesselRequests_reviewedBy_users_id"
+	}),
+}));
+
+export const mocVendorsRelations = relations(mocVendors, ({one}) => ({
+	moc: one(mocs, {
+		fields: [mocVendors.mocId],
+		references: [mocs.id]
+	}),
+	mstVendor: one(mstVendors, {
+		fields: [mocVendors.vendorId],
+		references: [mstVendors.id]
+	}),
+}));
+
+export const mocsRelations = relations(mocs, ({one, many}) => ({
+	mocVendors: many(mocVendors),
+	user: one(users, {
+		fields: [mocs.createdBy],
+		references: [users.id]
+	}),
+	vesselRequest: one(vesselRequests, {
+		fields: [mocs.vesselRequestId],
+		references: [vesselRequests.id]
+	}),
+	vesselRequestItem: one(vesselRequestItems, {
+		fields: [mocs.vesselRequestItemId],
+		references: [vesselRequestItems.id]
+	}),
+}));
+
+export const mstVendorsRelations = relations(mstVendors, ({many}) => ({
+	mocVendors: many(mocVendors),
+}));
+
+export const vesselRequestsRelations = relations(vesselRequests, ({one, many}) => ({
+	mocs: many(mocs),
+	vesselRequestItems: many(vesselRequestItems),
+	user_requestedBy: one(users, {
+		fields: [vesselRequests.requestedBy],
+		references: [users.id],
+		relationName: "vesselRequests_requestedBy_users_id"
+	}),
+	user_reviewedBy: one(users, {
+		fields: [vesselRequests.reviewedBy],
+		references: [users.id],
+		relationName: "vesselRequests_reviewedBy_users_id"
+	}),
+	mstVessel: one(mstVessels, {
+		fields: [vesselRequests.vesselId],
+		references: [mstVessels.id]
+	}),
+}));
+
+export const vesselRequestItemsRelations = relations(vesselRequestItems, ({one, many}) => ({
+	mocs: many(mocs),
+	mstItem: one(mstItems, {
+		fields: [vesselRequestItems.itemId],
+		references: [mstItems.id]
+	}),
+	vesselRequest: one(vesselRequests, {
+		fields: [vesselRequestItems.vesselRequestId],
+		references: [vesselRequests.id]
 	}),
 }));
 
@@ -50,35 +113,6 @@ export const vesselItemStandardRelations = relations(vesselItemStandard, ({one})
 	}),
 	mstVessel: one(mstVessels, {
 		fields: [vesselItemStandard.vesselId],
-		references: [mstVessels.id]
-	}),
-}));
-
-export const vesselRequestItemsRelations = relations(vesselRequestItems, ({one}) => ({
-	mstItem: one(mstItems, {
-		fields: [vesselRequestItems.itemId],
-		references: [mstItems.id]
-	}),
-	vesselRequest: one(vesselRequests, {
-		fields: [vesselRequestItems.vesselRequestId],
-		references: [vesselRequests.id]
-	}),
-}));
-
-export const vesselRequestsRelations = relations(vesselRequests, ({one, many}) => ({
-	vesselRequestItems: many(vesselRequestItems),
-	user_requestedBy: one(users, {
-		fields: [vesselRequests.requestedBy],
-		references: [users.id],
-		relationName: "vesselRequests_requestedBy_users_id"
-	}),
-	user_reviewedBy: one(users, {
-		fields: [vesselRequests.reviewedBy],
-		references: [users.id],
-		relationName: "vesselRequests_reviewedBy_users_id"
-	}),
-	mstVessel: one(mstVessels, {
-		fields: [vesselRequests.vesselId],
 		references: [mstVessels.id]
 	}),
 }));

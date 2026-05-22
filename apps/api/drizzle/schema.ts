@@ -1,4 +1,4 @@
-import { mysqlTable, mysqlSchema, AnyMySqlColumn, index, foreignKey, primaryKey, unique, int, varchar, timestamp, serial, text, bigint, datetime, mysqlEnum, date } from "drizzle-orm/mysql-core"
+import { mysqlTable, mysqlSchema, AnyMySqlColumn, index, foreignKey, primaryKey, unique, int, varchar, timestamp, serial, text, bigint, mysqlEnum, datetime, date } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
 export const apiTokens = mysqlTable("api_tokens", {
@@ -27,14 +27,40 @@ export const migrations = mysqlTable("migrations", {
 	unique("id").on(table.id),
 ]);
 
+export const mocVendors = mysqlTable("moc_vendors", {
+	id: int().autoincrement().notNull(),
+	mocId: int("moc_id").notNull().references(() => mocs.id, { onDelete: "cascade" } ),
+	vendorId: int("vendor_id").notNull().references(() => mstVendors.id),
+	unitPrice: int("unit_price").notNull(),
+	leadTime: varchar("lead_time", { length: 100 }).notNull(),
+	remarks: text(),
+	isSelected: tinyint("is_selected").default(0).notNull(),
+},
+(table) => [
+	primaryKey({ columns: [table.id], name: "moc_vendors_id"}),
+]);
+
+export const mocs = mysqlTable("mocs", {
+	id: int().autoincrement().notNull(),
+	vesselRequestId: int("vessel_request_id").notNull().references(() => vesselRequests.id),
+	vesselRequestItemId: int("vessel_request_item_id").notNull().references(() => vesselRequestItems.id),
+	status: mysqlEnum(['Draft','Completed']).default('Draft').notNull(),
+	createdBy: int("created_by").notNull().references(() => users.id),
+	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`(now())`).notNull(),
+	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`(now())`).onUpdateNow().notNull(),
+},
+(table) => [
+	primaryKey({ columns: [table.id], name: "mocs_id"}),
+]);
+
 export const mstCity = mysqlTable("mst_city", {
 	id: int().autoincrement().notNull(),
 	cityName: varchar("city_name", { length: 255 }),
 	createdAt: datetime("created_at", { mode: 'string'}).notNull(),
 },
 (table) => [
-	index("o2o_master_city_id").on(table.id),
 	index("o2o_master_city_city_name").on(table.cityName),
+	index("o2o_master_city_id").on(table.id),
 	primaryKey({ columns: [table.id], name: "mst_city_id"}),
 ]);
 
@@ -61,8 +87,8 @@ export const mstItems = mysqlTable("mst_items", {
 	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`(now())`).onUpdateNow().notNull(),
 },
 (table) => [
-	index("idx_item_code").on(table.itemCode),
 	index("idx_category_id").on(table.categoryId),
+	index("idx_item_code").on(table.itemCode),
 	index("idx_status").on(table.status),
 	primaryKey({ columns: [table.id], name: "mst_items_id"}),
 ]);
@@ -128,8 +154,8 @@ export const users = mysqlTable("users", {
 (table) => [
 	index("users_vessel_id_fkey").on(table.vesselId),
 	primaryKey({ columns: [table.id], name: "users_id"}),
-	unique("users_username_unique").on(table.username),
 	unique("users_email_unique").on(table.email),
+	unique("users_username_unique").on(table.username),
 ]);
 
 export const vesselItemStandard = mysqlTable("vessel_item_standard", {
@@ -143,8 +169,8 @@ export const vesselItemStandard = mysqlTable("vessel_item_standard", {
 	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`(now())`).onUpdateNow().notNull(),
 },
 (table) => [
-	index("idx_vessel_id").on(table.vesselId),
 	index("idx_item_id").on(table.itemId),
+	index("idx_vessel_id").on(table.vesselId),
 	primaryKey({ columns: [table.id], name: "vessel_item_standard_id"}),
 ]);
 
@@ -163,8 +189,8 @@ export const vesselRequestItems = mysqlTable("vessel_request_items", {
 	staffJustification: text("staff_justification"),
 },
 (table) => [
-	index("idx_vessel_request_id").on(table.vesselRequestId),
 	index("idx_item_id").on(table.itemId),
+	index("idx_vessel_request_id").on(table.vesselRequestId),
 	primaryKey({ columns: [table.id], name: "vessel_request_items_id"}),
 ]);
 
@@ -185,8 +211,8 @@ export const vesselRequests = mysqlTable("vessel_requests", {
 	rejectReason: text("reject_reason"),
 },
 (table) => [
-	index("idx_vessel_id").on(table.vesselId),
 	index("idx_status").on(table.status),
+	index("idx_vessel_id").on(table.vesselId),
 	index("vessel_requests_requested_by_fkey").on(table.requestedBy),
 	index("vessel_requests_reviewed_by_fkey").on(table.reviewedBy),
 	primaryKey({ columns: [table.id], name: "vessel_requests_id"}),
@@ -203,7 +229,7 @@ export const vesselStocks = mysqlTable("vessel_stocks", {
 	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`(now())`).onUpdateNow().notNull(),
 },
 (table) => [
-	index("idx_vessel_id").on(table.vesselId),
 	index("idx_item_id").on(table.itemId),
+	index("idx_vessel_id").on(table.vesselId),
 	primaryKey({ columns: [table.id], name: "vessel_stocks_id"}),
 ]);

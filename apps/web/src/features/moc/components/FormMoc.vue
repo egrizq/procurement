@@ -7,36 +7,55 @@
     @close="handleClose"
   >
     <template #default>
-      <!-- Step indicator (only for create mode) -->
-      <div v-if="!isEditMode" class="mb-8 border-b border-gray-100 pb-4">
+      <!-- ─── Step Indicator ──────────────────────────────────────── -->
+      <div class="mb-8 border-b border-gray-100 pb-4">
         <div class="flex items-center justify-center gap-2">
-          <div class="flex items-center gap-2">
+          <!-- Step 1 -->
+          <div v-if="!isEditMode" class="flex items-center gap-2">
             <span
               class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold transition-all duration-200"
-              :class="currentStep === 1 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'bg-gray-100 text-gray-500'"
+              :class="currentStep === 1 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : currentStep > 1 ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-500'"
             >
-              1
+              <Check v-if="currentStep > 1" :size="14" />
+              <span v-else>1</span>
             </span>
-            <span class="text-sm font-medium" :class="currentStep === 1 ? 'text-indigo-600 font-semibold' : 'text-gray-500'">
-              Select Request & Item
+            <span class="text-sm font-medium" :class="currentStep === 1 ? 'text-indigo-600 font-semibold' : 'text-gray-400'">
+              Select Item
             </span>
           </div>
-          <div class="w-12 h-px bg-gray-200"></div>
+          <div v-if="!isEditMode" class="w-10 h-px bg-gray-200"></div>
+
+          <!-- Step 2 -->
           <div class="flex items-center gap-2">
             <span
               class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold transition-all duration-200"
-              :class="currentStep === 2 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'bg-gray-100 text-gray-500'"
+              :class="currentStep === 2 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : currentStep > 2 ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-500'"
             >
-              2
+              <Check v-if="currentStep > 2" :size="14" />
+              <span v-else>{{ isEditMode ? 1 : 2 }}</span>
             </span>
-            <span class="text-sm font-medium" :class="currentStep === 2 ? 'text-indigo-600 font-semibold' : 'text-gray-500'">
-              Comparison Matrix
+            <span class="text-sm font-medium" :class="currentStep === 2 ? 'text-indigo-600 font-semibold' : currentStep > 2 ? 'text-emerald-600' : 'text-gray-400'">
+              Vendor Matrix
+            </span>
+          </div>
+          <div class="w-10 h-px bg-gray-200"></div>
+
+          <!-- Step 3 -->
+          <div class="flex items-center gap-2">
+            <span
+              class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold transition-all duration-200"
+              :class="currentStep === 3 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'bg-gray-100 text-gray-500'"
+            >
+              {{ isEditMode ? 2 : 3 }}
+            </span>
+            <span class="text-sm font-medium" :class="currentStep === 3 ? 'text-indigo-600 font-semibold' : 'text-gray-400'">
+              SAW Scoring
             </span>
           </div>
         </div>
       </div>
 
-      <!-- Step 1: Select Request & Item -->
+      <!-- ─── Step 1: Select Request & Item ──────────────────────── -->
       <div v-if="currentStep === 1 && !isEditMode" class="space-y-6">
         <div class="space-y-2">
           <label class="block text-sm font-semibold text-gray-700">Choose Approved Request *</label>
@@ -54,15 +73,12 @@
 
         <div v-if="selectedRequestDetail" class="space-y-3">
           <label class="block text-sm font-semibold text-gray-700">Select Item to Compare *</label>
-          
           <div v-if="approvedItems.length === 0" class="text-sm text-amber-600 bg-amber-50 p-4 rounded-lg border border-amber-200">
             No approved items found in this request.
           </div>
-
           <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div
-              v-for="item in approvedItems"
-              :key="item.id"
+              v-for="item in approvedItems" :key="item.id"
               @click="selectRequestItem(item)"
               class="flex flex-col justify-between p-4 border rounded-xl cursor-pointer hover:border-indigo-500 hover:bg-indigo-50/20 transition-all duration-150"
               :class="wizardData.vesselRequestItemId === item.id ? 'border-indigo-600 bg-indigo-50/50 shadow-sm ring-1 ring-indigo-500' : 'border-gray-200 bg-white'"
@@ -73,13 +89,8 @@
                   <p class="text-xs text-gray-400 mt-0.5">Code: {{ item.item?.itemCode || '-' }}</p>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">
-                    Approved
-                  </span>
-                  <CheckCircle
-                    v-if="wizardData.vesselRequestItemId === item.id"
-                    class="w-5 h-5 text-indigo-600"
-                  />
+                  <span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">Approved</span>
+                  <CheckCircle v-if="wizardData.vesselRequestItemId === item.id" class="w-5 h-5 text-indigo-600" />
                 </div>
               </div>
               <div class="flex justify-between items-center mt-4 border-t border-gray-100 pt-3">
@@ -91,26 +102,14 @@
         </div>
       </div>
 
-      <!-- Step 2: Vendor Comparison Matrix -->
-      <div v-if="currentStep === 2 || isEditMode" class="space-y-6">
+      <!-- ─── Step 2: Vendor Comparison Matrix ───────────────────── -->
+      <div v-if="currentStep === 2" class="space-y-6">
         <!-- Summary Header -->
         <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-wrap gap-x-8 gap-y-2 text-sm text-slate-700">
-          <div>
-            <span class="text-slate-400">Request:</span>
-            <strong class="ml-1 text-slate-900">{{ summaryRequestCode }}</strong>
-          </div>
-          <div>
-            <span class="text-slate-400">Vessel:</span>
-            <strong class="ml-1 text-slate-900">{{ summaryVesselName }}</strong>
-          </div>
-          <div>
-            <span class="text-slate-400">Item:</span>
-            <strong class="ml-1 text-slate-900">{{ summaryItemName }}</strong>
-          </div>
-          <div>
-            <span class="text-slate-400">Approved Qty:</span>
-            <strong class="ml-1 text-slate-900">{{ summaryApprovedQty }}</strong>
-          </div>
+          <div><span class="text-slate-400">Request:</span> <strong class="ml-1 text-slate-900">{{ summaryRequestCode }}</strong></div>
+          <div><span class="text-slate-400">Vessel:</span> <strong class="ml-1 text-slate-900">{{ summaryVesselName }}</strong></div>
+          <div><span class="text-slate-400">Item:</span> <strong class="ml-1 text-slate-900">{{ summaryItemName }}</strong></div>
+          <div><span class="text-slate-400">Approved Qty:</span> <strong class="ml-1 text-slate-900">{{ summaryApprovedQty }}</strong></div>
         </div>
 
         <div class="flex justify-between items-center">
@@ -120,6 +119,7 @@
             <span class="text-xs font-normal text-gray-400">(Minimum 3 vendors required)</span>
           </h4>
           <button
+            v-if="!isCompleted"
             @click="addVendorToMatrix"
             type="button"
             class="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 border border-indigo-200 hover:border-indigo-300 bg-indigo-50/50 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
@@ -129,11 +129,10 @@
           </button>
         </div>
 
-        <!-- Matrix Comparison Board -->
+        <!-- Vendor Cards Grid -->
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
           <div
-            v-for="(matrix, idx) in wizardData.vendors"
-            :key="idx"
+            v-for="(matrix, idx) in wizardData.vendors" :key="idx"
             class="flex flex-col bg-white border rounded-xl overflow-hidden shadow-sm transition-all duration-200"
             :class="matrix.isSelected ? 'border-emerald-500 shadow-emerald-50/50 ring-2 ring-emerald-500/20' : 'border-gray-200 hover:border-gray-300'"
           >
@@ -141,6 +140,7 @@
             <div class="flex justify-between items-center px-4 py-3 bg-slate-50 border-b border-gray-100">
               <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Vendor #{{ idx + 1 }}</span>
               <button
+                v-if="!isCompleted"
                 @click="removeVendorFromMatrix(idx)"
                 type="button"
                 :disabled="wizardData.vendors.length <= 3"
@@ -158,13 +158,11 @@
                 <label class="block text-xs font-bold text-gray-500 mb-1">Select Vendor *</label>
                 <select
                   v-model="matrix.vendorId"
-                  required
-                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                  :disabled="isCompleted"
+                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 bg-white disabled:bg-gray-50 disabled:text-gray-500"
                 >
                   <option :value="null" disabled>Choose vendor</option>
-                  <option v-for="v in masterVendors" :key="v.id" :value="v.id">
-                    {{ v.name }}
-                  </option>
+                  <option v-for="v in masterVendors" :key="v.id" :value="v.id">{{ v.name }}</option>
                 </select>
               </div>
 
@@ -173,27 +171,53 @@
                 <label class="block text-xs font-bold text-gray-500 mb-1">Unit Price (IDR) *</label>
                 <input
                   v-model.number="matrix.unitPrice"
-                  type="number"
-                  min="0"
-                  required
-                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                  type="number" min="0"
+                  :disabled="isCompleted"
+                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
                   placeholder="Enter unit price"
                 />
-                <span class="text-[10px] text-gray-400 mt-0.5 block" v-if="matrix.unitPrice">
+                <span v-if="matrix.unitPrice" class="text-[10px] text-gray-400 mt-0.5 block">
                   Rp {{ formatNumber(matrix.unitPrice) }}
                 </span>
               </div>
 
-              <!-- Lead Time -->
+              <!-- Available Qty -->
               <div>
-                <label class="block text-xs font-bold text-gray-500 mb-1">Lead Time *</label>
+                <label class="block text-xs font-bold text-gray-500 mb-1">Ketersediaan Qty *</label>
                 <input
-                  v-model="matrix.leadTime"
-                  type="text"
-                  required
-                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g. 3 days, 1 week"
+                  v-model.number="matrix.availableQty"
+                  type="number" min="0"
+                  :disabled="isCompleted"
+                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  placeholder="Available stock qty"
                 />
+              </div>
+
+              <!-- Warranty -->
+              <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">Garansi (bulan)</label>
+                <input
+                  v-model.number="matrix.warranty"
+                  type="number" min="0"
+                  :disabled="isCompleted"
+                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  placeholder="e.g. 12"
+                />
+              </div>
+
+              <!-- Discount -->
+              <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">Diskon (%)</label>
+                <div class="relative">
+                  <input
+                    v-model.number="matrix.discount"
+                    type="number" min="0" max="100"
+                    :disabled="isCompleted"
+                    class="w-full px-3 py-2 pr-8 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    placeholder="0"
+                  />
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">%</span>
+                </div>
               </div>
 
               <!-- Remarks -->
@@ -202,79 +226,251 @@
                 <textarea
                   v-model="matrix.remarks"
                   rows="2"
-                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                  :disabled="isCompleted"
+                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 bg-white disabled:bg-gray-50 disabled:text-gray-500"
                   placeholder="Notes, terms, etc."
                 ></textarea>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <!-- Card Footer (Winner Selection) -->
-            <div class="px-4 py-3 bg-slate-50/50 border-t border-gray-100 flex items-center justify-between">
-              <span class="text-xs font-medium" :class="matrix.isSelected ? 'text-emerald-700 font-bold' : 'text-gray-500'">
-                Selected Winner?
+      <!-- ─── Step 3: SAW Scoring Results ────────────────────────── -->
+      <div v-if="currentStep === 3" class="space-y-6">
+        <!-- Summary Header (same pattern as step 2) -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-wrap gap-x-8 gap-y-2 text-sm text-slate-700">
+          <div><span class="text-slate-400">Request:</span> <strong class="ml-1 text-slate-900">{{ summaryRequestCode }}</strong></div>
+          <div><span class="text-slate-400">Vessel:</span> <strong class="ml-1 text-slate-900">{{ summaryVesselName }}</strong></div>
+          <div><span class="text-slate-400">Item:</span> <strong class="ml-1 text-slate-900">{{ summaryItemName }}</strong></div>
+          <div><span class="text-slate-400">Approved Qty:</span> <strong class="ml-1 text-slate-900">{{ summaryApprovedQty }}</strong></div>
+        </div>
+
+        <!-- Section Title -->
+        <div class="flex items-center gap-2">
+          <h4 class="text-md font-bold text-gray-900 flex items-center gap-1.5">
+            <BarChart2 :size="18" class="text-indigo-600" />
+            Hasil Scoring SAW
+          </h4>
+          <div class="flex gap-2 ml-auto flex-wrap">
+            <span v-for="w in sawWeightLabels" :key="w.label"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
+              :class="w.cls"
+            >{{ w.label }} {{ w.pct }}</span>
+          </div>
+        </div>
+
+        <!-- Scoring Cards (same grid as step 2) -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <div
+            v-for="v in sawResults" :key="v.vendorId"
+            class="flex flex-col bg-white border rounded-xl overflow-hidden shadow-sm transition-all duration-200"
+            :class="v.rank === 1 ? 'border-emerald-500 shadow-emerald-100 ring-2 ring-emerald-500/20' : 'border-gray-200'"
+          >
+            <!-- Card Header (same pattern as vendor cards) -->
+            <div
+              class="flex justify-between items-center px-4 py-3 border-b border-gray-100"
+              :class="v.rank === 1 ? 'bg-emerald-50' : 'bg-slate-50'"
+            >
+              <div class="flex items-center gap-2">
+                <span class="text-base">{{ medalOf(v.rank) }}</span>
+                <span class="text-xs font-bold uppercase tracking-wider" :class="v.rank === 1 ? 'text-emerald-700' : 'text-gray-400'">
+                  Rank #{{ v.rank }}
+                </span>
+              </div>
+              <span v-if="v.rank === 1"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white"
+              >
+                <Trophy :size="10" /> WINNER
               </span>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  :checked="matrix.isSelected"
-                  @change="toggleWinner(idx)"
-                  class="sr-only peer"
-                />
-                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-              </label>
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-4 space-y-3 flex-1">
+              <!-- Vendor Name -->
+              <div class="text-sm font-bold text-gray-900">{{ v.vendorName }}</div>
+
+              <!-- SAW Score Bar -->
+              <div class="space-y-1">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs text-gray-500">SAW Score</span>
+                  <span class="text-lg font-black" :class="v.rank === 1 ? 'text-emerald-600' : 'text-indigo-700'">
+                    {{ (v.sawScore * 100).toFixed(2) }}%
+                  </span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2">
+                  <div
+                    class="h-2 rounded-full transition-all duration-700"
+                    :class="v.rank === 1 ? 'bg-emerald-500' : 'bg-indigo-400'"
+                    :style="{ width: `${(v.sawScore * 100).toFixed(1)}%` }"
+                  />
+                </div>
+              </div>
+
+              <!-- Criterion Breakdown -->
+              <div class="space-y-2 pt-1 border-t border-gray-100">
+                <!-- Price -->
+                <div class="flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-rose-400 shrink-0"></span>
+                    <span class="text-gray-500">Harga</span>
+                    <span class="text-gray-400">(Rp {{ formatNumber(v.unitPrice) }})</span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-rose-600 font-bold">{{ v.normalized.rPrice.toFixed(4) }}</span>
+                    <span class="text-gray-400 ml-1">→ {{ (v.weighted.wPrice * 100).toFixed(2) }}%</span>
+                  </div>
+                </div>
+                <!-- Qty -->
+                <div class="flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></span>
+                    <span class="text-gray-500">Qty</span>
+                    <span class="text-gray-400">({{ v.availableQty }} unit)</span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-blue-600 font-bold">{{ v.normalized.rQty.toFixed(4) }}</span>
+                    <span class="text-gray-400 ml-1">→ {{ (v.weighted.wQty * 100).toFixed(2) }}%</span>
+                  </div>
+                </div>
+                <!-- Warranty -->
+                <div class="flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+                    <span class="text-gray-500">Garansi</span>
+                    <span class="text-gray-400">({{ v.warranty }} bln)</span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-emerald-600 font-bold">{{ v.normalized.rWar.toFixed(4) }}</span>
+                    <span class="text-gray-400 ml-1">→ {{ (v.weighted.wWar * 100).toFixed(2) }}%</span>
+                  </div>
+                </div>
+                <!-- Discount -->
+                <div class="flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-violet-400 shrink-0"></span>
+                    <span class="text-gray-500">Diskon</span>
+                    <span class="text-gray-400">({{ v.discount }}%)</span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-violet-600 font-bold">{{ v.normalized.rDis.toFixed(4) }}</span>
+                    <span class="text-gray-400 ml-1">→ {{ (v.weighted.wDis * 100).toFixed(2) }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Footer: raw total -->
+            <div class="px-4 py-2.5 border-t border-gray-100 bg-slate-50/50 flex justify-between items-center">
+              <span class="text-[10px] text-gray-400">Σ weighted score</span>
+              <span class="text-xs font-bold" :class="v.rank === 1 ? 'text-emerald-600' : 'text-gray-600'">
+                {{ v.sawScore.toFixed(4) }}
+              </span>
             </div>
           </div>
+        </div>
+
+        <!-- Formula note (same card style) -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-500 space-y-1">
+          <p class="font-semibold text-slate-700 flex items-center gap-1.5"><Info :size="13" /> Formula SAW</p>
+          <p>• <b>Cost</b> (Harga): r = nilai_min ÷ nilai_vendor &nbsp;|&nbsp; <b>Benefit</b> (Qty, Garansi, Diskon): r = nilai_vendor ÷ nilai_max</p>
+          <p>• <b>S</b> = (r_harga × 40%) + (r_qty × 25%) + (r_garansi × 20%) + (r_diskon × 15%)</p>
         </div>
       </div>
     </template>
 
-    <!-- Custom footer to handle navigation & submission -->
+    <!-- ─── Footer ─────────────────────────────────────────────── -->
     <template #footer>
       <div class="flex items-center justify-between w-full">
-        <!-- Back button (only on Step 2 in create mode) -->
-        <button
-          v-if="currentStep === 2 && !isEditMode"
-          @click="currentStep = 1"
-          type="button"
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          Back
-        </button>
-        <div v-else></div>
+        <!-- Left: Back button -->
+        <div>
+          <button
+            v-if="currentStep > 1"
+            @click="goBack"
+            type="button"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            ← Back
+          </button>
+        </div>
 
-        <div class="flex items-center gap-3">
+        <!-- Right: action buttons -->
+        <div class="flex items-center gap-2">
           <button
             @click="handleClose"
             type="button"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            Cancel
+            {{ isCompleted ? 'Tutup' : 'Cancel' }}
           </button>
 
-          <!-- Next button (Step 1 in create mode) -->
+          <!-- Step 1: Next -->
           <button
-            v-if="currentStep === 1 && !isEditMode"
+            v-if="currentStep === 1"
             @click="goToStep2"
             type="button"
             class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            Next
+            Next →
           </button>
 
-          <!-- Submit button (Step 2 or Edit mode) -->
-          <button
-            v-else
-            @click="submitWizardForm"
-            type="button"
-            :disabled="isSaving"
-            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <span v-if="isSaving" class="flex items-center gap-2">
-              <span class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              Saving...
-            </span>
-            <span v-else>Save Draft</span>
-          </button>
+          <!-- Step 2: Save Draft + Lanjut Scoring -->
+          <template v-if="currentStep === 2">
+            <template v-if="!isCompleted">
+              <button
+                @click="saveDraft"
+                type="button"
+                :disabled="isSaving"
+                class="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-300 rounded-lg hover:bg-indigo-50 disabled:opacity-50 transition-colors"
+              >
+                <span v-if="isSaving && savingMode === 'draft'" class="flex items-center gap-2">
+                  <span class="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></span>
+                  Saving...
+                </span>
+                <span v-else>Simpan Draft</span>
+              </button>
+            </template>
+            <button
+              @click="goToScoring"
+              type="button"
+              :disabled="isSaving"
+              class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            >
+              <BarChart2 :size="14" />
+              <span>{{ isCompleted ? 'Lihat Scoring →' : 'Lanjut Scoring →' }}</span>
+            </button>
+          </template>
+
+          <!-- Step 3: Simpan Draft + Selesaikan MOC -->
+          <template v-if="currentStep === 3 && !isCompleted">
+            <button
+              @click="saveDraft"
+              type="button"
+              :disabled="isSaving"
+              class="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-300 rounded-lg hover:bg-indigo-50 disabled:opacity-50 transition-colors"
+            >
+              <span v-if="isSaving && savingMode === 'draft'" class="flex items-center gap-2">
+                <span class="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></span>
+                Saving...
+              </span>
+              <span v-else>Simpan Draft</span>
+            </button>
+            <button
+              @click="completeWithSAW"
+              type="button"
+              :disabled="isSaving"
+              class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+            >
+              <span v-if="isSaving && savingMode === 'complete'" class="flex items-center gap-2">
+                <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                Saving...
+              </span>
+              <span v-else class="flex items-center gap-2">
+                <Trophy :size="14" />
+                Selesaikan MOC
+              </span>
+            </button>
+          </template>
         </div>
       </div>
     </template>
@@ -283,7 +479,7 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
-import { Plus, Trash2, CheckCircle, Scale } from 'lucide-vue-next'
+import { Plus, Trash2, CheckCircle, Scale, BarChart2, Trophy, Check, Info } from 'lucide-vue-next'
 import FormDialog from '@/components/base/form/Form.vue'
 import { useMocStore } from '../store.js'
 import { useRequestStore } from '../../request/store.js'
@@ -291,114 +487,139 @@ import { useVendorStore } from '../../master-data/vendors/store.js'
 import { showSuccess, showError } from '@/services/notification.js'
 
 const props = defineProps({
-  isOpen: {
-    type: Boolean,
-    default: false
-  },
-  isEditMode: {
-    type: Boolean,
-    default: false
-  },
-  mocId: {
-    type: [Number, String],
-    default: null
-  }
+  isOpen:     { type: Boolean, default: false },
+  isEditMode: { type: Boolean, default: false },
+  mocId:      { type: [Number, String], default: null },
 })
 
 const emit = defineEmits(['close', 'saved'])
 
-const mocStore = useMocStore()
+const mocStore    = useMocStore()
 const requestStore = useRequestStore()
-const vendorStore = useVendorStore()
+const vendorStore  = useVendorStore()
 
-const currentStep = ref(1)
-const isSaving = ref(false)
+// ── State ────────────────────────────────────────────────────────
+const currentStep   = ref(1)
+const isSaving      = ref(false)
+const savingMode    = ref(null)   // 'draft' | 'complete'
 
-const approvedRequests = ref([])
+const approvedRequests    = ref([])
 const selectedRequestDetail = ref(null)
-const approvedItems = ref([])
+const approvedItems       = ref([])
+
+// SAW results (computed in goToScoring)
+const sawResults = ref([])
+
+const makeEmptyVendor = () => ({
+  vendorId: null, unitPrice: 0, availableQty: 0,
+  warranty: 0, discount: 0, remarks: '', isSelected: false, sawScore: null,
+})
 
 const wizardData = ref({
   vesselRequestId: null,
   vesselRequestItemId: null,
   status: 'Draft',
-  vendors: [
-    { vendorId: null, unitPrice: 0, leadTime: '', remarks: '', isSelected: false },
-    { vendorId: null, unitPrice: 0, leadTime: '', remarks: '', isSelected: false },
-    { vendorId: null, unitPrice: 0, leadTime: '', remarks: '', isSelected: false },
-  ]
+  vendors: [makeEmptyVendor(), makeEmptyVendor(), makeEmptyVendor()],
 })
 
+// ── Computed ──────────────────────────────────────────────────────
 const masterVendors = computed(() => vendorStore.vendors || [])
 
 const summaryRequestCode = computed(() => {
-  if (props.isEditMode && mocStore.currentMoc) {
-    return mocStore.currentMoc.vesselRequest?.requestCode || '-'
-  }
+  if (props.isEditMode && mocStore.currentMoc) return mocStore.currentMoc.vesselRequest?.requestCode || '-'
   return selectedRequestDetail.value?.requestCode || '-'
 })
-
 const summaryVesselName = computed(() => {
-  if (props.isEditMode && mocStore.currentMoc) {
-    return mocStore.currentMoc.vesselRequest?.vessel?.name || '-'
-  }
+  if (props.isEditMode && mocStore.currentMoc) return mocStore.currentMoc.vesselRequest?.vessel?.name || '-'
   return selectedRequestDetail.value?.vessel?.name || '-'
 })
-
 const summaryItemName = computed(() => {
-  if (props.isEditMode && mocStore.currentMoc) {
-    return mocStore.currentMoc.vesselRequestItem?.item?.name || '-'
-  }
-  const itemObj = approvedItems.value.find(i => i.id === wizardData.value.vesselRequestItemId)
-  return itemObj?.item?.name || '-'
+  if (props.isEditMode && mocStore.currentMoc) return mocStore.currentMoc.vesselRequestItem?.item?.name || '-'
+  const item = approvedItems.value.find(i => i.id === wizardData.value.vesselRequestItemId)
+  return item?.item?.name || '-'
 })
-
 const summaryApprovedQty = computed(() => {
   if (props.isEditMode && mocStore.currentMoc) {
-    return `${mocStore.currentMoc.vesselRequestItem?.qtyApproved || 0} ${mocStore.currentMoc.vesselRequestItem?.unit || ''}`
+    const ri = mocStore.currentMoc.vesselRequestItem
+    return `${ri?.qtyApproved || 0} ${ri?.unit || ''}`
   }
-  const itemObj = approvedItems.value.find(i => i.id === wizardData.value.vesselRequestItemId)
-  return itemObj ? `${itemObj.qtyApproved} ${itemObj.unit}` : '-'
+  const item = approvedItems.value.find(i => i.id === wizardData.value.vesselRequestItemId)
+  return item ? `${item.qtyApproved} ${item.unit}` : '-'
 })
 
+const isCompleted = computed(() => wizardData.value.status === 'Completed')
+
+const sawWeightLabels = [
+  { label: 'Harga',  pct: '40%', cls: 'bg-rose-50 border-rose-200 text-rose-700'     },
+  { label: 'Qty',    pct: '25%', cls: 'bg-blue-50 border-blue-200 text-blue-700'     },
+  { label: 'Garansi',pct: '20%', cls: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
+  { label: 'Diskon', pct: '15%', cls: 'bg-violet-50 border-violet-200 text-violet-700' },
+]
+
+// ── Helpers ───────────────────────────────────────────────────────
 const formatNumber = (num) => {
-  if (num === undefined || num === null) return '0'
+  if (!num) return '0'
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
-const fetchApprovedRequestsList = async () => {
-  try {
-    await mocStore.fetchApprovedRequests(1, 100, '')
-    approvedRequests.value = mocStore.requests || []
-  } catch (err) {
-    showError('Failed to fetch approved crew requests.')
-  }
-}
+const medalOf = (rank) => ({ 1: '🥇', 2: '🥈', 3: '🥉' }[rank] ?? `#${rank}`)
 
-const handleRequestChange = async () => {
-  selectedRequestDetail.value = null
-  approvedItems.value = []
-  wizardData.value.vesselRequestItemId = null
+/** Client-side SAW calculation from current wizardData.vendors */
+const computeSAW = () => {
+  const active = wizardData.value.vendors.filter(v => v.vendorId !== null && Number(v.unitPrice) > 0)
+  if (active.length < 2) return []
 
-  if (!wizardData.value.vesselRequestId) return
+  const minPrice = Math.min(...active.map(v => Number(v.unitPrice) || 1))
+  const maxQty   = Math.max(...active.map(v => Number(v.availableQty) || 0))
+  const maxWar   = Math.max(...active.map(v => Number(v.warranty) || 0))
+  const maxDis   = Math.max(...active.map(v => Number(v.discount) || 0))
 
-  try {
-    const fullRequest = await requestStore.fetchRequestById(wizardData.value.vesselRequestId)
-    if (fullRequest) {
-      selectedRequestDetail.value = fullRequest
-      approvedItems.value = fullRequest.vesselRequestItems?.filter(i => i.status === 'Approved' || i.qtyApproved > 0) || []
-      
-      if (approvedItems.value.length === 1) {
-        wizardData.value.vesselRequestItemId = approvedItems.value[0].id
-      }
+  const scored = active.map(v => {
+    const rPrice = minPrice / (Number(v.unitPrice) || 1)
+    const rQty   = maxQty > 0 ? (Number(v.availableQty) || 0) / maxQty : 0
+    const rWar   = maxWar > 0 ? (Number(v.warranty)     || 0) / maxWar : 0
+    const rDis   = maxDis > 0 ? (Number(v.discount)     || 0) / maxDis : 0
+
+    const wPrice = 0.40 * rPrice
+    const wQty   = 0.25 * rQty
+    const wWar   = 0.20 * rWar
+    const wDis   = 0.15 * rDis
+
+    const sawScore = parseFloat((wPrice + wQty + wWar + wDis).toFixed(4))
+    const vendor   = masterVendors.value.find(mv => mv.id === v.vendorId)
+
+    return {
+      ...v,
+      vendorName: vendor?.name || 'Unknown Vendor',
+      normalized: {
+        rPrice: parseFloat(rPrice.toFixed(4)),
+        rQty:   parseFloat(rQty.toFixed(4)),
+        rWar:   parseFloat(rWar.toFixed(4)),
+        rDis:   parseFloat(rDis.toFixed(4)),
+      },
+      weighted: {
+        wPrice: parseFloat(wPrice.toFixed(4)),
+        wQty:   parseFloat(wQty.toFixed(4)),
+        wWar:   parseFloat(wWar.toFixed(4)),
+        wDis:   parseFloat(wDis.toFixed(4)),
+      },
+      sawScore,
     }
-  } catch (error) {
-    showError('Failed to load request item details')
-  }
+  })
+
+  const sorted   = [...scored].sort((a, b) => b.sawScore - a.sawScore)
+  const maxScore = sorted[0]?.sawScore ?? 0
+
+  return scored
+    .map(v => ({ ...v, rank: sorted.findIndex(s => s.vendorId === v.vendorId) + 1, isWinner: v.sawScore === maxScore }))
+    .sort((a, b) => a.rank - b.rank)
 }
 
-const selectRequestItem = (item) => {
-  wizardData.value.vesselRequestItemId = item.id
+// ── Navigation ────────────────────────────────────────────────────
+const goBack = () => {
+  if (currentStep.value > (props.isEditMode ? 2 : 1)) {
+    currentStep.value -= 1
+  }
 }
 
 const goToStep2 = () => {
@@ -413,14 +634,19 @@ const goToStep2 = () => {
   currentStep.value = 2
 }
 
+const goToScoring = () => {
+  if (!validateVendorData(false)) return
+  sawResults.value = computeSAW()
+  if (sawResults.value.length < 2) {
+    showError('Minimal 2 vendor dengan harga > 0 untuk melakukan scoring.')
+    return
+  }
+  currentStep.value = 3
+}
+
+// ── Data manipulation ─────────────────────────────────────────────
 const addVendorToMatrix = () => {
-  wizardData.value.vendors.push({
-    vendorId: null,
-    unitPrice: 0,
-    leadTime: '',
-    remarks: '',
-    isSelected: false
-  })
+  wizardData.value.vendors.push(makeEmptyVendor())
 }
 
 const removeVendorFromMatrix = (idx) => {
@@ -429,136 +655,118 @@ const removeVendorFromMatrix = (idx) => {
   }
 }
 
-const toggleWinner = (winnerIdx) => {
-  wizardData.value.vendors.forEach((v, idx) => {
-    if (idx === winnerIdx) {
-      v.isSelected = !v.isSelected
-    } else {
-      v.isSelected = false
+const handleClose = () => emit('close')
+
+// ── Data loading ──────────────────────────────────────────────────
+const fetchApprovedRequestsList = async () => {
+  try {
+    await mocStore.fetchApprovedRequests(1, 100, '')
+    approvedRequests.value = mocStore.requests || []
+  } catch {
+    showError('Failed to fetch approved requests.')
+  }
+}
+
+const handleRequestChange = async () => {
+  selectedRequestDetail.value = null
+  approvedItems.value = []
+  wizardData.value.vesselRequestItemId = null
+  if (!wizardData.value.vesselRequestId) return
+  try {
+    const full = await requestStore.fetchRequestById(wizardData.value.vesselRequestId)
+    if (full) {
+      selectedRequestDetail.value = full
+      approvedItems.value = full.vesselRequestItems?.filter(i => i.status === 'Approved' || i.qtyApproved > 0) || []
+      if (approvedItems.value.length === 1) {
+        wizardData.value.vesselRequestItemId = approvedItems.value[0].id
+      }
     }
-  })
+  } catch {
+    showError('Failed to load request item details')
+  }
 }
 
-const handleClose = () => {
-  emit('close')
+const selectRequestItem = (item) => {
+  wizardData.value.vesselRequestItemId = item.id
 }
 
+// ── Form init ─────────────────────────────────────────────────────
 const initForm = async () => {
+  sawResults.value = []
   if (props.isEditMode && props.mocId) {
     currentStep.value = 2
     try {
       await mocStore.fetchMocById(props.mocId)
       const current = mocStore.currentMoc
       if (current) {
-        const loadedVendors = current.mocVendors?.map(v => ({
+        const loaded = current.mocVendors?.map(v => ({
           vendorId: v.vendorId,
           unitPrice: v.unitPrice,
-          leadTime: v.leadTime,
+          availableQty: v.availableQty ?? 0,
+          warranty: v.warranty ?? 0,
+          discount: v.discount ?? 0,
           remarks: v.remarks || '',
-          isSelected: !!v.isSelected
+          isSelected: !!v.isSelected,
+          sawScore: v.sawScore ?? null,
         })) || []
-
-        while (loadedVendors.length < 3) {
-          loadedVendors.push({
-            vendorId: null,
-            unitPrice: 0,
-            leadTime: '',
-            remarks: '',
-            isSelected: false
-          })
-        }
-
+        while (loaded.length < 3) loaded.push(makeEmptyVendor())
         wizardData.value = {
           vesselRequestId: current.vesselRequestId,
           vesselRequestItemId: current.vesselRequestItemId,
           status: current.status,
-          vendors: loadedVendors
+          vendors: loaded,
         }
       }
-    } catch (err) {
+    } catch {
       showError('Failed to fetch MOC details.')
     }
   } else {
     currentStep.value = 1
     selectedRequestDetail.value = null
     approvedItems.value = []
-    
     wizardData.value = {
       vesselRequestId: null,
       vesselRequestItemId: null,
       status: 'Draft',
-      vendors: [
-        { vendorId: null, unitPrice: 0, leadTime: '', remarks: '', isSelected: false },
-        { vendorId: null, unitPrice: 0, leadTime: '', remarks: '', isSelected: false },
-        { vendorId: null, unitPrice: 0, leadTime: '', remarks: '', isSelected: false },
-      ]
+      vendors: [makeEmptyVendor(), makeEmptyVendor(), makeEmptyVendor()],
     }
     await fetchApprovedRequestsList()
   }
 }
 
-watch(() => props.isOpen, (newVal) => {
-  if (newVal) {
-    initForm()
+watch(() => props.isOpen, (open) => { if (open) initForm() })
+
+// ── Validation ────────────────────────────────────────────────────
+const validateVendorData = (requireAllFilled = true) => {
+  const vendors = wizardData.value.vendors
+  const active  = vendors.filter(v => v.vendorId !== null)
+
+  if (active.length < 1) {
+    showError('Please choose at least one vendor.')
+    return false
   }
-})
 
-const validateMocForm = () => {
-  const vData = wizardData.value
-  const isDraft = vData.status === 'Draft'
+  const ids = active.map(v => v.vendorId)
+  if (new Set(ids).size !== ids.length) {
+    showError('Duplicate vendors found. Each vendor must be unique.')
+    return false
+  }
 
-  const activeVendors = vData.vendors.filter(v => v.vendorId !== null)
-
-  if (isDraft) {
-    if (activeVendors.length < 1) {
-      showError('Please choose at least one vendor to save a draft.')
+  if (requireAllFilled) {
+    if (vendors.length < 3) {
+      showError('Minimum 3 vendors required.')
       return false
     }
-
-    const activeVendorIds = activeVendors.map(v => v.vendorId)
-    if (new Set(activeVendorIds).size !== activeVendorIds.length) {
-      showError('Duplicate vendors found. Each vendor in the comparison matrix must be unique.')
+    if (ids.length < vendors.length) {
+      showError('Please select a vendor for all entries.')
       return false
     }
-
-    const hasInvalidPrice = activeVendors.some(v => v.unitPrice < 0)
-    if (hasInvalidPrice) {
-      showError('Please input a valid price.')
+    if (vendors.some(v => !v.unitPrice || v.unitPrice <= 0)) {
+      showError('Please enter a valid price (> 0) for all vendors.')
       return false
     }
-  } else {
-    if (vData.vendors.length < 3) {
-      showError('Minimum comparison is 3 vendors.')
-      return false
-    }
-
-    const vendorIds = vData.vendors.map(v => v.vendorId).filter(Boolean)
-    if (vendorIds.length < vData.vendors.length) {
-      showError('Please choose a vendor for all entries in the matrix.')
-      return false
-    }
-
-    const uniqueVendorIds = new Set(vendorIds)
-    if (uniqueVendorIds.size !== vendorIds.length) {
-      showError('Duplicate vendors found. Each vendor in the comparison matrix must be unique.')
-      return false
-    }
-
-    const hasMissingPrice = vData.vendors.some(v => v.unitPrice === null || v.unitPrice === undefined || v.unitPrice <= 0)
-    if (hasMissingPrice) {
-      showError('Please input a valid price greater than 0 for all compared vendors.')
-      return false
-    }
-
-    const hasMissingLead = vData.vendors.some(v => !v.leadTime || !v.leadTime.trim())
-    if (hasMissingLead) {
-      showError('Please enter lead times for all compared vendors.')
-      return false
-    }
-
-    const selectedWinners = vData.vendors.filter(v => v.isSelected)
-    if (selectedWinners.length !== 1) {
-      showError('Please select exactly one winning vendor.')
+    if (vendors.some(v => !v.availableQty || v.availableQty <= 0)) {
+      showError('Please enter available qty (> 0) for all vendors.')
       return false
     }
   }
@@ -566,36 +774,37 @@ const validateMocForm = () => {
   return true
 }
 
-const submitWizardForm = async () => {
-  if (!validateMocForm()) return
+// ── Save actions ──────────────────────────────────────────────────
+const buildPayload = (status) => {
+  const isDraft   = status === 'Draft'
+  const allVendors = wizardData.value.vendors
+  const toSend    = isDraft
+    ? allVendors.filter(v => v.vendorId !== null)
+    : allVendors
 
-  isSaving.value = true
+  return {
+    vesselRequestId:     Number(wizardData.value.vesselRequestId),
+    vesselRequestItemId: Number(wizardData.value.vesselRequestItemId),
+    status,
+    vendors: toSend.map(v => ({
+      vendorId:     Number(v.vendorId),
+      unitPrice:    Number(v.unitPrice)     || 0,
+      availableQty: Number(v.availableQty)  || 0,
+      warranty:     Number(v.warranty)      || 0,
+      discount:     Number(v.discount)      || 0,
+      remarks:      v.remarks || '',
+      isSelected:   false,  // backend SAW will decide on Completed
+    })),
+  }
+}
+
+const saveDraft = async () => {
+  if (!validateVendorData(false)) return
+  isSaving.value   = true
+  savingMode.value  = 'draft'
+  mocStore.clearError()
   try {
-    const isDraft = wizardData.value.status === 'Draft'
-
-    const payload = {
-      vesselRequestId: Number(wizardData.value.vesselRequestId),
-      vesselRequestItemId: Number(wizardData.value.vesselRequestItemId),
-      status: wizardData.value.status,
-      vendors: isDraft
-        ? wizardData.value.vendors
-            .filter(v => v.vendorId !== null)
-            .map(v => ({
-              vendorId: Number(v.vendorId),
-              unitPrice: Number(v.unitPrice) || 0,
-              leadTime: v.leadTime || '',
-              remarks: v.remarks || '',
-              isSelected: !!v.isSelected
-            }))
-        : wizardData.value.vendors.map(v => ({
-            vendorId: Number(v.vendorId),
-            unitPrice: Number(v.unitPrice),
-            leadTime: v.leadTime,
-            remarks: v.remarks || '',
-            isSelected: !!v.isSelected
-          }))
-    }
-
+    const payload = buildPayload('Draft')
     if (props.isEditMode) {
       await mocStore.updateMoc(props.mocId, payload)
       showSuccess('MOC draft updated successfully.')
@@ -605,10 +814,36 @@ const submitWizardForm = async () => {
     }
     emit('saved')
     handleClose()
-  } catch (error) {
-    showError(mocStore.error || 'Failed to save MOC draft.')
+  } catch (err) {
+    console.error('[MOC] Save draft failed:', err)
+    showError(mocStore.error || err?.message || 'Failed to save MOC draft.')
   } finally {
-    isSaving.value = false
+    isSaving.value  = false
+    savingMode.value = null
+  }
+}
+
+const completeWithSAW = async () => {
+  if (!validateVendorData(true)) return
+  isSaving.value   = true
+  savingMode.value  = 'complete'
+  mocStore.clearError()
+  try {
+    const payload = buildPayload('Completed')
+    if (props.isEditMode) {
+      await mocStore.updateMoc(props.mocId, payload)
+    } else {
+      await mocStore.createMoc(payload)
+    }
+    showSuccess('MOC selesai! Vendor terbaik dipilih berdasarkan SAW.')
+    emit('saved')
+    handleClose()
+  } catch (err) {
+    console.error('[MOC] Complete failed:', err)
+    showError(mocStore.error || err?.message || 'Failed to complete MOC.')
+  } finally {
+    isSaving.value  = false
+    savingMode.value = null
   }
 }
 </script>

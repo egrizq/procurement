@@ -60,10 +60,23 @@ const deleteMoc = asyncHandler(async (req: Request, res: Response) => {
   return success(res, { message: 'MOC deleted successfully' });
 });
 
+const scoreMoc = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const mocRepo = new MocRepository();
+  try {
+    const result = await mocRepo.scoreMoc(Number(id));
+    return success(res, result);
+  } catch (err: any) {
+    throw new AppError(err.message || 'Failed to calculate SAW score', 400);
+  }
+});
+
 export default {
   createMoc,
   getMocs,
   getMocById,
   updateMoc,
   deleteMoc,
+  scoreMoc,
 };

@@ -1,4 +1,4 @@
-import { int, mysqlTable, mysqlEnum, timestamp, varchar, text, boolean } from 'drizzle-orm/mysql-core';
+import { int, mysqlTable, mysqlEnum, timestamp, text, boolean, decimal } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 import { vesselRequests, vesselRequestItems } from './vessel-requests';
 import { mstVendors } from './vendors';
@@ -29,7 +29,10 @@ export const mocVendors = mysqlTable(
     mocId: int('moc_id').notNull().references(() => mocs.id, { onDelete: 'cascade' }),
     vendorId: int('vendor_id').notNull().references(() => mstVendors.id),
     unitPrice: int('unit_price').notNull(),
-    leadTime: varchar('lead_time', { length: 100 }).notNull(),
+    availableQty: int('available_qty').notNull().default(0),
+    warranty: int('warranty').notNull().default(0),
+    discount: int('discount').notNull().default(0),
+    sawScore: decimal('saw_score', { precision: 10, scale: 4 }),
     remarks: text('remarks'),
     isSelected: boolean('is_selected').default(false).notNull(),
   }

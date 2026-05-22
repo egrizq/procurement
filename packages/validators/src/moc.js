@@ -9,9 +9,12 @@ export const mocSchema = z.object({
       z.object({
         vendorId: z.number().int().positive('Please select a vendor'),
         unitPrice: z.number().int().nonnegative().optional().default(0),
-        leadTime: z.string().optional().default(''),
+        availableQty: z.number().int().nonnegative().optional().default(0),
+        warranty: z.number().int().nonnegative().optional().default(0),
+        discount: z.number().int().min(0).max(100).optional().default(0),
         remarks: z.string().optional().nullable(),
         isSelected: z.boolean().default(false),
+        sawScore: z.number().optional().nullable(),
       })
     )
   }).superRefine((val, ctx) => {
@@ -62,23 +65,14 @@ export const mocSchema = z.object({
             path: ['vendors', idx, 'unitPrice'],
           });
         }
-        if (!v.leadTime || !v.leadTime.trim()) {
+        if (v.availableQty === undefined || v.availableQty === null || v.availableQty <= 0) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'Lead time is required',
-            path: ['vendors', idx, 'leadTime'],
+            message: 'Available qty must be greater than 0',
+            path: ['vendors', idx, 'availableQty'],
           });
         }
       });
-
-      const selectedWinners = vendors.filter(v => v.isSelected);
-      if (selectedWinners.length !== 1) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Exactly one vendor must be selected as winner to complete the MOC',
-          path: ['vendors'],
-        });
-      }
     }
   }),
 });

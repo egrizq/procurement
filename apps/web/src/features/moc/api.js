@@ -29,3 +29,8 @@ export async function deleteMoc(id) {
   const { data } = await http.delete(`/moc/${id}`)
   return data
 }
+
+export async function scoreMoc(id) {
+  const { data } = await http.post(`/moc/${id}/score`)
+  return data
+}

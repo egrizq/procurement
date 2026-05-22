@@ -86,6 +86,24 @@ export const useMocStore = defineStore('moc', {
       }
     },
 
+    async scoreMoc(id) {
+      try {
+        const data = await mocAPI.scoreMoc(id)
+        // Update MOC in list
+        const idx = this.mocs.findIndex((m) => m.id === id)
+        if (idx !== -1) this.mocs[idx] = data.moc
+        if (this.currentMoc && this.currentMoc.id === id) this.currentMoc = data.moc
+        return data  // { moc, breakdown }
+      } catch (error) {
+        if (error.errors && Array.isArray(error.errors)) {
+          this.error = error.errors.map((e) => e.message).join(', ')
+        } else {
+          this.error = error.error || error.message || 'Failed to calculate SAW score.'
+        }
+        throw error
+      }
+    },
+
     clearError() {
       this.error = null
     },

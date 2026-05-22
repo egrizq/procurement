@@ -4,7 +4,7 @@
     <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100">
       <div>
         <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Matrix of Comparison (MOC)</h1>
-        <p class="text-gray-500 mt-1 text-sm">Compare vendors, analyze pricing & lead times, and track procurement drafts.</p>
+        <p class="text-gray-500 mt-1 text-sm">Compare vendors, analyze pricing, qty availability, warranty & discounts using SAW algorithm.</p>
       </div>
       <button
         @click="openCreateWizard"
@@ -16,11 +16,11 @@
     </div>
 
     <!-- Filters and Search -->
-    <div class="flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-      <div class="w-full sm:max-w-md">
+    <div class="flex flex-col sm:flex-row gap-4 w-full items-stretch sm:items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div class="w-full">
         <SearchFilter v-model="searchQuery" placeholder="Search MOC drafts (Request, Vessel, Item)..." />
       </div>
-      <div class="flex gap-2">
+      <!-- <div class="flex gap-2">
         <select
           v-model="statusFilter"
           class="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
@@ -29,7 +29,7 @@
           <option value="Draft">Draft</option>
           <option value="Completed">Completed</option>
         </select>
-      </div>
+      </div> -->
     </div>
 
     <!-- MOC Drafts Table -->
@@ -42,6 +42,8 @@
         :pagination="pagination"
         @update:current-page="currentPage = $event"
         :is-loading="isLoading"
+        @row-click="openEditWizard"
+        class="cursor-pointer"
       >
         <template #cell-requestCode="{ row }">
           <span class="font-medium text-gray-900">{{ row.vesselRequest?.requestCode || '-' }}</span>
@@ -66,14 +68,17 @@
         </template>
 
         <template #cell-winner="{ row }">
-          <div v-if="getWinner(row)" class="flex flex-col">
+          <div v-if="getWinner(row)" class="flex flex-col gap-0.5">
             <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <CheckCircle :size="12" />
               {{ getWinner(row).vendor?.name }}
             </span>
-            <span class="text-xs text-gray-500 mt-0.5">Rp {{ formatNumber(getWinner(row).unitPrice) }}</span>
+            <span v-if="getWinner(row).sawScore" class="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-600">
+              <BarChart2 :size="10" />
+              SAW: {{ (parseFloat(getWinner(row).sawScore) * 100).toFixed(2) }}%
+            </span>
           </div>
-          <span v-else class="text-xs text-gray-400 italic">No winner chosen</span>
+          <span v-else class="text-xs text-gray-400 italic">Pending SAW</span>
         </template>
 
         <template #cell-status="{ value }">
@@ -89,15 +94,8 @@
           <span class="text-xs text-gray-500">{{ formatDate(value) }}</span>
         </template>
 
-        <template #cell-actions="{ row }">
+        <!-- <template #cell-actions="{ row }">
           <div class="flex items-center gap-2">
-            <button
-              @click.stop="openEditWizard(row)"
-              class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
-              title="Edit MOC"
-            >
-              <Edit :size="16" />
-            </button>
             <button
               @click.stop="confirmDeleteMoc(row)"
               class="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
@@ -106,7 +104,7 @@
               <Trash2 :size="16" />
             </button>
           </div>
-        </template>
+        </template> -->
       </DataTable>
     </div>
 
@@ -161,7 +159,7 @@ const columns = [
   { key: 'winner', label: 'Selected Option' },
   { key: 'status', label: 'Status' },
   { key: 'updatedAt', label: 'Last Updated' },
-  { key: 'actions', label: 'Actions' },
+  // { key: 'actions', label: 'Actions' },
 ]
 
 // Fetch MOC drafts
