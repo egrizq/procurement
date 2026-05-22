@@ -53,7 +53,7 @@ const login = asyncHandler(async (req: Request, res: Response) => {
 
 	const user = await authRepo.findUser({ email: email });
 	if (!user) {
-		throw new AppError('Invalid email or passwordr', 401);
+		throw new AppError('Invalid email or password', 401);
 	}
 
 	const isPasswordValid = await comparePassword(password, user.password);
