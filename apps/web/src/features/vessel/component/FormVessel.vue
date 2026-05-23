@@ -239,13 +239,6 @@ const handleClose = () => {
 }
 
 const handleSubmit = async () => {
-  loading.value = true
-
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
   emit('submit', { ...formData.value })
-  loading.value = false
-  handleClose()
 }
 </script>

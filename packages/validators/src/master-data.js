@@ -39,3 +39,16 @@ export const addCategorySchema = z.object({
 });
 
 export const updateCategorySchema = addCategorySchema;
+
+export const addVesselSchema = z.object({
+  body: z.object({
+    imoNumber: z.string().min(1, 'IMO Number is required'),
+    name: z.string().min(1, 'Vessel name is required'),
+    flag: z.string().min(1, 'Flag is required'),
+    type: z.string().min(1, 'Type is required'),
+    status: z.enum(['Publish', 'Unpublish']).optional().default('Publish'),
+    imgUrl: z.string().url('Invalid image URL format').optional().or(z.literal('')),
+  }),
+});
+
+export const updateVesselSchema = addVesselSchema;

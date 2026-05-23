@@ -213,6 +213,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { Plus, Search, Edit, Eye, Trash2 } from 'lucide-vue-next'
 import { useVesselStore } from '../store.js'
+import { createVessel, updateVessel, deleteVessel as apiDeleteVessel } from '../api.js'
 import FormVessel from '../component/FormVessel.vue'
 
 const vesselStore = useVesselStore()
@@ -305,8 +306,7 @@ const deleteVesselConfirm = async (vessel) => {
 
 const deleteVessel = async (vessel) => {
   try {
-    // Call API to delete
-    // await deleteVessel(vessel.id)
+    await apiDeleteVessel(vessel.id)
     loadVessels()
   } catch (error) {
     console.error('Error deleting vessel:', error)
@@ -321,9 +321,9 @@ const closeFormDialog = () => {
 const handleFormSubmit = async (formData) => {
   try {
     if (formMode.value === 'add') {
-      // await createVessel(formData)
+      await createVessel(formData)
     } else if (formMode.value === 'edit') {
-      // await updateVessel(editingVessel.value.id, formData)
+      await updateVessel(editingVessel.value.id, formData)
     }
     loadVessels()
     closeFormDialog()

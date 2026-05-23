@@ -33,6 +33,21 @@ class MstVesselRepository {
                 });
                 return result || null;
         }
+
+        async createVessel(data: any) {
+                const result = await db.insert(mstVessels).values(data);
+                return result;
+        }
+
+        async updateVessel(id: number, data: any) {
+                const result = await db.update(mstVessels).set(data).where(eq(mstVessels.id, id));
+                return result;
+        }
+
+        async deleteVessel(id: number) {
+                const result = await db.delete(mstVessels).where(eq(mstVessels.id, id));
+                return result;
+        }
 }
 
 export default MstVesselRepository;
