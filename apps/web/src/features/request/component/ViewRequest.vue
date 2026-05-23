@@ -19,7 +19,7 @@
             </div>
             <div class="flex gap-2 items-center">
               <button
-                v-if="request.status === 'Approved'"
+                v-if="request.status === 'Approved' || request.status === 'Approved by system'"
                 @click="downloadPDF"
                 class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-indigo-700 bg-white border border-indigo-200 rounded-lg shadow-sm hover:bg-indigo-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 :disabled="isDownloading"
@@ -182,7 +182,7 @@
             <template #cell-actions="{ row }">
               <div class="flex items-center justify-end">
                 <button
-                  v-if="request.status === 'Approved'"
+                  v-if="request.status === 'Approved' || request.status === 'Approved by system'"
                   @click="downloadItemPDF(row)"
                   class="p-1.5 hover:bg-indigo-50 text-indigo-600 hover:text-indigo-900 rounded transition-colors disabled:opacity-50"
                   :disabled="downloadingItemId !== null"
@@ -354,7 +354,7 @@ const downloadPDF = async () => {
 }
 
 const canReview = computed(() => {
-  return props.request && (props.request.status === 'Waiting' || props.request.status === 'Ok')
+  return props.request && props.request.status === 'Waiting'
 })
 
 // Initialize adjustments when request details open
@@ -442,6 +442,7 @@ const formatDate = (dateString) => {
 
 const getStatusColor = (status) => {
   const colors = {
+    'Approved by system': 'bg-green-100 text-green-800 border border-green-200',
     Ok: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
     Waiting: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
     Approved: 'bg-green-100 text-green-800 border border-green-200',
@@ -453,7 +454,8 @@ const getStatusColor = (status) => {
 }
 
 const formatStatus = (status) => {
-  return status === 'Ok' ? 'OK' : status
+  if (status === 'Ok') return 'OK'
+  return status
 }
 
 const getPriorityColor = (priority) => {

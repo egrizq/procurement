@@ -181,7 +181,7 @@ export const vesselRequestItems = mysqlTable("vessel_request_items", {
 	qtyRequested: int("qty_requested").notNull(),
 	qtyApproved: int("qty_approved"),
 	unit: mysqlEnum(['Pcs','Box','Liter','Meter','Kg']).notNull(),
-	status: mysqlEnum(['Ok','Waiting','Approved','Rejected']).default('Waiting').notNull(),
+	status: mysqlEnum(['Approved by system','Waiting','Approved','Rejected']).default('Waiting').notNull(),
 	priority: mysqlEnum(['Low','Medium','High']).default('Medium').notNull(),
 	justification: text(),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`(now())`).notNull(),

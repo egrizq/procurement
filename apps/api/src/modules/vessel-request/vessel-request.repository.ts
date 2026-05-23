@@ -42,7 +42,11 @@ class VesselRequestRepository {
                     conditions.push(inArray(vesselRequests.id, matchingUserIds));
                 }
                 if (status) {
-                    conditions.push(eq(vesselRequests.status, status as any));
+                    if (status === 'Approved') {
+                        conditions.push(inArray(vesselRequests.status, ['Approved', 'Approved by system']));
+                    } else {
+                        conditions.push(eq(vesselRequests.status, status as any));
+                    }
                 }
 
                 const condition = conditions.length > 0 ? (conditions.length === 1 ? conditions[0] : and(...conditions)) : undefined;
@@ -59,7 +63,8 @@ class VesselRequestRepository {
                         },
                         with: {
                                 items: {
-                                        columns: { id: true }
+                                        columns: { id: true, status: true, qtyApproved: true },
+                                        with: { mocs: { columns: { id: true } } }
                                 },
                                 user: {
                                         columns: { id: true, fullName: true },
@@ -82,13 +87,20 @@ class VesselRequestRepository {
                 let [itemsResult, total] = await Promise.all([itemsQuery, countQuery]);
                 
                 // Map to simulate prisma _count
-                const items = itemsResult.map(item => ({
-                        ...item,
-                        _count: {
-                                vesselRequestItems: item.items.length
-                        },
-                        items: undefined
-                }));
+                const items = itemsResult.map(item => {
+                        const availableItems = item.items.filter((i: any) => 
+                                (i.status === 'Approved' || i.status === 'Approved by system' || (i.qtyApproved && i.qtyApproved > 0)) &&
+                                (!i.mocs || i.mocs.length === 0)
+                        );
+                        return {
+                                ...item,
+                                _count: {
+                                        vesselRequestItems: item.items.length
+                                },
+                                availableForMocCount: availableItems.length,
+                                items: undefined
+                        };
+                });
 
                 return { items, total };
         }
@@ -127,6 +139,7 @@ class VesselRequestRepository {
                                                 item: {
                                                         columns: { id: true, name: true },
                                                 },
+                                                mocs: { columns: { id: true } }
                                         }
                                 },
                                 user: {

@@ -36,6 +36,7 @@ function formatDate(date: Date | string | null): string {
 function getStatusColor(status: string): string {
 	switch (status) {
 		case 'Approved':
+		case 'Approved by system':
 		case 'Completed':
 			return '#10b981'; // Emerald
 		case 'Rejected':
@@ -173,8 +174,8 @@ export async function generateVesselRequestPdf(request: any): Promise<Buffer> {
 						stack: [
 							{ text: 'Approved/Reviewed By:', margin: [0, 40, 0, 40], alignment: 'center' },
 							{ text: '___________________________', alignment: 'center', margin: [0, 0, 0, 8] },
-							{ text: request.status === 'Approved' ? 'Logistics Office / Staff' : 'Pending Review', fontSize: 10, alignment: 'center', bold: true },
-							{ text: request.reviewedAt ? 'Date: ' + formatDate(request.reviewedAt) : 'Date: ________________', fontSize: 9, alignment: 'center', color: '#6b7280' },
+							{ text: request.status === 'Approved' ? 'Logistics Office / Staff' : (request.status === 'Approved by system' ? 'Approved by System' : 'Pending Review'), fontSize: 10, alignment: 'center', bold: true },
+							{ text: (request.status === 'Approved' || request.status === 'Approved by system') ? 'Date: ' + formatDate(request.reviewedAt || request.requestDate) : 'Date: ________________', fontSize: 9, alignment: 'center', color: '#6b7280' },
 						],
 					},
 				],

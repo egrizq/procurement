@@ -4,8 +4,8 @@ export const vesselRequestSchema = z.object({
   body: z.object({
     vesselId: z.number('Vessel is not found').int().positive(),
     status: z.enum(
-      ['Ok', 'Waiting', 'Approved', 'Rejected'],
-      'Status must be either Ok, Waiting, Approved, or Rejected'
+      ['Approved by system', 'Waiting', 'Approved', 'Rejected'],
+      'Status must be either Approved by system, Waiting, Approved, or Rejected'
     ),
     priority: z.enum(['Low', 'Medium', 'High'], 'Priority must be either Low, Medium, or High'),
     justification: z.string().optional(),
@@ -20,8 +20,8 @@ export const vesselRequestSchema = z.object({
             'Unit must be either Pcs, Box, Liter, Meter, or Kg'
           ),
           status: z.enum(
-            ['Ok', 'Waiting', 'Approved', 'Rejected'],
-            'Status must be either Ok, Waiting, Approved, or Rejected'
+            ['Approved by system', 'Waiting', 'Approved', 'Rejected'],
+            'Status must be either Approved by system, Waiting, Approved, or Rejected'
           ),
           priority: z.enum(['Low', 'Medium', 'High'], 'Priority must be either Low, Medium, or High'),
           justification: z.string().optional(),
@@ -62,8 +62,8 @@ export const updateVesselRequestSchema = z.object({
   body: z.object({
     vesselId: z.number('Vessel is not found').int().positive(),
     status: z.enum(
-      ['Ok', 'Waiting', 'Approved', 'Rejected'],
-      'Status must be either Ok, Waiting, Approved, or Rejected'
+      ['Approved by system', 'Waiting', 'Approved', 'Rejected'],
+      'Status must be either Approved by system, Waiting, Approved, or Rejected'
     ),
     items: z.array(
       z.object({
@@ -74,8 +74,8 @@ export const updateVesselRequestSchema = z.object({
           'Unit must be either Pcs, Box, Liter, Meter, or Kg'
         ),
         status: z.enum(
-          ['Ok', 'Waiting', 'Approved', 'Rejected'],
-          'Status must be either Ok, Waiting, Approved, or Rejected'
+          ['Approved by system', 'Waiting', 'Approved', 'Rejected'],
+          'Status must be either Approved by system, Waiting, Approved, or Rejected'
         ),
         justification: z.string().optional(),
       }),

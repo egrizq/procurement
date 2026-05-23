@@ -5,71 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1776610386277,
-      "tag": "0000_tired_grandmaster",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1777095627063,
-      "tag": "0001_bored_blob",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1777097276747,
-      "tag": "0002_amusing_bloodstorm",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1778139538936,
-      "tag": "0003_fat_rocket_racer",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1778940461956,
-      "tag": "0004_natural_mariko_yashida",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "5",
-      "when": 1778987550014,
-      "tag": "0005_woozy_apocalypse",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "5",
-      "when": 1779077729287,
-      "tag": "0006_brave_marrow",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "5",
-      "when": 1779279907756,
-      "tag": "0007_smart_toxin",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "5",
-      "when": 1748003392000,
-      "tag": "0008_moc_saw_parameters",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "5",
-      "when": 1779450370773,
-      "tag": "0009_cuddly_wrecker",
+      "when": 1779494805223,
+      "tag": "0000_lonely_patriot",
       "breakpoints": true
     }
   ]

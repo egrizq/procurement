@@ -1,1 +1,0 @@
-ALTER TABLE `vessel_stocks` DROP COLUMN `stock_minimal`;

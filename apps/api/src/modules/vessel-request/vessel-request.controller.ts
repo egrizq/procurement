@@ -126,7 +126,7 @@ const validateVesselRequestPayload = async (body: any) => {
 		items: validations,
 		header: [],
 		hasWarnings,
-		status: hasWarnings ? 'Waiting' : 'Ok',
+		status: hasWarnings ? 'Waiting' : 'Approved by system',
 	};
 };
 
@@ -162,18 +162,22 @@ const create = asyncHandler(async (req: Request, res: Response) => {
 		throw new AppError('Failed to create vessel request', 500);
 	}
 
-	const vesselRequestItemsData = req.body.items.map((item: any) => ({
-		vesselRequestId: vesselRequest.id,
-		itemId: item.itemId,
-		qtyRequested: item.qtyRequested,
-		unit: item.unit,
-		status:
-			(validationByItem.get(item.itemId)?.warnings.length ?? 0) > 0
+	const vesselRequestItemsData = req.body.items.map((item: any) => {
+		const status = (validationByItem.get(item.itemId)?.warnings.length ?? 0) > 0
 				? 'Waiting'
-				: 'Ok',
-		priority: item.priority,
-		justification: item.justification,
-	}));
+				: 'Approved by system';
+
+		return {
+			vesselRequestId: vesselRequest.id,
+			itemId: item.itemId,
+			qtyRequested: item.qtyRequested,
+			qtyApproved: status === 'Approved by system' ? item.qtyRequested : null,
+			unit: item.unit,
+			status,
+			priority: item.priority,
+			justification: item.justification,
+		};
+	});
 	const vesselRequestItems = await vesselRequestRepo.createVesselRequestItems(
 		vesselRequestItemsData
 	);
@@ -260,8 +264,8 @@ const review = asyncHandler(async (req: Request, res: Response) => {
 	const vesselRequest = await vesselRequestRepo.getVesselRequestById(id);
 	if (!vesselRequest) throw new AppError('Vessel request not found', 404);
 
-	if (vesselRequest.status !== 'Waiting' && vesselRequest.status !== 'Ok') {
-		throw new AppError('Only Waiting or Ok requests can be reviewed', 400);
+	if (vesselRequest.status !== 'Waiting') {
+		throw new AppError('Only Waiting requests can be reviewed', 400);
 	}
 
 	const userId = req.apiToken!.userId;

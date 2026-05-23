@@ -48,9 +48,10 @@
       <DataTable
         :columns="columns"
         :data="standards"
-        :loading="loading"
+        :current-page="currentPage"
+        :items-per-page="10"
         :pagination="pagination"
-        @page-change="handlePageChange"
+        @update:current-page="handlePageChange"
         @row-click="handleRowClick"
       >
         <!-- Vessel Name Cell -->

@@ -3,6 +3,7 @@ import { requestStatusEnum, priorityEnum, unitEnum } from './enums';
 import { mstItems } from './items';
 import { mstVessels } from './vessels';
 import { users } from './users';
+import { mocs } from './moc';
 import { relations } from 'drizzle-orm';
 
 export const vesselRequests = mysqlTable(
@@ -76,7 +77,7 @@ export const vesselRequestsRelations = relations(vesselRequests, ({ one, many })
   items: many(vesselRequestItems),
 }));
 
-export const vesselRequestItemsRelations = relations(vesselRequestItems, ({ one }) => ({
+export const vesselRequestItemsRelations = relations(vesselRequestItems, ({ one, many }) => ({
   vesselRequest: one(vesselRequests, {
     fields: [vesselRequestItems.vesselRequestId],
     references: [vesselRequests.id],
@@ -85,4 +86,5 @@ export const vesselRequestItemsRelations = relations(vesselRequestItems, ({ one 
     fields: [vesselRequestItems.itemId],
     references: [mstItems.id],
   }),
+  mocs: many(mocs),
 }));

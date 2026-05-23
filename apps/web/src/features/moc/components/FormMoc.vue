@@ -65,7 +65,7 @@
             @change="handleRequestChange"
           >
             <option :value="null" disabled>Select an approved request</option>
-            <option v-for="req in approvedRequests" :key="req.id" :value="req.id">
+            <option v-for="req in approvedRequests.filter(r => r.availableForMocCount > 0)" :key="req.id" :value="req.id">
               {{ req.requestCode }} - {{ req.vessel?.name }} (Requested by: {{ req.user?.fullName }})
             </option>
           </select>
@@ -541,10 +541,10 @@ const summaryItemName = computed(() => {
 const summaryApprovedQty = computed(() => {
   if (props.isEditMode && mocStore.currentMoc) {
     const ri = mocStore.currentMoc.vesselRequestItem
-    return `${ri?.qtyApproved || 0} ${ri?.unit || ''}`
+    return `${ri?.qtyApproved || ri?.qtyRequested} ${ri?.unit || ''}`
   }
   const item = approvedItems.value.find(i => i.id === wizardData.value.vesselRequestItemId)
-  return item ? `${item.qtyApproved} ${item.unit}` : '-'
+  return item ? `${item.qtyApproved || item.qtyRequested} ${item.unit}` : '-'
 })
 
 const isCompleted = computed(() => wizardData.value.status === 'Completed')
@@ -676,7 +676,10 @@ const handleRequestChange = async () => {
     const full = await requestStore.fetchRequestById(wizardData.value.vesselRequestId)
     if (full) {
       selectedRequestDetail.value = full
-      approvedItems.value = full.vesselRequestItems?.filter(i => i.status === 'Approved' || i.qtyApproved > 0) || []
+      approvedItems.value = full.vesselRequestItems?.filter(i => 
+        (i.status === 'Approved' || i.status === 'Approved by system' || i.qtyApproved > 0) &&
+        (!i.mocs || i.mocs.length === 0)
+      ) || []
       if (approvedItems.value.length === 1) {
         wizardData.value.vesselRequestItemId = approvedItems.value[0].id
       }

@@ -32,7 +32,8 @@ class VesselStockRepository {
                      lastUpdate: vesselStocks.lastUpdate,
                      vessel: { id: mstVessels.id, name: mstVessels.name },
                      item: { id: mstItems.id, itemCode: mstItems.itemCode, name: mstItems.name, unit: mstItems.unit },
-                     minStock: vesselItemStandards.minStock
+                     minStock: vesselItemStandards.minStock,
+                     maxStock: vesselItemStandards.maxStock,
                 })
                 .from(vesselStocks)
                 .leftJoin(mstVessels, eq(vesselStocks.vesselId, mstVessels.id))

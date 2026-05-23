@@ -186,9 +186,9 @@ const columns = [
   { key: 'requestDate', label: 'Request Date', cellClass: 'text-gray-700' },
   { key: '_count.vesselRequestItems', label: 'Items' },
 ]
-
 const getStatusColor = (status) => {
   const colors = {
+    'Approved by system': 'bg-green-100 text-green-800',
     Ok: 'bg-emerald-100 text-emerald-800',
     Waiting: 'bg-yellow-100 text-yellow-800',
     Approved: 'bg-green-100 text-green-800',
@@ -200,9 +200,9 @@ const getStatusColor = (status) => {
 }
 
 const formatStatus = (status) => {
-  return status === 'Ok' ? 'OK' : status
+  if (status === 'Ok') return 'OK'
+  return status
 }
-
 const getPriorityColor = (priority) => {
   const colors = {
     High: 'bg-red-100 text-red-800',

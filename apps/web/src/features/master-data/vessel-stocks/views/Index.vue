@@ -54,6 +54,11 @@
         <span class="text-xs text-gray-500 ml-1">{{ !row.minStock ? 'N/A' : row.item?.unit }}</span>
       </template>
 
+      <template #cell-maxStock="{ row }">
+        <span class="text-gray-700">{{ row.maxStock}}</span>
+        <span class="text-xs text-gray-500 ml-1">{{ !row.maxStock ? 'N/A' : row.item?.unit }}</span>
+      </template>
+
       <template #cell-lastUpdate="{ row }">
         <span class="text-gray-600 text-sm">
           {{ formatDate(row.lastUpdate) }}
@@ -170,6 +175,7 @@ const columns = [
   { key: 'item.name', label: 'Item' },
   { key: 'stockOnHand', label: 'Stock On Hand' },
   { key: 'minStock', label: 'Min. Stock' },
+  { key: 'maxStock', label: 'Max. Stock' },
   { key: 'lastUpdate', label: 'Last Update' },
   { key: 'status', label: 'Status' },
   { key: 'actions', label: 'Actions' },

@@ -82,10 +82,10 @@
         </div>
       </div>
 
-      <!-- Stock On Hand and Stock Minimal Row -->
+      <!-- Stock On Hand, Min, Max Row -->
       <div :class="[
           'grid grid-cols-1 gap-4',
-          !formData.unit ? 'md:grid-cols-2' : 'md:grid-cols-3'
+          !formData.unit ? 'md:grid-cols-3' : 'md:grid-cols-4'
         ]">
         <!-- Stock On Hand -->
         <div>
@@ -124,6 +124,19 @@
           </label>
           <input
             :value="formData.minimumStock"
+            type="text"
+            disabled
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+          />
+        </div>
+
+        <!-- Stock Maximal -->
+        <div>
+          <label for="stockMaximal" class="block text-sm font-medium text-gray-700 mb-1">
+            Maximum Stock <span v-if="mode !== 'view'" class="text-red-500">*</span>
+          </label>
+          <input
+            :value="formData.maximumStock"
             type="text"
             disabled
             class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
@@ -188,6 +201,7 @@ const formData = ref({
   unit: '',
   stockOnHand: 0,
   minimumStock: 0,
+  maximumStock: 0,
   lastUpdate: new Date().toISOString().split('T')[0],
 })
 
@@ -212,6 +226,7 @@ const resetForm = () => {
     unit: '',
     stockOnHand: 0,
     minimumStock: 0,
+    maximumStock: 0,
     lastUpdate: new Date().toISOString().split('T')[0],
   }
   errorMessage.value = ''
@@ -244,10 +259,11 @@ watch(
         itemId: newStock?.itemId || '',
         stockOnHand: newStock?.stockOnHand || 0,
         minimumStock: newStock?.minStock || 0,
+        maximumStock: newStock?.maxStock || 0,
         lastUpdate: newStock.lastUpdate
           ? new Date(newStock.lastUpdate).toISOString().split('T')[0]
           : new Date().toISOString().split('T')[0],
-        unit: newStock?.item.unit || '',
+        unit: newStock?.item?.unit || '',
       }
     } else {
       resetForm()

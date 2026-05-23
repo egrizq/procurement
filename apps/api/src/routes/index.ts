@@ -9,10 +9,12 @@ import settingsStandardRoutes from '#modules/settings/vessel-item-standards/vess
 import userRoutes from '#modules/settings/users/user.routes.ts';
 import moduleAccessRoutes from '#modules/settings/module-access/module-access.routes.ts';
 import mocRoutes from '#modules/moc/moc.routes.ts';
+import dashboardRoutes from '#modules/dashboard/index.ts';
 
 const router: Router = express.Router();
 
 router.use('/', healthRoutes);
+router.use('/dashboard', dashboardRoutes);
 router.use('/token', tokenRoutes);
 router.use('/auth', authRoutes);
 router.use('/profile', profileRoutes);
