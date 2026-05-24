@@ -18,8 +18,8 @@ export const users = mysqlTable(
     position: varchar('position', { length: 100 }),
     status: mysqlEnum('status', userStatusEnum).default('Contract').notNull(),
     leaveDate: date('leave_date', { mode: 'date' }),
-    createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'date', fsp: 0 })
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
       .defaultNow()
       .onUpdateNow()
       .notNull(),

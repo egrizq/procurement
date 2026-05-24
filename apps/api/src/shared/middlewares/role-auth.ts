@@ -13,7 +13,7 @@ const KNOWN_MODULE_SLUGS = [
   'master-data/vessel-stocks',
   'request',
   'moc',
-  'purchase-order',
+  'purchase-orders',
   'good-receipt',
   'settings',
   'settings/users',
@@ -55,6 +55,8 @@ const roleAuth = () => {
       where: eq(roleModules.userType, user.type),
       columns: { moduleSlug: true },
     });
+
+    console.log(`User ID ${userId} with type ${user.type} accessing module ${moduleSlug}`);
 
     if (!hasModuleAccess(access.map((item) => item.moduleSlug), moduleSlug)) {
       throw new AppError('Insufficient module permissions', 403);

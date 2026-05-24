@@ -5,6 +5,6 @@ export const mstCities = mysqlTable(
   {
     id: int('id').primaryKey().autoincrement(),
     cityName: varchar('city_name', { length: 255 }).notNull(),
-    createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
   },
 );

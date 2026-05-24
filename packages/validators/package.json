@@ -11,7 +11,8 @@
     "./token": "./src/token.js",
     "./vessel-request": "./src/vessel-request.js",
     "./master-data": "./src/master-data.js",
-    "./moc": "./src/moc.js"
+    "./moc": "./src/moc.js",
+    "./purchase-order": "./src/purchase-order.js"
   },
   "dependencies": {
     "zod": "^4.3.6"

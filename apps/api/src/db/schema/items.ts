@@ -6,8 +6,8 @@ export const mstItemCategories = mysqlTable('mst_item_categories', {
   id: int('id').primaryKey().autoincrement(),
   name: varchar('name', { length: 255 }).notNull(),
   status: mysqlEnum('status', statusEnum).default('Publish').notNull(),
-  createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { mode: 'date', fsp: 0 })
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at')
     .defaultNow()
     .onUpdateNow()
     .notNull(),
@@ -23,8 +23,8 @@ export const mstItems = mysqlTable(
     categoryId: int('category_id').notNull().references(() => mstItemCategories.id),
     status: mysqlEnum('status', statusEnum).notNull(),
     description: text('description'),
-    createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'date', fsp: 0 })
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
       .defaultNow()
       .onUpdateNow()
       .notNull(),

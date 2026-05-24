@@ -9,9 +9,9 @@ export const apiTokens = mysqlTable(
     deviceName: varchar('device_name', { length: 255 }),
     token: varchar('token', { length: 255 }).notNull().unique(),
     userId: int('user_id').references(() => users.id),
-    expiredAt: timestamp('expired_at', { mode: 'date', fsp: 0 }).notNull(),
-    createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'date', fsp: 0 })
+    expiredAt: timestamp('expired_at').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
       .defaultNow()
       .onUpdateNow()
       .notNull(),

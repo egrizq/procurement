@@ -84,10 +84,29 @@
         <template #cell-status="{ value }">
           <span
             class="px-2.5 py-1 text-xs font-semibold rounded-full border"
-            :class="value === 'Completed' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
+            :class="value === 'Completed' ? 'bg-purple-50 text-purple-700 border-purple-200' : value === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
           >
             {{ value }}
           </span>
+        </template>
+
+        <template #cell-poStatus="{ row }">
+          <div v-if="row.purchaseOrders && row.purchaseOrders.length > 0" class="flex flex-col gap-0.5">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <ShoppingCart :size="10" />
+              {{ row.purchaseOrders[0].poNumber }}
+            </span>
+            <span
+              class="text-[10px] font-semibold"
+              :class="{
+                'text-amber-600': row.purchaseOrders[0].status === 'Pending Approval',
+                'text-sky-600': row.purchaseOrders[0].status === 'Auto Approved',
+                'text-emerald-600': row.purchaseOrders[0].status === 'Approved',
+                'text-red-500': row.purchaseOrders[0].status === 'Rejected',
+              }"
+            >{{ row.purchaseOrders[0].status }}</span>
+          </div>
+          <span v-else class="text-xs text-gray-400 italic">Belum ada PO</span>
         </template>
 
         <template #cell-updatedAt="{ value }">
@@ -113,14 +132,16 @@
       :is-edit-mode="isEditMode"
       :moc-id="selectedMocId"
       @close="closeWizard"
-      @saved="fetchMocs"
+      @saved="handleMocSaved"
+      @go-to-po="handleGoToPO"
     />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
-import { Plus, Trash2, Users, CheckCircle, Edit, Scale } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+import { Plus, Trash2, Users, CheckCircle, Edit, Scale, ShoppingCart, BarChart2 } from 'lucide-vue-next'
 import SearchFilter from '@/components/base/data-table/SearchFilter.vue'
 import DataTable from '@/components/base/data-table/DataTable.vue'
 import FormMoc from '../components/FormMoc.vue'
@@ -129,6 +150,8 @@ import { useRequestStore } from '../../request/store.js'
 import { useVendorStore } from '../../master-data/vendors/store.js'
 import { showInfo, showSuccess, showError } from '@/services/notification.js'
 import Swal from 'sweetalert2'
+
+const router = useRouter()
 
 // Stores
 const mocStore = useMocStore()
@@ -157,9 +180,9 @@ const columns = [
   { key: 'item', label: 'Item Details' },
   { key: 'vendorsCount', label: 'Vendors' },
   { key: 'winner', label: 'Selected Option' },
+  { key: 'poStatus', label: 'PO' },
   { key: 'status', label: 'Status' },
   { key: 'updatedAt', label: 'Last Updated' },
-  // { key: 'actions', label: 'Actions' },
 ]
 
 // Fetch MOC drafts
@@ -167,7 +190,7 @@ const fetchMocs = async () => {
   isLoading.value = true
   try {
     await mocStore.fetchMocs(currentPage.value, itemsPerPage, searchQuery.value, statusFilter.value)
-    mocs.value = mocStore.mocs
+    mocs.value = (mocStore.mocs || []).filter(Boolean)
     pagination.value = mocStore.pagination
 
     if (mocStore.error) {
@@ -221,6 +244,16 @@ const closeWizard = () => {
   isWizardOpen.value = false
   isEditMode.value = false
   selectedMocId.value = null
+}
+
+const handleMocSaved = async () => {
+  closeWizard()
+  await fetchMocs()
+}
+
+const handleGoToPO = (mocId) => {
+  closeWizard()
+  router.push({ path: '/purchase-order', query: { moc_id: mocId } })
 }
 
 // Delete MOC

@@ -4,7 +4,8 @@ export const mocSchema = z.object({
   body: z.object({
     vesselRequestId: z.number().int().positive(),
     vesselRequestItemId: z.number().int().positive(),
-    status: z.enum(['Draft', 'Completed']).default('Draft'),
+    status: z.enum(['Draft', 'Completed', 'Approved']).default('Draft'),
+    selectedVendorId: z.number().int().positive().optional().nullable(),
     vendors: z.array(
       z.object({
         vendorId: z.number().int().positive('Please select a vendor'),

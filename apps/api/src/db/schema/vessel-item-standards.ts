@@ -1,4 +1,4 @@
-import { int, mysqlTable, mysqlEnum, timestamp, index } from 'drizzle-orm/mysql-core';
+import { int, mysqlTable, mysqlEnum, timestamp, index, decimal } from 'drizzle-orm/mysql-core';
 import { mstVessels } from './vessels';
 import { mstItems } from './items';
 import { periodEnum } from './enums';
@@ -13,8 +13,9 @@ export const vesselItemStandards = mysqlTable(
     periode: mysqlEnum('periode', periodEnum).notNull(),
     minStock: int('min_stock').notNull(),
     maxStock: int('max_stock').notNull(),
-    createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'date', fsp: 0 })
+    poThreshold: decimal('po_threshold', { precision: 15, scale: 2 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
       .defaultNow()
       .onUpdateNow()
       .notNull(),

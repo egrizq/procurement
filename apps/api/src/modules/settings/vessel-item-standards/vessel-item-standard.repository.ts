@@ -67,7 +67,7 @@ class VesselItemStandardRepository {
                 return result || null;
         }
 
-        async create(data: { vesselId: number; itemId: number; periode: any; minStock: number; maxStock: number; }) {
+        async create(data: { vesselId: number; itemId: number; periode: any; minStock: number; maxStock: number; poThreshold?: number | null; }) {
                 const inserted = await db.insert(vesselItemStandards).values(data);
                 return this.findById(inserted[0].insertId);
         }

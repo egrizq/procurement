@@ -168,11 +168,44 @@ CREATE TABLE `mocs` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`vessel_request_id` int NOT NULL,
 	`vessel_request_item_id` int NOT NULL,
-	`status` enum('Draft','Completed') NOT NULL DEFAULT 'Draft',
+	`status` enum('Draft','Completed','Approved') NOT NULL DEFAULT 'Draft',
+	`selected_vendor_id` int,
 	`created_by` int NOT NULL,
 	`created_at` timestamp(0) NOT NULL DEFAULT (now()),
 	`updated_at` timestamp(0) NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
 	CONSTRAINT `mocs_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `purchase_orders` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`po_number` varchar(50) NOT NULL,
+	`moc_id` int NOT NULL,
+	`vendor_id` int NOT NULL,
+	`vessel_request_item_id` int NOT NULL,
+	`unit_price` decimal(15,2) NOT NULL,
+	`qty` int NOT NULL,
+	`total_amount` decimal(15,2) NOT NULL,
+	`status` enum('Auto Approved','Pending Approval','Approved','Rejected') NOT NULL DEFAULT 'Pending Approval',
+	`notes` text,
+	`approved_by` int,
+	`approved_at` timestamp(0),
+	`rejection_reason` text,
+	`created_by` int NOT NULL,
+	`created_at` timestamp(0) NOT NULL DEFAULT (now()),
+	`updated_at` timestamp(0) NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `purchase_orders_id` PRIMARY KEY(`id`),
+	CONSTRAINT `purchase_orders_po_number_unique` UNIQUE(`po_number`)
+);
+--> statement-breakpoint
+CREATE TABLE `po_settings` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`key` varchar(100) NOT NULL,
+	`value` varchar(255) NOT NULL,
+	`description` text,
+	`updated_by` int,
+	`updated_at` timestamp(0) NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `po_settings_id` PRIMARY KEY(`id`),
+	CONSTRAINT `idx_po_settings_key` UNIQUE(`key`)
 );
 --> statement-breakpoint
 ALTER TABLE `api_tokens` ADD CONSTRAINT `api_tokens_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -191,7 +224,14 @@ ALTER TABLE `moc_vendors` ADD CONSTRAINT `moc_vendors_moc_id_mocs_id_fk` FOREIGN
 ALTER TABLE `moc_vendors` ADD CONSTRAINT `moc_vendors_vendor_id_mst_vendors_id_fk` FOREIGN KEY (`vendor_id`) REFERENCES `mst_vendors`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `mocs` ADD CONSTRAINT `mocs_vessel_request_id_vessel_requests_id_fk` FOREIGN KEY (`vessel_request_id`) REFERENCES `vessel_requests`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `mocs` ADD CONSTRAINT `mocs_vessel_request_item_id_vessel_request_items_id_fk` FOREIGN KEY (`vessel_request_item_id`) REFERENCES `vessel_request_items`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `mocs` ADD CONSTRAINT `mocs_selected_vendor_id_mst_vendors_id_fk` FOREIGN KEY (`selected_vendor_id`) REFERENCES `mst_vendors`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE `mocs` ADD CONSTRAINT `mocs_created_by_users_id_fk` FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `purchase_orders` ADD CONSTRAINT `purchase_orders_moc_id_mocs_id_fk` FOREIGN KEY (`moc_id`) REFERENCES `mocs`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `purchase_orders` ADD CONSTRAINT `purchase_orders_vendor_id_mst_vendors_id_fk` FOREIGN KEY (`vendor_id`) REFERENCES `mst_vendors`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `purchase_orders` ADD CONSTRAINT `purchase_orders_vr_item_id_vr_items_id_fk` FOREIGN KEY (`vr_item_id`) REFERENCES `vr_items`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `purchase_orders` ADD CONSTRAINT `purchase_orders_approved_by_users_id_fk` FOREIGN KEY (`approved_by`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `purchase_orders` ADD CONSTRAINT `purchase_orders_created_by_users_id_fk` FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `po_settings` ADD CONSTRAINT `po_settings_updated_by_users_id_fk` FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`) ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX `idx_device_user` ON `api_tokens` (`device_id`,`user_id`);--> statement-breakpoint
 CREATE INDEX `idx_item_code` ON `mst_items` (`item_code`);--> statement-breakpoint
 CREATE INDEX `idx_category_id` ON `mst_items` (`category_id`);--> statement-breakpoint
@@ -207,4 +247,8 @@ CREATE INDEX `idx_status` ON `vessel_requests` (`status`);--> statement-breakpoi
 CREATE INDEX `vessel_requests_requested_by_fkey` ON `vessel_requests` (`requested_by`);--> statement-breakpoint
 CREATE INDEX `vessel_requests_reviewed_by_fkey` ON `vessel_requests` (`reviewed_by`);--> statement-breakpoint
 CREATE INDEX `idx_vessel_id` ON `vessel_item_standard` (`vessel_id`);--> statement-breakpoint
-CREATE INDEX `idx_item_id` ON `vessel_item_standard` (`item_id`);
+CREATE INDEX `idx_item_id` ON `vessel_item_standard` (`item_id`);--> statement-breakpoint
+CREATE INDEX `idx_po_moc_id` ON `purchase_orders` (`moc_id`);--> statement-breakpoint
+CREATE INDEX `idx_po_vendor_id` ON `purchase_orders` (`vendor_id`);--> statement-breakpoint
+CREATE INDEX `idx_po_status` ON `purchase_orders` (`status`);--> statement-breakpoint
+CREATE INDEX `idx_po_created_by` ON `purchase_orders` (`created_by`);

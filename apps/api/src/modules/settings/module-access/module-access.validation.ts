@@ -9,7 +9,7 @@ export const KNOWN_MODULE_SLUGS = [
 	'master-data/vessel-stocks',
 	'request',
 	'moc',
-	'purchase-order',
+	'purchase-orders',
 	'good-receipt',
 	'settings',
 	'settings/users',

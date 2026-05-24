@@ -22,8 +22,8 @@ cp .env.example .env
 
 3. Run database migrations:
 ```bash
-npx drizzle-kit push --name create_migration
-npx drizzle-kit generate
+npm run db:push
+npm run db:generate
 ```
 
 4. Start development server:
@@ -58,7 +58,7 @@ nano .env  # Edit with production values
 4. Run Drizzle migrations:
 ```bash
 npm run db:push
-npx drizzle-kit generate
+npm run db:generate
 ```
 
 ### PM2 Commands

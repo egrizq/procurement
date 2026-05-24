@@ -43,7 +43,7 @@ const getById = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const create = asyncHandler(async (req: Request, res: Response) => {
-	const { vesselId, itemId, periode, minStock, maxStock } = req.body;
+	const { vesselId, itemId, periode, minStock, maxStock, poThreshold } = req.body;
 
 	const existingStandard = await standardRepo.findByVesselAndItem(vesselId, itemId);
 	if (existingStandard) {
@@ -62,6 +62,7 @@ const create = asyncHandler(async (req: Request, res: Response) => {
 		periode,
 		minStock,
 		maxStock,
+		poThreshold: poThreshold ?? null,
 	});
 
 	return success(res, std, 201);
@@ -75,7 +76,7 @@ const update = asyncHandler(async (req: Request, res: Response) => {
 	const existing = await standardRepo.findById(id);
 	if (!existing) throw new AppError('Standard not found', 404);
 
-	const { vesselId, itemId, periode, minStock, maxStock } = req.body;
+	const { vesselId, itemId, periode, minStock, maxStock, poThreshold } = req.body;
 
     const newVesselId = vesselId ?? existing.vesselId;
     const newItemId = itemId ?? existing.itemId;
@@ -103,6 +104,7 @@ const update = asyncHandler(async (req: Request, res: Response) => {
 	if (periode !== undefined) updateData.periode = periode;
 	if (minStock !== undefined) updateData.minStock = minStock;
 	if (maxStock !== undefined) updateData.maxStock = maxStock;
+	if (poThreshold !== undefined) updateData.poThreshold = poThreshold;
 
 	const std = await standardRepo.update(id, updateData);
 

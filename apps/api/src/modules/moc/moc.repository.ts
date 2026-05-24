@@ -136,6 +136,8 @@ class MocRepository {
         mocVendors: {
           with: { vendor: { columns: { id: true, name: true } } },
         },
+        selectedVendor: { columns: { id: true, name: true } },
+        purchaseOrders: { columns: { id: true, poNumber: true, status: true } },
       },
     });
 
@@ -209,7 +211,11 @@ class MocRepository {
     return await db.transaction(async (tx) => {
       await tx
         .update(mocs)
-        .set({ status: data.status || 'Draft', updatedAt: new Date() })
+        .set({
+          status: data.status || 'Draft',
+          selectedVendorId: data.selectedVendorId ?? null,
+          updatedAt: new Date(),
+        })
         .where(eq(mocs.id, id));
 
       await tx.delete(mocVendors).where(eq(mocVendors.mocId, id));

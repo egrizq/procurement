@@ -10,6 +10,7 @@ import userRoutes from '#modules/settings/users/user.routes.ts';
 import moduleAccessRoutes from '#modules/settings/module-access/module-access.routes.ts';
 import mocRoutes from '#modules/moc/moc.routes.ts';
 import dashboardRoutes from '#modules/dashboard/index.ts';
+import purchaseOrderRoutes from '#modules/purchase-order/purchase-order.routes.ts';
 
 const router: Router = express.Router();
 
@@ -24,5 +25,7 @@ router.use('/settings/vessel-item-standards', settingsStandardRoutes);
 router.use('/settings/users', userRoutes);
 router.use('/settings/module-access', moduleAccessRoutes);
 router.use('/moc', mocRoutes);
+router.use('/purchase-orders', purchaseOrderRoutes);
 
 export default router;
+

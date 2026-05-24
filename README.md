@@ -120,8 +120,8 @@ cp .env.example .env
 
 # 4. Set up the database
 cd apps/api
-npx drizzle-kit push
-npx drizzle-kit generate
+npm run db:push
+npm run db:generate
 npm run db:seed  # Optional: seed with sample data
 cd ../..
 
@@ -164,10 +164,10 @@ npm run build        # Build for production
 npm run preview      # Preview production build
 
 # Database (from apps/api/)
-npx drizzle-kit push      # Create and apply migration
+npm run db:push      # Apply schema changes to the database
 npm run db:push   # Apply migrations (production)
 npx drizzle-kit studio           # Open database GUI
-npx drizzle-kit generate         # Generate Drizzle Client
+npm run db:generate         # Generate Drizzle migration files
 npm run db:seed          # Seed database
 ```
 

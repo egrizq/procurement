@@ -11,7 +11,7 @@ export const MODULES = [
   { slug: 'master-data/vessel-stocks', label: 'Vessel Stock', parent: 'master-data' },
   { slug: 'request', label: 'Request' },
   { slug: 'moc', label: 'MOC' },
-  { slug: 'purchase-order', label: 'Purchase Order' },
+  { slug: 'purchase-orders', label: 'Purchase Order' },
   { slug: 'good-receipt', label: 'Good Receipt' },
   { slug: 'settings', label: 'Settings' },
   { slug: 'settings/users', label: 'Manage Users', parent: 'settings' },

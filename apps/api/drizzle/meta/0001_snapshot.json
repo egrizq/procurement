@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "e455ce5b-8b93-49dd-9f38-922240ba048d",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "639eda7c-507c-455e-8c1e-2735c1061663",
+  "prevId": "35af06a1-8393-4c41-8dbb-ac20b8adcdd1",
   "tables": {
     "api_tokens": {
       "name": "api_tokens",
@@ -44,14 +44,14 @@
         },
         "expired_at": {
           "name": "expired_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -59,7 +59,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -164,7 +164,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -172,7 +172,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -220,7 +220,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -228,7 +228,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -303,7 +303,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -311,7 +311,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -416,7 +416,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -424,7 +424,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -543,7 +543,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -551,7 +551,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -654,7 +654,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -662,7 +662,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -795,7 +795,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -803,7 +803,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -936,7 +936,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -944,7 +944,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -953,7 +953,7 @@
         },
         "reviewed_at": {
           "name": "reviewed_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -1102,7 +1102,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -1110,7 +1110,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -1239,7 +1239,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -1403,11 +1403,18 @@
         },
         "status": {
           "name": "status",
-          "type": "enum('Draft','Completed')",
+          "type": "enum('Draft','Completed','Approved')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
           "default": "'Draft'"
+        },
+        "selected_vendor_id": {
+          "name": "selected_vendor_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "created_by": {
           "name": "created_by",
@@ -1418,7 +1425,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -1426,7 +1433,7 @@
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp(0)",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -1462,6 +1469,19 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "mocs_selected_vendor_id_mst_vendors_id_fk": {
+          "name": "mocs_selected_vendor_id_mst_vendors_id_fk",
+          "tableFrom": "mocs",
+          "tableTo": "mst_vendors",
+          "columnsFrom": [
+            "selected_vendor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "mocs_created_by_users_id_fk": {
           "name": "mocs_created_by_users_id_fk",
           "tableFrom": "mocs",
@@ -1479,6 +1499,324 @@
       "compositePrimaryKeys": {
         "mocs_id": {
           "name": "mocs_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "purchase_orders": {
+      "name": "purchase_orders",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "po_number": {
+          "name": "po_number",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "moc_id": {
+          "name": "moc_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "vendor_id": {
+          "name": "vendor_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "vessel_request_item_id": {
+          "name": "vessel_request_item_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "unit_price": {
+          "name": "unit_price",
+          "type": "decimal(15,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "qty": {
+          "name": "qty",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "total_amount": {
+          "name": "total_amount",
+          "type": "decimal(15,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "enum('Auto Approved','Pending Approval','Approved','Rejected')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'Pending Approval'"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "rejection_reason": {
+          "name": "rejection_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "idx_po_moc_id": {
+          "name": "idx_po_moc_id",
+          "columns": [
+            "moc_id"
+          ],
+          "isUnique": false
+        },
+        "idx_po_vendor_id": {
+          "name": "idx_po_vendor_id",
+          "columns": [
+            "vendor_id"
+          ],
+          "isUnique": false
+        },
+        "idx_po_status": {
+          "name": "idx_po_status",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        },
+        "idx_po_created_by": {
+          "name": "idx_po_created_by",
+          "columns": [
+            "created_by"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "purchase_orders_moc_id_mocs_id_fk": {
+          "name": "purchase_orders_moc_id_mocs_id_fk",
+          "tableFrom": "purchase_orders",
+          "tableTo": "mocs",
+          "columnsFrom": [
+            "moc_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "purchase_orders_vendor_id_mst_vendors_id_fk": {
+          "name": "purchase_orders_vendor_id_mst_vendors_id_fk",
+          "tableFrom": "purchase_orders",
+          "tableTo": "mst_vendors",
+          "columnsFrom": [
+            "vendor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "purchase_orders_vr_item_id_vr_items_id_fk": {
+          "name": "purchase_orders_vr_item_id_vr_items_id_fk",
+          "tableFrom": "purchase_orders",
+          "tableTo": "vr_items",
+          "columnsFrom": [
+            "vr_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "purchase_orders_approved_by_users_id_fk": {
+          "name": "purchase_orders_approved_by_users_id_fk",
+          "tableFrom": "purchase_orders",
+          "tableTo": "users",
+          "columnsFrom": [
+            "approved_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "purchase_orders_created_by_users_id_fk": {
+          "name": "purchase_orders_created_by_users_id_fk",
+          "tableFrom": "purchase_orders",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "purchase_orders_id": {
+          "name": "purchase_orders_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "purchase_orders_po_number_unique": {
+          "name": "purchase_orders_po_number_unique",
+          "columns": [
+            "po_number"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "po_settings": {
+      "name": "po_settings",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "key": {
+          "name": "key",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "idx_po_settings_key": {
+          "name": "idx_po_settings_key",
+          "columns": [
+            "key"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "po_settings_updated_by_users_id_fk": {
+          "name": "po_settings_updated_by_users_id_fk",
+          "tableFrom": "po_settings",
+          "tableTo": "users",
+          "columnsFrom": [
+            "updated_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "po_settings_id": {
+          "name": "po_settings_id",
           "columns": [
             "id"
           ]

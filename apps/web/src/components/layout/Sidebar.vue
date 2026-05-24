@@ -120,10 +120,10 @@
 
       <!-- Purchase Order -->
       <router-link
-        v-if="canOpen('purchase-order')"
-        to="/purchase-order"
+        v-if="canOpen('purchase-orders')"
+        to="/purchase-orders"
         class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-700"
-        :class="isActive('/purchase-order') ? 'bg-gray-700' : ''"
+        :class="isActive('/purchase-orders') ? 'bg-gray-700' : ''"
       >
         <ShoppingCart :size="20" />
         <span>Purchase Order</span>

@@ -150,6 +150,34 @@
             </div>
           </div>
 
+          <!-- PO Threshold -->
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              PO Threshold (IDR)
+              <span class="text-xs text-gray-400 font-normal ml-1">— Opsional, untuk auto-approve PO</span>
+            </label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
+              <input
+                v-if="mode !== 'view'"
+                type="number"
+                v-model="formData.poThreshold"
+                min="0"
+                placeholder="0"
+                class="w-full rounded-md border border-gray-300 pl-10 pr-3 py-2 bg-white text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+              <div
+                v-else
+                class="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600"
+              >
+                {{ standard?.poThreshold ? `Rp ${Number(standard.poThreshold).toLocaleString('id-ID')}` : '— Tidak diset' }}
+              </div>
+            </div>
+            <p v-if="mode !== 'view'" class="text-xs text-gray-400 mt-1">
+              Jika total PO &lt; threshold → Auto Approved. Jika kosong / 0 → selalu Pending Approval.
+            </p>
+          </div>
+
           <!-- Actions -->
           <div class="mt-6 flex justify-end space-x-3">
             <button
@@ -217,6 +245,7 @@ const formData = ref({
   periode: '',
   minStock: 0,
   maxStock: 0,
+  poThreshold: null,
 })
 
 const formTitle = computed(() => {
@@ -252,6 +281,7 @@ const resetForm = () => {
     periode: '',
     minStock: 0,
     maxStock: 0,
+    poThreshold: null,
   }
   errorMessage.value = ''
 }
@@ -284,6 +314,7 @@ watch(
         periode: newStandard.periode || '',
         minStock: newStandard.minStock || 0,
         maxStock: newStandard.maxStock || 0,
+        poThreshold: newStandard.poThreshold != null ? Number(newStandard.poThreshold) : null,
       }
     } else {
       resetForm()
@@ -317,6 +348,9 @@ const handleSubmit = async () => {
       periode: formData.value.periode,
       minStock: Number(formData.value.minStock),
       maxStock: Number(formData.value.maxStock),
+      poThreshold: formData.value.poThreshold != null && formData.value.poThreshold !== ''
+        ? Number(formData.value.poThreshold)
+        : null,
     }
     emit('submit', submitData)
   } catch (error) {

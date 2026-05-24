@@ -1,10 +1,11 @@
 export const purchaseOrderRoutes = [
   {
-    path: '/purchase-order',
-    name: 'purchase-order',
+    path: '/purchase-orders',
+    name: 'PurchaseOrder',
     component: () => import('./views/Index.vue'),
     meta: {
       title: 'Purchase Order',
+      requiresAuth: true,
     },
   },
 ]

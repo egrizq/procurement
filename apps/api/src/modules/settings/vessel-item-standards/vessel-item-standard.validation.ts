@@ -16,6 +16,7 @@ export const createStandardSchema = z.object({
 		periode: z.enum(periodEnum, { message: 'Periode is required' }),
 		minStock: z.number('Min stock is required').min(0),
 		maxStock: z.number('Max stock is required').min(0),
+		poThreshold: z.number().min(0).optional().nullable(),
 	}),
 });
 
@@ -29,6 +30,7 @@ export const updateStandardSchema = z.object({
 		periode: z.enum(periodEnum).optional(),
 		minStock: z.number().min(0).optional(),
 		maxStock: z.number().min(0).optional(),
+		poThreshold: z.number().min(0).optional().nullable(),
 	}),
 });
 

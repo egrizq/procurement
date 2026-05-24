@@ -95,6 +95,14 @@
           </span>
         </template>
 
+        <!-- PO Threshold Cell -->
+        <template #cell-poThreshold="{ row }">
+          <span v-if="row.poThreshold" class="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 border border-indigo-200">
+            Rp {{ Number(row.poThreshold).toLocaleString('id-ID') }}
+          </span>
+          <span v-else class="text-xs text-gray-400 italic">— tidak diset</span>
+        </template>
+
         <!-- Actions Cell -->
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-2">
@@ -167,6 +175,7 @@ const columns = [
   { key: 'item.name', label: 'Item' },
   { key: 'minStock', label: 'Min. Stock' },
   { key: 'maxStock', label: 'Max. Stock' },
+  { key: 'poThreshold', label: 'PO Threshold' },
   { key: 'periode', label: 'Periode' },
   { key: 'actions', label: 'Actions' },
 ]

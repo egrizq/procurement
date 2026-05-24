@@ -16,9 +16,9 @@
         <tbody class="bg-white divide-y divide-gray-200">
           <tr
             v-for="(row, index) in displayData"
-            :key="row[rowKey] || index"
+            :key="row?.[rowKey] ?? index"
             :class="{ 'cursor-pointer hover:bg-gray-50 transition-colors': clickable }"
-            @click="clickable && emit('row-click', row)"
+            @click="clickable && row && emit('row-click', row)"
           >
             <td
               v-for="column in columns"
@@ -125,9 +125,9 @@ const isServerSide = computed(() => props.pagination !== null)
 // Display data - either full data (server-side) or paginated (client-side)
 const displayData = computed(() => {
   if (isServerSide.value) {
-    return props.data
+    return (props.data || []).filter(Boolean)
   }
-  return props.data.slice(startIndex.value, endIndex.value)
+  return (props.data || []).slice(startIndex.value, endIndex.value).filter(Boolean)
 })
 
 // Client-side pagination calculations

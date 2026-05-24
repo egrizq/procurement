@@ -11,8 +11,8 @@ export const vesselStocks = mysqlTable(
     itemId: int('item_id').notNull().references(() => mstItems.id),
     stockOnHand: int('stock_on_hand').notNull(),
     lastUpdate: date('last_update', { mode: 'date' }).notNull(),
-    createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'date', fsp: 0 })
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
       .defaultNow()
       .onUpdateNow()
       .notNull(),

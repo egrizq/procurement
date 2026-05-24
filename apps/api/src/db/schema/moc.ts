@@ -3,8 +3,9 @@ import { relations } from 'drizzle-orm';
 import { vesselRequests, vesselRequestItems } from './vessel-requests';
 import { mstVendors } from './vendors';
 import { users } from './users';
+import { purchaseOrders } from './purchase-orders';
 
-export const mocStatusEnum = ['Draft', 'Completed'] as const;
+export const mocStatusEnum = ['Draft', 'Completed', 'Approved'] as const;
 
 export const mocs = mysqlTable(
   'mocs',
@@ -13,9 +14,10 @@ export const mocs = mysqlTable(
     vesselRequestId: int('vessel_request_id').notNull().references(() => vesselRequests.id),
     vesselRequestItemId: int('vessel_request_item_id').notNull().references(() => vesselRequestItems.id),
     status: mysqlEnum('status', mocStatusEnum).default('Draft').notNull(),
+    selectedVendorId: int('selected_vendor_id').references(() => mstVendors.id),
     createdBy: int('created_by').notNull().references(() => users.id),
-    createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'date', fsp: 0 })
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
       .defaultNow()
       .onUpdateNow()
       .notNull(),
@@ -51,7 +53,12 @@ export const mocsRelations = relations(mocs, ({ one, many }) => ({
     fields: [mocs.createdBy],
     references: [users.id],
   }),
+  selectedVendor: one(mstVendors, {
+    fields: [mocs.selectedVendorId],
+    references: [mstVendors.id],
+  }),
   mocVendors: many(mocVendors),
+  purchaseOrders: many(purchaseOrders),
 }));
 
 export const mocVendorsRelations = relations(mocVendors, ({ one }) => ({

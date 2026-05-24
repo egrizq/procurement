@@ -58,8 +58,8 @@ cp .env.example .env
 
 # 5. Set up database
 cd apps/api
-npx drizzle-kit push
-npx drizzle-kit generate
+npm run db:push
+npm run db:generate
 cd ../..
 
 # 6. Start development servers
@@ -1095,10 +1095,10 @@ git commit -m "feat(db): add purchase order model"
 
 ```bash
 # Generate Drizzle Client
-npx drizzle-kit generate
+npm run db:generate
 
 # Create and apply migration
-npx drizzle-kit push --name <migration_name>
+npm run db:push
 
 # Apply pending migrations (production)
 npm run db:push

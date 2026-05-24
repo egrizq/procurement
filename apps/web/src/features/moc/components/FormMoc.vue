@@ -376,6 +376,54 @@
           <p>• <b>Cost</b> (Harga): r = nilai_min ÷ nilai_vendor &nbsp;|&nbsp; <b>Benefit</b> (Qty, Garansi, Diskon): r = nilai_vendor ÷ nilai_max</p>
           <p>• <b>S</b> = (r_harga × 40%) + (r_qty × 25%) + (r_garansi × 20%) + (r_diskon × 15%)</p>
         </div>
+
+        <!-- ─── Vendor Picker ──────────────────────────────── -->
+        <div class="border-t border-slate-100 pt-4">
+          <h4 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <UserCheck :size="16" class="text-indigo-500" />
+            Pilih Vendor Final
+            <span class="text-xs font-normal text-gray-400">(SAW winner dipilih otomatis, Anda dapat mengubahnya)</span>
+          </h4>
+
+          <!-- SAW-mismatch warning -->
+          <div
+            v-if="selectedVendorId && sawWinner && selectedVendorId !== sawWinner.vendorId"
+            class="mb-3 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4"
+          >
+            <AlertTriangle :size="18" class="text-amber-500 shrink-0 mt-0.5" />
+            <p class="text-sm text-amber-800">
+              <strong>Perhatian:</strong> Vendor yang Anda pilih berbeda dari rekomendasi SAW (<em>{{ sawWinner.vendorName }}</em>).
+              Pastikan ada alasan yang valid untuk keputusan ini.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
+            <div
+              v-for="v in sawResults" :key="v.vendorId"
+              @click="selectedVendorId = v.vendorId"
+              class="relative flex flex-col gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all duration-150"
+              :class="selectedVendorId === v.vendorId
+                ? 'border-indigo-500 bg-indigo-50/60 shadow-sm ring-2 ring-indigo-500/20'
+                : 'border-gray-200 bg-white hover:border-gray-300'"
+            >
+              <!-- SAW rank badge -->
+              <div class="flex items-center justify-between">
+                <span class="text-base">{{ medalOf(v.rank) }}</span>
+                <span
+                  v-if="v.rank === 1"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white"
+                >SAW Winner</span>
+                <span
+                  v-if="selectedVendorId === v.vendorId"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-600 text-white"
+                >✓ Dipilih</span>
+              </div>
+              <p class="text-sm font-bold text-gray-900">{{ v.vendorName }}</p>
+              <p class="text-xs text-indigo-700 font-semibold">SAW: {{ (v.sawScore * 100).toFixed(2) }}%</p>
+              <p class="text-xs text-gray-500">Rp {{ formatNumber(v.unitPrice) }}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
 
@@ -441,7 +489,7 @@
             </button>
           </template>
 
-          <!-- Step 3: Simpan Draft + Selesaikan MOC -->
+          <!-- Step 3: Simpan Draft + Pilih Vendor & Lanjutkan PO -->
           <template v-if="currentStep === 3 && !isCompleted">
             <button
               @click="saveDraft"
@@ -456,9 +504,9 @@
               <span v-else>Simpan Draft</span>
             </button>
             <button
-              @click="completeWithSAW"
+              @click="completeWithVendorAndPO"
               type="button"
-              :disabled="isSaving"
+              :disabled="isSaving || !selectedVendorId"
               class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
             >
               <span v-if="isSaving && savingMode === 'complete'" class="flex items-center gap-2">
@@ -466,8 +514,8 @@
                 Saving...
               </span>
               <span v-else class="flex items-center gap-2">
-                <Trophy :size="14" />
-                Selesaikan MOC
+                <ShoppingCart :size="14" />
+                Pilih Vendor &amp; Lanjutkan PO
               </span>
             </button>
           </template>
@@ -479,12 +527,16 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
-import { Plus, Trash2, CheckCircle, Scale, BarChart2, Trophy, Check, Info } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+import { Plus, Trash2, CheckCircle, Scale, BarChart2, Trophy, Check, Info, UserCheck, AlertTriangle, ShoppingCart } from 'lucide-vue-next'
 import FormDialog from '@/components/base/form/Form.vue'
 import { useMocStore } from '../store.js'
 import { useRequestStore } from '../../request/store.js'
 import { useVendorStore } from '../../master-data/vendors/store.js'
 import { showSuccess, showError } from '@/services/notification.js'
+import Swal from 'sweetalert2'
+
+const router = useRouter()
 
 const props = defineProps({
   isOpen:     { type: Boolean, default: false },
@@ -492,7 +544,7 @@ const props = defineProps({
   mocId:      { type: [Number, String], default: null },
 })
 
-const emit = defineEmits(['close', 'saved'])
+const emit = defineEmits(['close', 'saved', 'go-to-po'])
 
 const mocStore    = useMocStore()
 const requestStore = useRequestStore()
@@ -509,6 +561,10 @@ const approvedItems       = ref([])
 
 // SAW results (computed in goToScoring)
 const sawResults = ref([])
+const selectedVendorId = ref(null)
+
+// Computed winner from SAW
+const sawWinner = computed(() => sawResults.value.find((v) => v.rank === 1) || null)
 
 const makeEmptyVendor = () => ({
   vendorId: null, unitPrice: 0, availableQty: 0,
@@ -641,6 +697,9 @@ const goToScoring = () => {
     showError('Minimal 2 vendor dengan harga > 0 untuk melakukan scoring.')
     return
   }
+  // Pre-select SAW winner
+  const winner = sawResults.value.find((v) => v.rank === 1)
+  if (winner) selectedVendorId.value = winner.vendorId
   currentStep.value = 3
 }
 
@@ -696,6 +755,7 @@ const selectRequestItem = (item) => {
 // ── Form init ─────────────────────────────────────────────────────
 const initForm = async () => {
   sawResults.value = []
+  selectedVendorId.value = null
   if (props.isEditMode && props.mocId) {
     currentStep.value = 2
     try {
@@ -816,7 +876,6 @@ const saveDraft = async () => {
       showSuccess('MOC draft saved successfully.')
     }
     emit('saved')
-    handleClose()
   } catch (err) {
     console.error('[MOC] Save draft failed:', err)
     showError(mocStore.error || err?.message || 'Failed to save MOC draft.')
@@ -826,26 +885,50 @@ const saveDraft = async () => {
   }
 }
 
-const completeWithSAW = async () => {
+const completeWithVendorAndPO = async () => {
+  if (!selectedVendorId.value) {
+    showError('Pilih vendor terlebih dahulu sebelum membuat PO.')
+    return
+  }
   if (!validateVendorData(true)) return
-  isSaving.value   = true
-  savingMode.value  = 'complete'
+
+  // If vendor differs from SAW winner, show confirmation
+  if (sawWinner.value && selectedVendorId.value !== sawWinner.value.vendorId) {
+    const result = await Swal.fire({
+      title: 'Konfirmasi Pilihan Vendor',
+      html: `Vendor yang Anda pilih berbeda dari rekomendasi SAW.<br>Apakah Anda yakin ingin melanjutkan?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#4f46e5',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Ya, lanjutkan',
+      cancelButtonText: 'Batal',
+    })
+    if (!result.isConfirmed) return
+  }
+
+  isSaving.value = true
+  savingMode.value = 'complete'
   mocStore.clearError()
   try {
     const payload = buildPayload('Completed')
+    payload.selectedVendorId = selectedVendorId.value
+
+    let savedMoc
     if (props.isEditMode) {
-      await mocStore.updateMoc(props.mocId, payload)
+      savedMoc = await mocStore.updateMoc(props.mocId, payload)
     } else {
-      await mocStore.createMoc(payload)
+      savedMoc = await mocStore.createMoc(payload)
     }
-    showSuccess('MOC selesai! Vendor terbaik dipilih berdasarkan SAW.')
+
+    showSuccess('MOC selesai! Melanjutkan ke Purchase Order...')
     emit('saved')
-    handleClose()
+    emit('go-to-po', savedMoc?.id || props.mocId)
   } catch (err) {
-    console.error('[MOC] Complete failed:', err)
-    showError(mocStore.error || err?.message || 'Failed to complete MOC.')
+    console.error('[MOC] Complete with PO failed:', err)
+    showError(mocStore.error || err?.message || 'Gagal menyelesaikan MOC.')
   } finally {
-    isSaving.value  = false
+    isSaving.value = false
     savingMode.value = null
   }
 }

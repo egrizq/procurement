@@ -1,6 +1,5 @@
 import { int, mysqlTable, mysqlEnum, timestamp, varchar, index } from 'drizzle-orm/mysql-core';
 import { statusEnum } from './enums';
-import { relations } from 'drizzle-orm';
 
 export const mstVessels = mysqlTable(
   'mst_vessels',
@@ -11,8 +10,8 @@ export const mstVessels = mysqlTable(
     flag: varchar('flag', { length: 100 }),
     type: varchar('type', { length: 100 }),
     status: mysqlEnum('status', statusEnum).default('Publish').notNull(),
-    createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'date', fsp: 0 })
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
       .defaultNow()
       .onUpdateNow()
       .notNull(),

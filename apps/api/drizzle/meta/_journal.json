@@ -5,8 +5,29 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1779494805223,
-      "tag": "0000_lonely_patriot",
+      "when": 1779588738860,
+      "tag": "0001_safe_firestar",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1779589379703,
+      "tag": "0001_famous_speed",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1779589648666,
+      "tag": "0002_solid_malice",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1779591646750,
+      "tag": "0003_talented_songbird",
       "breakpoints": true
     }
   ]

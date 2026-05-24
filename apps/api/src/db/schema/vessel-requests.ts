@@ -17,12 +17,12 @@ export const vesselRequests = mysqlTable(
     priority: mysqlEnum('priority', priorityEnum).default('Medium').notNull(),
     justification: text('justification'),
     requestDate: date('request_date', { mode: 'date' }).notNull(),
-    createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'date', fsp: 0 })
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
       .defaultNow()
       .onUpdateNow()
       .notNull(),
-    reviewedAt: timestamp('reviewed_at', { mode: 'date', fsp: 0 }),
+    reviewedAt: timestamp('reviewed_at'),
     reviewedBy: int('reviewed_by').references(() => users.id),
     rejectReason: text('reject_reason'),
   },
@@ -46,8 +46,8 @@ export const vesselRequestItems = mysqlTable(
     status: mysqlEnum('status', requestStatusEnum).default('Waiting').notNull(),
     priority: mysqlEnum('priority', priorityEnum).default('Medium').notNull(),
     justification: text('justification'),
-    createdAt: timestamp('created_at', { mode: 'date', fsp: 0 }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { mode: 'date', fsp: 0 })
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
       .defaultNow()
       .onUpdateNow()
       .notNull(),
