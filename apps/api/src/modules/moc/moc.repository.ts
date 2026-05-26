@@ -90,7 +90,9 @@ function calculateSAWWithBreakdown(vendors: any[]) {
 
 class MocRepository {
   async createMoc(data: any, createdBy: number) {
-    return await db.transaction(async (tx) => {
+    let mocId: number;
+
+    await db.transaction(async (tx) => {
       const [inserted] = await tx.insert(mocs).values({
         vesselRequestId: data.vesselRequestId,
         vesselRequestItemId: data.vesselRequestItemId,
@@ -98,7 +100,7 @@ class MocRepository {
         createdBy: createdBy,
       });
 
-      const mocId = inserted.insertId;
+      mocId = inserted.insertId;
 
       if (data.vendors && data.vendors.length > 0) {
         const isCompleted = data.status === 'Completed';
@@ -117,9 +119,10 @@ class MocRepository {
         }));
         await tx.insert(mocVendors).values(vendorValues);
       }
-
-      return await this.getMocById(mocId);
     });
+
+    // Query AFTER transaction commits so data is visible
+    return await this.getMocById(mocId!);
   }
 
   async getMocById(id: number) {
@@ -208,7 +211,7 @@ class MocRepository {
   }
 
   async updateMoc(id: number, data: any) {
-    return await db.transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       await tx
         .update(mocs)
         .set({
@@ -237,9 +240,10 @@ class MocRepository {
         }));
         await tx.insert(mocVendors).values(vendorValues);
       }
-
-      return await this.getMocById(id);
     });
+
+    // Query AFTER transaction commits so data is visible
+    return await this.getMocById(id);
   }
 
   async deleteMoc(id: number) {

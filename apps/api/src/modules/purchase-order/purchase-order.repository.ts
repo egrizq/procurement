@@ -64,7 +64,7 @@ class PurchaseOrderRepository {
     const threshold = await getItemThreshold(data.itemId);
 
     let status: 'Auto Approved' | 'Pending Approval' = 'Pending Approval';
-    if (threshold !== null && threshold > 0 && totalAmount < threshold) {
+    if (threshold !== null && threshold > 0 && data.unitPrice < threshold) {
       status = 'Auto Approved';
     }
 

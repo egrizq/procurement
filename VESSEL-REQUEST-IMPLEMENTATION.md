@@ -3,8 +3,8 @@
 **Module Name:** Vessel Request  
 **Status:** ✅ Complete (with ongoing improvements)  
 **Created:** February 2026  
-**Last Updated:** February 28, 2026  
-**Version:** 1.0.0
+**Last Updated:** May 2026  
+**Version:** 2.0.0
 
 ---
 
@@ -32,14 +32,29 @@ The Vessel Request module enables users to create and manage procurement request
 
 - ✅ Multi-step wizard form for complex data entry
 - ✅ Dynamic items management (add/remove items)
+- ✅ Duplicate item detection before submit
+- ✅ Server-side pre-submission validation endpoint (`/validate`)
+- ✅ Validation warnings dialog (intercepts form before submit)
 - ✅ Server-side pagination for request list
-- ✅ Real-time search functionality
+- ✅ Real-time search functionality (by request code)
+- ✅ Status filter support (`status` param on list endpoint)
 - ✅ Read-only view mode with beautiful UI
 - ✅ Row-click navigation for viewing details
 - ✅ Status and priority badges with color coding
-- ✅ Integration with master data (vessels, items)
-- ✅ Form validation using Zod schemas
+- ✅ Integration with master data (vessels, items, vessel stocks, vessel standards)
+- ✅ Rich server-side validation (inactive items, stock checks, frequency, capacity)
+- ✅ Staff review workflow (Approve / Reject with adjustments)
+- ✅ PDF generation (full request & per-item PDF download)
 - ✅ Responsive design with Tailwind CSS
+
+### Statuses
+
+| Status | Description |
+|--------|-------------|
+| `Waiting` | Request created with warnings; needs staff review |
+| `Approved by system` | Request auto-approved (no warnings detected) |
+| `Approved` | Staff manually approved |
+| `Rejected` | Staff rejected with reason |
 
 ### User Flow
 
@@ -47,9 +62,15 @@ The Vessel Request module enables users to create and manage procurement request
 1. User clicks "New Request" button
 2. Step 1: Select vessel, date, priority, justification
 3. Step 2: Add items with quantities, units, priorities
-4. Submit validates the request and creates it as "Ok" when clean, or "Waiting" when warnings need staff review
-5. User can click any row to view full details
-6. Read-only view shows all information in organized layout
+4. Submit → Frontend calls /validate first
+   ├─ If warnings → Show validation dialog
+   │   ├─ User clicks "Go Back & Edit" → stays on form
+   │   └─ User clicks "Tetap Ajukan Request" → proceed to create
+   └─ If no warnings → Directly proceed to create
+5. Backend creates request with status: "Approved by system" (clean) or "Waiting" (warnings)
+6. User can click any row to view full details
+7. Staff sees "Staff Actions" panel on Waiting requests (Approve/Reject with optional item qty adjustment)
+8. Approved requests show PDF download buttons (full or per-item)
 ```
 
 ---
@@ -60,16 +81,18 @@ The Vessel Request module enables users to create and manage procurement request
 
 **Backend:**
 - Express.js (REST API)
-- Drizzle ORM (Database)
+- Drizzle ORM (MySQL)
 - Zod (Validation)
 - TypeScript
+- pdfmake (PDF generation)
 
 **Frontend:**
-- Vue 3 (Composition API)
+- Vue 3 (Composition API, `<script setup>`)
 - Pinia (State Management)
 - Vite (Build Tool)
 - Tailwind CSS (Styling)
-- Lucide Icons (UI Icons)
+- Lucide Vue Next (UI Icons)
+- SweetAlert2 (Confirmation dialogs)
 
 **Shared:**
 - Monorepo structure with Turborepo
@@ -81,20 +104,25 @@ The Vessel Request module enables users to create and manage procurement request
 ```
 Backend (apps/api):
 ├── src/modules/vessel-request/
-│   ├── vessel-request.controller.ts    # Request handlers
-│   ├── vessel-request.repository.ts    # Database operations
+│   ├── vessel-request.controller.ts    # Request handlers (create, getAll, getById, update, validate, review, generatePdf)
+│   ├── vessel-request.repository.ts    # Database operations (Drizzle ORM)
 │   ├── vessel-request.routes.ts        # Route definitions
-│   └── vessel-request.validation.ts    # Request validation
+│   ├── vessel-request.validation.ts    # Zod schema imports
+│   └── vessel-request.pdf.ts           # PDF generation with pdfmake
+
+├── src/db/schema/
+│   ├── vessel-requests.ts              # Drizzle table definitions
+│   └── enums.ts                        # Shared enum values
 
 Frontend (apps/web):
 ├── src/features/request/
 │   ├── views/
-│   │   └── Index.vue                   # Main list view
+│   │   └── Index.vue                   # Main list view + validation warnings dialog
 │   ├── component/
-│   │   ├── FormRequest.vue             # Create/edit form
-│   │   └── ViewRequest.vue             # Read-only view
-│   ├── store.js                        # Pinia store
-│   └── api.js                          # HTTP requests
+│   │   ├── FormRequest.vue             # Multi-step create/edit form
+│   │   └── ViewRequest.vue             # Read-only view + staff review + PDF download
+│   ├── store.js                        # Pinia store (fetch, validate, create, review, downloadPdf)
+│   └── api.js                          # HTTP service layer
 
 Shared (packages):
 └── validators/src/
@@ -107,102 +135,64 @@ Shared (packages):
 
 ### 1. Database Schema (Drizzle)
 
-```drizzle
-model VesselRequest {
-  id                  Int                  @id @default(autoincrement())
-  requestCode         String               @unique
-  vesselId            Int
-  vessel              MstVessel            @relation(fields: [vesselId], references: [id])
-  userId              Int
-  user                User                 @relation(fields: [userId], references: [id])
-  status              RequestStatus        @default(Waiting)
-  priority            Priority             @default(Medium)
-  justification       String?              @db.Text
-  requestDate         DateTime
-  vesselRequestItems  VesselRequestItem[]
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  
-  @@map("vessel_requests")
-}
+**Location:** `apps/api/src/db/schema/vessel-requests.ts`
 
-model VesselRequestItem {
-  id                Int            @id @default(autoincrement())
-  vesselRequestId   Int
-  vesselRequest     VesselRequest  @relation(fields: [vesselRequestId], references: [id])
-  itemId            Int
-  item              MstItem        @relation(fields: [itemId], references: [id])
-  qtyRequested      Int
-  qtyApproved       Int?
-  unit              Unit           @default(Pcs)
-  status            RequestStatus  @default(Waiting)
-  priority          Priority       @default(Medium)
-  justification     String?        @db.Text
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  
-  @@map("vessel_request_items")
-}
+```typescript
+// vessel_requests table
+export const vesselRequests = mysqlTable('vessel_requests', {
+  id: int('id').primaryKey().autoincrement(),
+  requestCode: varchar('request_code', { length: 100 }).notNull(),
+  requestedBy: int('requested_by').notNull().references(() => users.id),
+  vesselId: int('vessel_id').notNull().references(() => mstVessels.id),
+  status: mysqlEnum('status', requestStatusEnum).default('Waiting').notNull(),
+  priority: mysqlEnum('priority', priorityEnum).default('Medium').notNull(),
+  justification: text('justification'),
+  requestDate: date('request_date', { mode: 'date' }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
+  reviewedAt: timestamp('reviewed_at'),
+  reviewedBy: int('reviewed_by').references(() => users.id),
+  rejectReason: text('reject_reason'),
+});
 
-enum RequestStatus {
-  Waiting
-  Approved
-  Rejected
-}
-
-enum Priority {
-  Low
-  Medium
-  High
-}
-
-enum Unit {
-  Pcs
-  Box
-  Liter
-  Meter
-  Kg
-}
+// vessel_request_items table
+export const vesselRequestItems = mysqlTable('vessel_request_items', {
+  id: int('id').primaryKey().autoincrement(),
+  vesselRequestId: int('vessel_request_id').notNull().references(() => vesselRequests.id),
+  itemId: int('item_id').notNull().references(() => mstItems.id),
+  qtyRequested: int('qty_requested').notNull(),
+  qtyApproved: int('qty_approved'),
+  unit: mysqlEnum('unit', unitEnum).notNull(),
+  status: mysqlEnum('status', requestStatusEnum).default('Waiting').notNull(),
+  priority: mysqlEnum('priority', priorityEnum).default('Medium').notNull(),
+  justification: text('justification'),
+  staffJustification: text('staff_justification'),  // ← Added for staff review adjustments
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
+});
 ```
+
+**Enums used:**
+
+```typescript
+// enums.ts
+export const requestStatusEnum = ['Approved by system', 'Waiting', 'Approved', 'Rejected'] as const;
+export const priorityEnum       = ['Low', 'Medium', 'High'] as const;
+export const unitEnum           = ['Pcs', 'Box', 'Liter', 'Meter', 'Kg'] as const;
+```
+
+> **Note:** Schema uses Drizzle ORM with MySQL (not Prisma as originally planned). Status `"Ok"` from early docs was replaced by `"Approved by system"`.
 
 ### 2. Validation Schema (Zod)
 
 **Location:** `packages/validators/src/vessel-request.js`
 
-```javascript
-import { z } from 'zod';
-
-export const vesselRequestSchema = z.object({
-  body: z.object({
-    vesselId: z.number('Vessel is not found').int().positive(),
-    status: z.enum(
-      ['Ok', 'Waiting', 'Approved', 'Rejected'],
-      'Status must be either Ok, Waiting, Approved, or Rejected'
-    ),
-    priority: z.enum(['Low', 'Medium', 'High']),
-    justification: z.string().optional(),
-    requestDate: z.string('Request date is not valid'),
-    items: z.array(
-      z.object({
-        itemId: z.number('Item is not found').int().positive(),
-        qtyRequested: z.number().int().positive(),
-        unit: z.enum(['Pcs', 'Box', 'Liter', 'Meter', 'Kg']),
-        status: z.enum(['Ok', 'Waiting', 'Approved', 'Rejected']),
-        priority: z.enum(['Low', 'Medium', 'High']),
-        justification: z.string().optional(),
-      })
-    ),
-  }),
-});
-
-export const vesselRequestListSchema = z.object({
-  body: z.object({
-    page: z.number().int().positive().default(1),
-    limit: z.number().int().positive().default(10),
-    search: z.string().optional(),
-  }),
-});
-```
+Zod schemas are imported in `vessel-request.validation.ts` and used by validation middleware. Key schemas:
+- `vesselRequestSchema` – for create
+- `vesselRequestListSchema` – for list (supports `page`, `limit`, `search`, `status`)
+- `vesselRequestByIdSchema` – for single fetch by ID (params)
+- `updateVesselRequestSchema` – for update
+- `reviewVesselRequestSchema` – for staff review (approve/reject)
 
 ### 3. Repository Pattern
 
@@ -213,185 +203,217 @@ export const vesselRequestListSchema = z.object({
 ```typescript
 class VesselRequestRepository {
   // Create vessel request header
-  async createVesselRequest(data: any) {
-    return await drizzle.vesselRequest.create({
-      data: data,
-    });
-  }
+  async createVesselRequest(data: any): Promise<VesselRequest>
 
   // Create request items in bulk
-  async createVesselRequestItems(data: any[]) {
-    return await drizzle.vesselRequestItem.createMany({
-      data: data,
-    });
-  }
+  async createVesselRequestItems(data: any[]): Promise<{ count: number }>
 
-  // Get paginated list with search
-  async getVesselRequests(page: number, limit: number, search: string) {
-    const where = search ? {
-      OR: [
-        { requestCode: { contains: search, mode: 'insensitive' } },
-        { vessel: { name: { contains: search, mode: 'insensitive' } } },
-        { user: { fullName: { contains: search, mode: 'insensitive' } } },
-      ],
-    } : {};
-
-    const [items, total] = await Promise.all([
-      drizzle.vesselRequest.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        include: {
-          vessel: true,
-          user: true,
-          _count: {
-            select: { vesselRequestItems: true },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      drizzle.vesselRequest.count({ where }),
-    ]);
-
-    return { items, total };
-  }
+  // Get paginated list with optional search and status filter
+  async getVesselRequests(page: number, limit: number, search: string, status?: string)
+  // Returns: { items, total }
+  // items include _count.vesselRequestItems and availableForMocCount
 
   // Get single request with all items
-  async getVesselRequestById(id: number) {
-    return await drizzle.vesselRequest.findUnique({
-      where: { id },
-      include: {
-        vessel: true,
-        user: true,
-        vesselRequestItems: {
-          include: { item: true },
-          orderBy: { createdAt: 'asc' },
-        },
-      },
-    });
-  }
+  async getVesselRequestById(id: number)
+  // Returns: { ...request, vesselRequestItems: items }
+
+  // Smart validation helpers
+  async findRecentRequestedItems(vesselId, itemIds, days = 30)
+  async getVesselItemStandards(vesselId, itemIds)
+  async getVesselStocks(vesselId, itemIds)
+
+  // Staff review: approve or reject
+  async reviewRequest(id, userId, action, rejectReason?, itemsAdjustment?)
+  // Uses DB transaction: updates header status + all item statuses + qty adjustments
 }
 ```
 
 **Design Decisions:**
-- ✅ Separation of concerns: Repository handles all database operations
-- ✅ Drizzle relations for eager loading (vessel, user, items)
-- ✅ Case-insensitive search across multiple fields
-- ✅ Pagination at database level for performance
-- ✅ Count aggregation for item numbers
+- ✅ Drizzle ORM with raw SQL query builder (not Prisma)
+- ✅ `availableForMocCount` computed per request: items that are approved AND not yet assigned to any MOC
+- ✅ Transactions used for multi-table operations (review)
+- ✅ Status filter supports `'Approved'` which matches both `'Approved'` and `'Approved by system'`
 
 ### 4. Controller Logic
 
 **Location:** `apps/api/src/modules/vessel-request/vessel-request.controller.ts`
 
-**Create Request Flow:**
+**Validation Logic (`validateVesselRequestPayload`):**
 
 ```typescript
-const create = asyncHandler(async (req: Request, res: Response) => {
-  // 1. Validate vessel exists
-  const vessel = await mstVesselRepo.findVessel({ id: req.body.vesselId });
-  if (!vessel) {
-    throw new AppError('Vessel is not found!', 400);
-  }
+const validateVesselRequestPayload = async (body) => {
+  // 1. Vessel must exist
+  const vessel = await mstVesselRepo.findVessel({ id: body.vesselId });
+  if (!vessel) throw new AppError('Vessel is not found!', 400);
 
-  // 2. Validate all items exist
-  const itemIds = req.body.items.map((item: any) => item.itemId);
+  // 2. All items must exist
   const items = await mstItemRepo.findItemByIds(itemIds);
-  if (!items || items.length !== req.body.items.length) {
-    throw new AppError('One or more items are invalid!', 400);
-  }
+  if (items.length !== requestItems.length) throw new AppError('One or more items are invalid!', 400);
 
-  // 3. Get authenticated user
+  // 3. Items must be active (status === 'Publish')
+  const inactiveItems = items.filter(item => item.status !== 'Publish');
+  if (inactiveItems.length > 0) throw new AppError(`Cannot request inactive items: ${names}`, 400);
+
+  // 4. Load parallel: recent history, vessel standards, vessel stocks
+  const [historyList, standardsList, stocksList] = await Promise.all([
+    findRecentRequestedItems(vesselId, itemIds, 30),
+    getVesselItemStandards(vesselId, itemIds),
+    getVesselStocks(vesselId, itemIds),
+  ]);
+
+  // 5. Per-item warning generation
+  const validations = requestItems.map(reqItem => {
+    const warnings = [];
+
+    // Warning: Item requested in last 30 days
+    if (history?.length > 0) {
+      warnings.push(`Item ini baru saja diajukan pada request ${mostRecent.requestCode} tanggal ${dateStr}.`);
+    }
+
+    // Warning: Item not in vessel's standard list
+    if (!standard) {
+      warnings.push(`Item tidak terdaftar pada standard kapal ini.`);
+    } else {
+      // Warning: Exceeds max stock capacity
+      if (reqItem.qtyRequested + stockOnHand > standard.maxStock) {
+        warnings.push(`Request melebihi kapasitas standar simpan batas maksimum (${standard.maxStock}).`);
+      }
+    }
+
+    // Warning: High priority but stock is above min
+    if (reqItem.priority === 'High' && stock?.stockOnHand > standard?.minStock) {
+      warnings.push(`Stok aktual (${stock.stockOnHand}) masih di atas batas minimal, disarankan Priority Medium/Low.`);
+    }
+
+    // Warning: Stock report outdated (>30 days)
+    if (stock?.lastUpdate && diffDays > 30) {
+      warnings.push(`Laporan stok terakhir diupdate pada ${dateStr} (Lebih dari 30 hari).`);
+    }
+    if (!stock) {
+      warnings.push(`Belum ada data laporan stok untuk item ini pada kapal.`);
+    }
+
+    return { itemId, itemName, warnings };
+  });
+
+  return {
+    items: validations,
+    header: [],
+    hasWarnings: validations.some(i => i.warnings.length > 0),
+    status: hasWarnings ? 'Waiting' : 'Approved by system',
+  };
+};
+```
+
+**Create Flow:**
+```typescript
+const create = asyncHandler(async (req, res) => {
+  // 1. Auth check
   const userId = req.apiToken!.userId;
-  if (!userId) {
-    throw new AppError('Unauthorized user', 401);
-  }
 
-  // 4. Generate unique request code
+  // 2. Validate date format
+  const requestDate = new Date(req.body.requestDate);
+
+  // 3. Run full validation (throws on hard errors, returns warnings)
+  const validationResult = await validateVesselRequestPayload(req.body);
+
+  // 4. Generate request code
   const requestCode = `VR-${Date.now()}`;
 
-  // 5. Create request header
-  const bodyVesselRequest = {
+  // 5. Create header – status derived from validation
+  const vesselRequest = await vesselRequestRepo.createVesselRequest({
     requestCode,
     user: { connect: { id: userId } },
     vessel: { connect: { id: req.body.vesselId } },
-    status: req.body.status,
+    status: validationResult.status, // 'Approved by system' or 'Waiting'
     priority: req.body.priority,
     justification: req.body.justification,
-    requestDate: new Date(req.body.requestDate),
-  };
-  const vesselRequest = await vesselRequestRepo.createVesselRequest(bodyVesselRequest);
+    requestDate,
+  });
 
-  // 6. Create request items
-  const vesselRequestItemsData = req.body.items.map((item: any) => ({
-    vesselRequestId: vesselRequest.id,
-    itemId: item.itemId,
-    qtyRequested: item.qtyRequested,
-    unit: item.unit,
-    status: item.status,
-    priority: item.priority,
-    justification: item.justification,
-  }));
-  const vesselRequestItems = await vesselRequestRepo.createVesselRequestItems(
-    vesselRequestItemsData
-  );
+  // 6. Create items – each item's status derived individually from warnings
+  const vesselRequestItemsData = req.body.items.map(item => {
+    const status = (validationByItem.get(item.itemId)?.warnings.length ?? 0) > 0
+      ? 'Waiting'
+      : 'Approved by system';
+    return {
+      vesselRequestId: vesselRequest.id,
+      itemId: item.itemId,
+      qtyRequested: item.qtyRequested,
+      qtyApproved: status === 'Approved by system' ? item.qtyRequested : null,
+      unit: item.unit,
+      status,
+      priority: item.priority,
+      justification: item.justification,
+    };
+  });
 
-  return success(res, { vesselRequest, vesselRequestItems }, 201);
+  return success(res, { vesselRequest, vesselRequestItems, validation: validationResult }, 201);
+});
+```
+
+**Review Flow:**
+```typescript
+const review = asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const { action, rejectReason, itemsAdjustment } = req.body;
+
+  // Only 'Waiting' requests can be reviewed
+  if (vesselRequest.status !== 'Waiting') throw new AppError('Only Waiting requests can be reviewed', 400);
+
+  // Calls reviewRequest which wraps in a DB transaction
+  const updated = await vesselRequestRepo.reviewRequest(id, userId, action, rejectReason, itemsAdjustment);
+  return success(res, updated, 200);
+});
+```
+
+**PDF Generation:**
+```typescript
+const generatePdf = asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const itemId = req.query.itemId ? Number(req.query.itemId) : undefined;
+
+  // Filter to single item if itemId query param provided
+  if (itemId !== undefined) {
+    vesselRequest.vesselRequestItems = vesselRequest.vesselRequestItems.filter(i => i.id === itemId);
+  }
+
+  const pdfBuffer = await generateVesselRequestPdf(vesselRequest);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename=VesselRequest-${vesselRequest.requestCode}${itemId ? '-item' : ''}.pdf`);
+  res.send(pdfBuffer);
 });
 ```
 
 **Key Features:**
 - ✅ Comprehensive validation before database operations
-- ✅ Atomic operations (both header and items created)
-- ✅ Authentication check via API token
-- ✅ Auto-generated request code with timestamp
-- ✅ Proper HTTP status codes (201 for creation)
+- ✅ Atomic transactions for review (header + all items updated together)
+- ✅ Authentication check via API token middleware
+- ✅ Auto-generated request code (`VR-<timestamp>`)
+- ✅ Per-item `qtyApproved` auto-set on "Approved by system"
+- ✅ PDF uses `pdfmake` with Helvetica (built-in font, no external files)
 
 ### 5. Routes Configuration
 
 **Location:** `apps/api/src/modules/vessel-request/vessel-request.routes.ts`
 
 ```typescript
-const router = Router();
-
-router.post(
-  '/',
-  validateRequest(vesselRequestValidation),
-  vesselRequestController.create
-);
-
-router.post(
-  '/list',
-  validateRequest(vesselRequestListValidation),
-  vesselRequestController.getAll
-);
-
-router.post(
-  '/list/:id',
-  validateRequest(vesselRequestByIdValidation),
-  vesselRequestController.getById
-);
-
-router.put(
-  '/:id',
-  validateRequest(updateVesselRequestValidation),
-  vesselRequestController.update
-);
-
-router.delete(
-  '/:id',
-  validateRequest(vesselRequestByIdValidation),
-  vesselRequestController.delete
-);
-
-export default router;
+// All routes have apiAuth() middleware
+router.post('/',             apiAuth(), validate(vesselRequestSchema),       controller.create);
+router.post('/validate',     apiAuth(), validate(vesselRequestSchema),       controller.validate);
+router.post('/list/:id',     apiAuth(), validate(vesselRequestByIdSchema),   controller.getById);
+router.post('/list',         apiAuth(), validate(vesselRequestListSchema),   controller.getAll);
+router.put('/:id',           apiAuth(), validate(updateVesselRequestSchema), controller.update);
+router.post('/:id/review',   apiAuth(), validate(reviewVesselRequestSchema), controller.review);
+router.get('/:id/pdf',       apiAuth(), validate(vesselRequestByIdSchema),   controller.generatePdf);
 ```
 
 **Design Decisions:**
-- ✅ POST for list enables complex search/filter payloads
-- ✅ Validation middleware applied to all routes
-- ✅ RESTful naming conventions
-- ✅ Consistent error handling via asyncHandler
+- ✅ `/validate` endpoint for pre-submission frontend validation (same schema as create)
+- ✅ `POST /list` to support complex filter payloads (page, limit, search, status)
+- ✅ `POST /list/:id` for single item (using POST for consistency)
+- ✅ `POST /:id/review` for staff review workflow
+- ✅ `GET /:id/pdf` with optional `?itemId=` query param for per-item PDF
 
 ---
 
@@ -406,325 +428,184 @@ export default router;
 - Real-time search with debouncing (500ms)
 - Row-click navigation to view details
 - Color-coded status and priority badges
-- Responsive data table
+- `formatStatus()` helper: displays `'Approved by system'` correctly
+- Validation warnings intercept dialog (shown between form submit and actual create)
 
-**Component Structure:**
-
-```vue
-<template>
-  <div class="space-y-6">
-    <!-- Header with New Request button -->
-    <div class="flex justify-between items-center">
-      <h1>Requests</h1>
-      <button @click="openAddDialog">
-        <Plus /> New Request
-      </button>
-    </div>
-
-    <!-- Search Filter -->
-    <SearchFilter v-model="searchQuery" />
-
-    <!-- Data Table with row-click -->
-    <DataTable
-      :columns="columns"
-      :data="requests"
-      :pagination="pagination"
-      @update:current-page="currentPage = $event"
-      @row-click="handleRowClick"
-    />
-
-    <!-- Dialogs -->
-    <ViewRequest :is-open="isViewOpen" :request="selectedRequest" />
-    <FormRequest :is-open="isFormOpen" @submit="handleFormSubmit" />
-  </div>
-</template>
+**Table Columns:**
+```javascript
+const columns = [
+  { key: 'requestCode', label: 'Request Code' },
+  { key: 'vessel.name', label: 'Vessel' },
+  { key: 'user.fullName', label: 'Requested By' },
+  { key: 'status', label: 'Status' },
+  { key: 'priority', label: 'Priority' },
+  { key: 'requestDate', label: 'Request Date' },
+  { key: '_count.vesselRequestItems', label: 'Items' },
+]
 ```
 
-**State Management:**
-
+**Validation Warning Dialog Flow:**
 ```javascript
-const searchQuery = ref('');
-const currentPage = ref(1);
-const itemsPerPage = 10;
-const requests = ref([]);
-const pagination = ref(null);
+// handleFormSubmit is called when user clicks "Submit Request" in FormRequest
+const handleFormSubmit = async (formData) => {
+  // 1. Call /validate endpoint first
+  const response = await requestStore.validateRequest(formData)
 
-// Debounced search
-watch(searchQuery, (newValue) => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    currentPage.value = 1;
-    fetchRequests();
-  }, 500);
-});
+  const itemsWithWarnings = response.items.filter(i => i.warnings.length > 0)
 
-// Pagination watcher
-watch(currentPage, () => {
-  fetchRequests();
-});
-```
-
-**Row Click Handler:**
-
-```javascript
-const handleRowClick = async (request) => {
-  try {
-    // Fetch full details including all items
-    const fullRequest = await requestStore.fetchRequestById(request.id);
-    if (fullRequest) {
-      selectedRequest.value = fullRequest;
-      isViewOpen.value = true;
-    }
-  } catch (error) {
-    showError('Failed to load request details');
+  if (itemsWithWarnings.length > 0) {
+    // 2. Show warning dialog - user can review or dismiss
+    validationWarnings.value = itemsWithWarnings
+    pendingFormData.value = formData
+    isValidationOpen.value = true
+  } else {
+    // No warnings - proceed directly
+    await proceedCreate(formData)
   }
-};
+}
+
+// User confirms despite warnings
+const confirmFormSubmit = async () => {
+  isValidationOpen.value = false
+  await proceedCreate(pendingFormData.value)
+}
+```
+
+**Status Colors:**
+```javascript
+{
+  'Approved by system': 'bg-green-100 text-green-800',
+  Ok:        'bg-emerald-100 text-emerald-800',   // legacy, kept for compatibility
+  Waiting:   'bg-yellow-100 text-yellow-800',
+  Approved:  'bg-green-100 text-green-800',
+  Rejected:  'bg-red-100 text-red-800',
+  Pending:   'bg-blue-100 text-blue-800',
+  Completed: 'bg-purple-100 text-purple-800',
+}
 ```
 
 ### 2. Multi-Step Form Component
 
 **Location:** `apps/web/src/features/request/component/FormRequest.vue`
 
-**Design Pattern: Multi-Step Wizard**
+**Design Pattern: Multi-Step Wizard (2 steps)**
 
-```vue
-<template>
-  <FormDialog>
-    <!-- Step Indicator -->
-    <div class="flex items-center justify-center">
-      <div>Step 1: Request Info</div>
-      <div>Step 2: Add Items</div>
-    </div>
+**Step 1 – Request Info:**
+- Vessel dropdown (shows name + IMO number)
+- Request date (defaults to today)
+- Priority (Low/Medium/High, default: Medium)
+- Justification (optional textarea)
 
-    <!-- Step 1: Header Information -->
-    <form v-show="currentStep === 1">
-      <select v-model="formData.vesselId" required>
-        <option v-for="vessel in vessels" :value="vessel.id">
-          {{ vessel.name }}
-        </option>
-      </select>
-      <input v-model="formData.requestDate" type="date" required />
-      <select v-model="formData.priority" required>
-        <option value="Low">Low</option>
-        <option value="Medium">Medium</option>
-        <option value="High">High</option>
-      </select>
-      <textarea v-model="formData.justification"></textarea>
-    </form>
+**Step 2 – Items:**
+- 4-column grid: Item | Qty | Unit | Priority
+- Full-width justification row per item
+- Add Item / Remove Item (min 1 item enforced)
+- Item dropdown shows: `name (itemCode) (id)`
 
-    <!-- Step 2: Items -->
-    <div v-show="currentStep === 2">
-      <button @click="addItem">Add Item</button>
-      
-      <div v-for="(item, index) in formData.items">
-        <select v-model="item.itemId" required />
-        <input v-model.number="item.qtyRequested" type="number" />
-        <select v-model="item.unit" />
-        <select v-model="item.priority" />
-        <button @click="removeItem(index)">Remove</button>
-      </div>
-    </div>
+**Validations:**
+```javascript
+// Step 1 → Step 2
+if (!formData.value.vesselId || !formData.value.requestDate) {
+  showError('Please fill in all required fields')
+  return
+}
 
-    <!-- Custom Footer -->
-    <template #footer>
-      <button v-if="currentStep === 2" @click="goToPreviousStep">
-        Previous
-      </button>
-      <button v-if="currentStep === 1" @click="goToNextStep">
-        Next
-      </button>
-      <button v-if="currentStep === 2" @click="handleSubmit">
-        Submit
-      </button>
-    </template>
-  </FormDialog>
-</template>
+// Step 2 submit
+const hasInvalidItems = formData.value.items.some(item => !item.itemId || !item.qtyRequested || item.qtyRequested < 1)
+
+// Duplicate item detection
+const validItemIds = formData.value.items.filter(i => i.itemId).map(i => i.itemId)
+const hasDuplicates = new Set(validItemIds).size !== validItemIds.length
+if (hasDuplicates) {
+  showError('Terdapat item duplikat di dalam request. Gabungkan qty jika item sama.')
+  return
+}
 ```
 
-**Form State Management:**
-
+**Form State (hidden fields):**
 ```javascript
-const currentStep = ref(1);
-const formData = ref({
+formData.value = {
   vesselId: null,
-  requestDate: new Date().toISOString().split('T')[0],
+  status: 'Waiting',        // Hidden – server derives final status
   priority: 'Medium',
-  status: 'Waiting', // Hidden field; API derives final status from validation
   justification: '',
-  items: [
-    {
-      itemId: null,
-      qtyRequested: 1,
-      unit: 'Pcs',
-      status: 'Waiting', // Hidden field; API derives final status from validation
-      priority: 'Medium',
-      justification: '',
-    },
-  ],
-});
-```
-
-**Step Navigation:**
-
-```javascript
-const goToNextStep = () => {
-  // Validate Step 1 required fields
-  if (!formData.value.vesselId || !formData.value.requestDate || !formData.value.priority) {
-    showError('Please fill all required fields');
-    return;
-  }
-  currentStep.value = 2;
-};
-
-const goToPreviousStep = () => {
-  currentStep.value = 1;
-};
-```
-
-**Dynamic Items Management:**
-
-```javascript
-const addItem = () => {
-  formData.value.items.push({
+  requestDate: new Date().toISOString().split('T')[0],
+  items: [{
     itemId: null,
     qtyRequested: 1,
     unit: 'Pcs',
-    status: 'Waiting',
+    status: 'Waiting',      // Hidden – server derives per-item status
     priority: 'Medium',
     justification: '',
-  });
-};
-
-const removeItem = (index) => {
-  if (formData.value.items.length > 1) {
-    formData.value.items.splice(index, 1);
-  }
-};
+  }],
+}
 ```
 
-**Submit Handler:**
+**Footer Navigation:**
+- Step 1: Cancel | Next
+- Step 2: Previous | Cancel | Submit Request
+- Submit disabled if `loading || formData.items.length === 0`
 
-```javascript
-const handleSubmit = () => {
-  loading.value = true;
-  
-  // Validate all items have required fields
-  const invalidItems = formData.value.items.filter(
-    item => !item.itemId || !item.qtyRequested
-  );
-  
-  if (invalidItems.length > 0) {
-    showError('Please complete all item fields');
-    loading.value = false;
-    return;
-  }
-
-  emit('submit', formData.value);
-};
-```
-
-**Key Design Decisions:**
-- ✅ Multi-step reduces cognitive load for complex forms
-- ✅ Status is derived by server validation: "Ok" for clean requests, "Waiting" for requests with warnings
-- ✅ Default values provided for better UX
-- ✅ Validation at each step prevents errors
-- ✅ Compact 4-column grid for items (responsive)
-- ✅ Disabled remove button when only 1 item exists
-- ✅ Visual step indicator shows progress
-
-### 3. Read-Only View Component
+### 3. View/Review Component
 
 **Location:** `apps/web/src/features/request/component/ViewRequest.vue`
 
-**Design Pattern: DataTable Integration**
+**Design Pattern:** Full-screen FormDialog with:
 
-```vue
-<template>
-  <FormDialog :show-footer="false" size="xl">
-    <!-- Gradient Header Card -->
-    <div class="bg-gradient-to-r from-indigo-50 to-blue-50">
-      <h3>{{ request.requestCode }}</h3>
-      <div class="grid grid-cols-2">
-        <!-- Vessel with Ship icon -->
-        <div class="flex items-start gap-3">
-          <Ship class="w-5 h-5 text-indigo-600" />
-          <div>
-            <label>Vessel</label>
-            <p>{{ request.vessel?.name }}</p>
-          </div>
-        </div>
-        
-        <!-- Requested By with User icon -->
-        <div class="flex items-start gap-3">
-          <User class="w-5 h-5 text-indigo-600" />
-          <div>
-            <label>Requested By</label>
-            <p>{{ request.user?.fullName }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
+1. **Gradient header card** (`bg-gradient-to-r from-indigo-50 to-blue-50`)
+   - Request code + date
+   - PDF download button (full request) – visible only if status is Approved/Approved by system
+   - Status badge + Priority badge
+   - Vessel info (with Ship icon)
+   - Requester info (with User icon)
+   - Justification (if present)
 
-    <!-- Items Table using DataTable component -->
-    <DataTable
-      :columns="itemColumns"
-      :data="request.vesselRequestItems"
-      :show-pagination="false"
-      :clickable="false"
-    >
-      <!-- Custom cell renderers -->
-      <template #cell-index="{ row }">
-        <div class="w-8 h-8 bg-gray-100 rounded-full">
-          {{ getItemIndex(row) }}
-        </div>
-      </template>
+2. **Items DataTable** (no pagination, not clickable)
+   - Columns: `#` | Item | Qty Requested | Qty Approved | Status | Priority | Actions
+   - **Qty Approved column**: Shows inline +/- adjustment controls when `isAdjusting = true`
+   - **Actions column**: Per-item PDF download button (only for Approved requests)
 
-      <template #cell-item="{ row }">
-        <div class="flex items-center gap-2">
-          <Package class="w-4 h-4" />
-          <div>
-            <p>{{ row.item?.name }}</p>
-            <p class="text-xs">{{ row.item?.itemCode }}</p>
-          </div>
-        </div>
-      </template>
+3. **Staff Actions Panel** (visible only when `request.status === 'Waiting'`)
+   - Checkbox: "Adjust items before approving?"
+   - Reject button → shows reject reason textarea
+   - Approve button → submits review
 
-      <template #cell-qtyRequested="{ row }">
-        <span>{{ row.qtyRequested }}</span>
-        <span class="text-xs">{{ row.unit }}</span>
-      </template>
-
-      <template #cell-status="{ row }">
-        <span :class="getStatusColor(row.status)">
-          {{ row.status }}
-        </span>
-      </template>
-    </DataTable>
-  </FormDialog>
-</template>
-```
-
-**DataTable Configuration:**
-
+**Staff Review State Machine:**
 ```javascript
-const itemColumns = [
-  { key: 'index', label: '#' },
-  { key: 'item', label: 'Item' },
-  { key: 'qtyRequested', label: 'Qty Requested' },
-  { key: 'qtyApproved', label: 'Qty Approved' },
-  { key: 'status', label: 'Status' },
-  { key: 'priority', label: 'Priority' },
-];
+const isAdjusting = ref(false)   // Enables per-item qty adjustment controls
+const isRejecting = ref(false)   // Shows reject reason textarea
+const rejectReason = ref('')
+const adjustments = ref({})      // { [itemId]: { qtyApproved, staffJustification } }
+
+const submitReview = async (action) => {
+  const payload = { action }
+  if (action === 'Reject') {
+    payload.rejectReason = rejectReason.value
+  } else if (action === 'Approve' && isAdjusting.value) {
+    payload.itemsAdjustment = Object.entries(adjustments.value).map(([itemId, data]) => ({
+      itemId: Number(itemId),
+      qtyApproved: data.qtyApproved,
+      staffJustification: data.staffJustification || undefined
+    }))
+  }
+  await requestStore.reviewRequest(props.request.id, payload)
+}
 ```
 
-**Key Design Decisions:**
-- ✅ Reusable DataTable component for consistency
-- ✅ Custom cell slots for complex rendering
-- ✅ Lucide icons for visual hierarchy
-- ✅ Gradient header creates visual interest
-- ✅ Color-coded badges for status/priority
-- ✅ Clickable disabled (rows not interactive)
-- ✅ Table format better than cards for comparing quantities
+**PDF Download (in ViewRequest):**
+```javascript
+// Full request PDF
+const downloadPDF = async () => {
+  const blob = await requestStore.downloadPdf(props.request.id)
+  // Creates blob URL → <a> click → revokes URL
+}
+
+// Per-item PDF
+const downloadItemPDF = async (row) => {
+  const blob = await requestStore.downloadPdf(props.request.id, row.id)
+  // Same blob-to-download pattern
+}
+```
 
 ### 4. Pinia Store
 
@@ -737,175 +618,129 @@ export const useRequestStore = defineStore('request', {
     pagination: {},
     error: null,
   }),
-  
   actions: {
-    async fetchRequests(page, limit, search) {
-      try {
-        const data = await requestAPI.getRequests(page, limit, search);
-        this.requests = data.requests;
-        this.pagination = data.pagination;
-      } catch (error) {
-        this.error = error.error || 'Failed to fetch requests.';
-      }
-    },
-
-    async fetchRequestById(id) {
-      try {
-        const request = await requestAPI.getRequestsById(id);
-        return request;
-      } catch (error) {
-        this.error = error.error || 'Failed to fetch request details.';
-        return null;
-      }
-    },
-
-    async createRequest(requestData) {
-      try {
-        await requestAPI.createRequest(requestData);
-        await this.fetchRequests(); // Refresh list
-      } catch (error) {
-        this.error = error.error || 'Failed to create request.';
-        throw error; // Re-throw for component handling
-      }
-    },
+    async fetchRequests(page, limit, search),        // Supports status param via API
+    async fetchRequestById(id),                      // Returns request data directly
+    async validateRequest(requestData),              // Calls /validate, returns { items, hasWarnings }
+    async createRequest(requestData),
+    async updateRequest(id, requestData),
+    async reviewRequest(id, payload),                // { action, rejectReason?, itemsAdjustment? }
+    async deleteRequest(id),
+    async downloadPdf(id, itemId?),                  // Returns blob (responseType: 'blob')
+    clearError(),
   },
-});
+})
 ```
-
-**Design Decisions:**
-- ✅ Centralized state management
-- ✅ Error handling with user-friendly messages
-- ✅ Auto-refresh after mutations
-- ✅ Throws errors for component-level handling
 
 ### 5. API Service Layer
 
 **Location:** `apps/web/src/features/request/api.js`
 
 ```javascript
-import { http } from '@/services/http';
-
-export async function getRequests(page, limit, search) {
-  const { data } = await http.post('/vessel-requests/list', {
-    page,
-    limit,
-    search,
-  });
-  return data;
-}
-
-export async function getRequestsById(id) {
-  const { data } = await http.post(`/vessel-requests/list/${id}`);
-  return data;
-}
-
-export async function createRequest(requestData) {
-  await http.post('/vessel-requests', requestData);
-}
-
-export async function updateRequest(id, requestData) {
-  await http.put(`/vessel-requests/${id}`, requestData);
-}
-
-export async function deleteRequest(id) {
-  await http.delete(`/vessel-requests/${id}`);
-}
+export async function getRequests(page, limit, search, status)  // POST /vessel-requests/list
+export async function getRequestsById(id)                        // POST /vessel-requests/list/:id
+export async function createRequest(requestData)                 // POST /vessel-requests
+export async function updateRequest(id, requestData)             // PUT /vessel-requests/:id
+export async function deleteRequest(id)                          // DELETE /vessel-requests/:id
+export async function validateRequestForm(requestData)           // POST /vessel-requests/validate
+export async function reviewRequest(id, payload)                 // POST /vessel-requests/:id/review
+export async function downloadRequestPdf(id, itemId?)            // GET /vessel-requests/:id/pdf?itemId=
+// Note: downloadRequestPdf uses responseType: 'blob' for binary PDF data
 ```
-
-**Design Decisions:**
-- ✅ Separation from store logic
-- ✅ Axios wrapper (http service) handles auth tokens
-- ✅ Consistent error handling at service level
-- ✅ Simple async/await pattern
 
 ---
 
 ## Data Flow
 
-### Request Creation Flow
+### Request Creation Flow (with Validation Dialog)
 
 ```
-1. User clicks "New Request"
-   └─> Index.vue sets isFormOpen = true
+1. User fills form (Step 1 + Step 2)
+   └─> FormRequest emits 'submit' event with formData
 
-2. FormRequest.vue opens with empty form
-   └─> onMounted: Loads vessels and items from stores
-   └─> Step 1: User fills vessel, date, priority, justification
-   └─> User clicks "Next"
-   └─> Validation: Check required fields
-   └─> currentStep = 2
+2. Index.vue: handleFormSubmit(formData)
+   └─> Calls requestStore.validateRequest(formData)
+   └─> POST /vessel-requests/validate
 
-3. Step 2: User manages items
-   └─> Click "Add Item" → Adds to formData.items array
-   └─> Select item, quantity, unit, priority
-   └─> Click "Remove" → Removes from array
-   └─> User clicks "Submit"
+3. Backend runs full validation
+   └─> Check vessel, items, inactive items, history, stocks, standards
+   └─> Returns: { items: [{ itemId, itemName, warnings[] }], hasWarnings }
 
-4. Form validation
-   └─> Check all items have itemId and qtyRequested
-   └─> If invalid → Show error and stop
-   └─> If valid → Continue
+4a. If warnings exist:
+    └─> Show Validation Warnings Dialog
+    └─> User reviews item-by-item warnings
+    ├─> "Go Back & Edit" → closes dialog, form stays open
+    └─> "Tetap Ajukan Request" → calls proceedCreate(formData)
 
-5. Emit submit event to parent
-   └─> Index.vue: handleFormSubmit(formData)
+4b. If no warnings:
+    └─> Directly calls proceedCreate(formData)
 
-6. Store action
+5. proceedCreate:
    └─> requestStore.createRequest(formData)
+   └─> POST /vessel-requests
 
-7. API call
-   └─> POST /vessel-requests with full payload
+6. Backend creates request
+   └─> Re-validates to get per-item statuses
+   └─> Creates VesselRequest header
+   └─> Creates VesselRequestItem records (with per-item status + qtyApproved)
+   └─> Returns { vesselRequest, vesselRequestItems, validation }
 
-8. Backend processing
-   └─> Validate vessel exists
-   └─> Validate all items exist
-   └─> Generate request code
-   └─> Create VesselRequest record
-   └─> Create VesselRequestItem records (bulk)
-   └─> Return success
-
-9. Frontend response handling
-   └─> Success: Show notification
-   └─> Refresh request list
-   └─> Close form dialog
-   └─> Error: Show error message
+7. Frontend response
+   └─> showSuccess('Request created successfully')
+   └─> closeForm()
+   └─> fetchRequests() (refresh list)
 ```
 
-### View Request Flow
+### Staff Review Flow
 
 ```
-1. User clicks table row
-   └─> DataTable emits 'row-click' event
+1. Staff clicks "Waiting" request row
+   └─> Fetches full request detail (POST /vessel-requests/list/:id)
 
-2. Index.vue: handleRowClick(request)
-   └─> request object has minimal data (from list)
+2. ViewRequest shows Staff Actions panel
+   ├─> Optional: check "Adjust items?" → shows +/- controls per item
+   ├─> Reject: click "Reject..." → fill reason → Confirm Reject
+   └─> Approve: click "Approve" (with optional itemsAdjustment)
 
-3. Fetch full details
-   └─> requestStore.fetchRequestById(request.id)
+3. POST /vessel-requests/:id/review
+   Body: { action: 'Approve'|'Reject', rejectReason?, itemsAdjustment? }
 
-4. API call
-   └─> POST /vessel-requests/list/:id
+4. Backend (transaction):
+   └─> Update vesselRequests.status = 'Approved'|'Rejected'
+   └─> Update vesselRequests.reviewedBy = userId
+   └─> Update vesselRequests.reviewedAt = NOW()
+   └─> For each item:
+       ├─> Approve: qtyApproved = qtyRequested (or adjusted value)
+       └─> Reject: qtyApproved = 0, status = 'Rejected'
 
-5. Backend processing
-   └─> Find VesselRequest by id
-   └─> Include: vessel, user, vesselRequestItems
-   └─> Include: item details in each vesselRequestItem
-   └─> Return full nested object
+5. Frontend:
+   └─> showSuccess('Request successfully approved/rejected')
+   └─> emit('reviewed') → Index.vue calls fetchRequests()
+   └─> Close dialog
+```
 
-6. Set view state
-   └─> selectedRequest.value = fullRequest
-   └─> isViewOpen.value = true
+### PDF Download Flow
 
-7. ViewRequest.vue renders
-   └─> Shows header with vessel and user info
-   └─> DataTable displays all items
-   └─> Icons and colors enhance readability
+```
+1. User (Approved request) clicks PDF button in ViewRequest
+2. requestStore.downloadPdf(requestId, itemId?)
+3. GET /vessel-requests/:id/pdf?itemId=<n>   (itemId is optional)
+4. Backend:
+   └─> Fetch full request with items
+   └─> Filter to single item if itemId provided
+   └─> generateVesselRequestPdf(request) with pdfmake
+   └─> res.send(pdfBuffer) with Content-Type: application/pdf
+5. Frontend:
+   └─> Creates Blob URL
+   └─> Simulates link click to download
+   └─> Revokes URL
 ```
 
 ---
 
 ## Development Journey
 
-### Initial Implementation
+### v1.0 – Initial Implementation
 
 **Goal:** Create a functional vessel request form
 
@@ -918,87 +753,53 @@ export async function deleteRequest(id) {
 - Step 1: Header information
 - Step 2: Dynamic items array
 
-### Iteration 1: Form Refinements
-
-**User Feedback:**
-- "Status should be derived from server validation for new requests"
-- "Items section too spacious"
-- "Don't need to show item status"
-
-**Changes Made:**
-```javascript
-// Hidden status field (server derives final request status)
-formData.value.status = 'Waiting'; // Not shown in UI
-
-// Compact grid layout
-// Before: 2 columns with large padding
-// After: 4 columns with reduced spacing
-<div class="grid grid-cols-4 gap-2 p-3">
-
-// Item status removed from UI but sent in payload
-item.status = 'Waiting'; // Hidden field; API derives final item status
-```
-
-### Iteration 2: View Separation
-
-**User Feedback:**
-- "Handle edit/delete buttons"
-- Then: "Remove delete & edit, just view"
-- "Open by clicking row, not icon"
-
-**Changes Made:**
-1. Removed actions column from table
-2. Created separate ViewRequest.vue component
-3. Made entire table row clickable
-4. Enhanced DataTable to emit row-click events
-
-```javascript
-// DataTable.vue enhancement
-<tr @click="emit('row-click', row)">
-```
-
-### Iteration 3: Visual Polish
-
-**User Feedback:**
-- "Make the form more beauty"
-- "Use lucide-icons, and make table instead for items"
-
-**Changes Made:**
-1. Added Lucide Vue Next icons
-   - Ship icon for vessel
-   - User icon for requester
-   - Package icon for items
-   - Loader2 for loading states
-
-2. Changed items display from cards to table
-   ```vue
-   <!-- Before: Individual cards -->
-   <div v-for="item in items" class="card">
-   
-   <!-- After: Structured table -->
-   <DataTable :columns="itemColumns" :data="items">
-   ```
-
-3. Enhanced header with gradient
-   ```vue
-   <div class="bg-gradient-to-r from-indigo-50 to-blue-50">
-   ```
-
-### Iteration 4: DataTable Integration
-
-**Goal:** Use consistent DataTable component everywhere
+### v1.1 – Form Refinements
 
 **Changes:**
-- Replaced custom HTML table with DataTable component
-- Added `clickable` prop to DataTable (default: true)
-- ViewRequest uses DataTable with custom cell slots
-- Main list view uses DataTable with row-click
+- Status hidden from UI (server derives it)
+- Compact 4-column grid for items
+- Item status removed from UI
 
-**Benefits:**
-- ✅ Consistent styling across application
-- ✅ Reusable pagination logic
-- ✅ Easier maintenance
-- ✅ Built-in responsive behavior
+### v1.2 – View Separation
+
+**Changes:**
+1. Removed actions column from table
+2. Created separate `ViewRequest.vue` component
+3. Made entire table row clickable
+4. DataTable enhanced with `row-click` event
+
+### v1.3 – Visual Polish
+
+**Changes:**
+1. Added Lucide Vue Next icons (Ship, User, Package, Loader2)
+2. Changed items display from cards to DataTable
+3. Enhanced header with gradient (`from-indigo-50 to-blue-50`)
+
+### v1.4 – DataTable Integration
+
+**Changes:**
+- Replaced custom HTML table with reusable `DataTable` component
+- Added `clickable` prop to DataTable
+- Consistent cell slot pattern everywhere
+
+### v2.0 – Advanced Validation, Review & PDF
+
+**Changes:**
+1. **Server-side validation engine** with 4 warning categories:
+   - Recent request history (30-day window)
+   - Item not in vessel standards
+   - Max stock capacity exceeded
+   - High priority with sufficient stock
+   - Stale stock report (>30 days)
+2. **`/validate` endpoint** – pre-submission check without creating the record
+3. **Validation warnings dialog** in `Index.vue` with "Tetap Ajukan" confirm
+4. **Staff review workflow** (`POST /:id/review`) with Approve/Reject + optional item qty adjustment
+5. **`staffJustification` field** per item for staff-adjusted quantities
+6. **PDF generation** with pdfmake (full request + per-item)
+7. **`availableForMocCount`** – smart counter for MOC eligibility
+8. **Status filter** on list endpoint
+9. **Duplicate item detection** in form submit
+10. **Inactive item check** (must be `status === 'Publish'`)
 
 ---
 
@@ -1012,14 +813,16 @@ item.status = 'Waiting'; // Hidden field; API derives final item status
 - Hide technical fields from users (status management)
 - Validate at each step, not just at submit
 - Show clear error messages
+- Pre-validate server-side before actual create (two-phase submit)
+- Detect and block duplicate items before submission
 - Enable/disable buttons based on state
-- Use grid layouts for responsive design
 
 **❌ DON'T:**
 - Put everything on one page
 - Use ambiguous labels
 - Allow removing the last item
 - Submit without validation
+- Ignore server-side warnings
 
 ### 2. Data Display
 
@@ -1047,6 +850,7 @@ item.status = 'Waiting'; // Hidden field; API derives final item status
 - Throw errors for caller handling
 - Refresh data after mutations
 - Use watchers for reactive updates
+- `clearError()` after each action
 
 **❌ DON'T:**
 - Make API calls directly from components
@@ -1057,18 +861,20 @@ item.status = 'Waiting'; // Hidden field; API derives final item status
 ### 4. Backend Design
 
 **✅ DO:**
-- Validate all inputs (vessel, items existence)
+- Validate all inputs (vessel, items existence, item status)
 - Use repository pattern for database operations
 - Implement proper pagination
-- Use transactions for multi-table inserts
-- Generate unique codes (timestamps, UUIDs)
+- Use transactions for multi-table operations
+- Generate unique codes (timestamps)
 - Include related data in responses
+- Run parallel queries with `Promise.all()` for performance
 
 **❌ DON'T:**
 - Trust client-side validation alone
 - Query database in controllers
 - Return all records without pagination
 - Expose internal IDs without validation
+- Miss status-transition guards (e.g., can only review `Waiting`)
 
 ### 5. Code Organization
 
@@ -1084,8 +890,8 @@ item.status = 'Waiting'; // Hidden field; API derives final item status
 features/request/
 ├── views/           # Pages
 ├── component/       # Feature-specific components
-├── store.js        # State management
-└── api.js          # HTTP layer
+├── store.js         # State management
+└── api.js           # HTTP layer
 ```
 
 ---
@@ -1096,81 +902,46 @@ features/request/
 
 **Create Request:**
 - [ ] Click "New Request" button opens form
-- [ ] Vessel dropdown populated
-- [ ] Items dropdown populated
+- [ ] Vessel dropdown populated (shows IMO number)
+- [ ] Items dropdown populated (shows code and ID)
 - [ ] Date defaults to today
 - [ ] Priority defaults to "Medium"
-- [ ] Step 1 validation works (required fields)
+- [ ] Step 1 validation: missing vessel or date shows error
 - [ ] "Next" button moves to Step 2
 - [ ] "Previous" button returns to Step 1
 - [ ] "Add Item" adds new item row
-- [ ] "Remove Item" removes row (min 1)
-- [ ] Item #1 is selected item name
-- [ ] Submit with valid data succeeds
-- [ ] Success notification appears
-- [ ] Form closes after submit
-- [ ] List refreshes with new request
+- [ ] "Remove Item" removes row (min 1 enforced)
+- [ ] Duplicate item detection: error message if same item added twice
+- [ ] Submit → validation dialog appears if warnings exist
+- [ ] "Go Back & Edit" closes dialog, form remains open
+- [ ] "Tetap Ajukan" → request created, list refreshes
+- [ ] Request with no warnings → created directly (no dialog)
+- [ ] Request status: "Approved by system" (no warnings) or "Waiting" (warnings)
 
-**View Request:**
-- [ ] Click any table row opens view
-- [ ] Request code displayed correctly
+**View & Review Request:**
+- [ ] Click any table row opens view dialog
+- [ ] Request code + date displayed in header
 - [ ] Vessel info with Ship icon
 - [ ] User info with User icon
-- [ ] Status badge with correct color
-- [ ] Priority badge with correct color
-- [ ] Items shown in table format
-- [ ] Item names with Package icons
-- [ ] Quantities display correctly
-- [ ] Close button works
+- [ ] Status + Priority badges displayed
+- [ ] Justification shown if present
+- [ ] Items shown in DataTable format with all columns
+- [ ] Staff Actions panel only shown for "Waiting" requests
+- [ ] "Adjust items?" checkbox shows qty +/- controls per item
+- [ ] Approve without adjustment → qtyApproved = qtyRequested
+- [ ] Approve with adjustment → item qty and staffJustification saved
+- [ ] Reject → reject reason required, saved to rejectReason
+- [ ] After review → list refreshes, dialog closes
+- [ ] PDF button visible only for Approved/Approved by system
+- [ ] Full PDF download works
+- [ ] Per-item PDF download works (Actions column)
 
 **Search & Pagination:**
 - [ ] Search by request code works
-- [ ] Search by vessel name works
-- [ ] Search by requester name works
 - [ ] Search debounces (500ms)
 - [ ] Pagination Previous/Next buttons
 - [ ] Page info displays correctly
 - [ ] Table updates on page change
-
-### Unit Testing Examples
-
-**Store Tests:**
-```javascript
-describe('useRequestStore', () => {
-  it('should fetch requests with pagination', async () => {
-    const store = useRequestStore();
-    await store.fetchRequests(1, 10, '');
-    expect(store.requests).toBeDefined();
-    expect(store.pagination).toBeDefined();
-  });
-
-  it('should handle fetch errors', async () => {
-    const store = useRequestStore();
-    // Mock API to throw error
-    await store.fetchRequests(1, 10, '');
-    expect(store.error).not.toBeNull();
-  });
-});
-```
-
-**Component Tests:**
-```javascript
-describe('FormRequest', () => {
-  it('should start at step 1', () => {
-    const wrapper = mount(FormRequest, {
-      props: { isOpen: true }
-    });
-    expect(wrapper.vm.currentStep).toBe(1);
-  });
-
-  it('should validate step 1 before proceeding', async () => {
-    const wrapper = mount(FormRequest);
-    await wrapper.vm.goToNextStep();
-    // Should stay on step 1 if invalid
-    expect(wrapper.vm.currentStep).toBe(1);
-  });
-});
-```
 
 ---
 
@@ -1181,62 +952,41 @@ describe('FormRequest', () => {
 1. **Draft Requests**
    - Save incomplete requests
    - Resume editing later
-   - Auto-save every 30 seconds
 
-2. **Approval Workflow**
-   - Multi-level approvals
-   - Approve/reject entire request
-   - Approve/reject individual items
-   - Approval history tracking
-
-3. **Notifications**
-   - Email on request creation
-   - Push notifications for status changes
-   - In-app notification center
-
-4. **Advanced Search**
-   - Filter by status
+2. **Advanced Search**
+   - Filter by status (UI for status dropdown)
    - Filter by priority
    - Filter by date range
    - Filter by vessel
-   - Export to Excel/PDF
+   - Export to Excel
 
-5. **Request Templates**
+3. **Request Templates**
    - Save common request patterns
    - Quick create from template
    - Vessel-specific templates
 
-6. **Bulk Operations**
-   - Approve multiple requests
+4. **Bulk Operations**
+   - Approve multiple requests at once
    - Export multiple requests
-   - Bulk status updates
 
-7. **Mobile App**
-   - Native iOS/Android apps
-   - Offline mode
-   - Camera for item photos
+5. **Notifications**
+   - Email on request creation
+   - Push notifications for status changes
+   - In-app notification center
 
 ### Technical Improvements
 
 1. **Performance**
-   - Implement request caching
+   - Request caching for master data (vessels, items)
    - Virtual scrolling for large lists
-   - Lazy loading for images
 
 2. **Error Handling**
    - Retry failed requests
-   - Better error messages
-   - Sentry integration
+   - Better validation error messages with field highlighting
 
 3. **Testing**
    - E2E tests with Playwright
    - API tests with Supertest
-   - Visual regression tests
-
-4. **Documentation**
-   - API documentation with Swagger
-   - Video tutorials
-   - Interactive demos
 
 ---
 
@@ -1245,42 +995,39 @@ describe('FormRequest', () => {
 ### What Worked Well
 
 1. **Multi-step forms** reduced cognitive load significantly
-2. **Reusable DataTable** component saved development time
-3. **Repository pattern** kept code organized and testable
-4. **Zod validation** caught errors early
-5. **Lucide icons** improved visual appeal without bloat
-6. **Pinia stores** made state management straightforward
-7. **Server-side pagination** prevented performance issues
+2. **Two-phase submit** (validate → confirm → create) gave users visibility into issues
+3. **Reusable DataTable** component saved development time
+4. **Repository pattern** kept code organized and testable
+5. **`Promise.all()`** for parallel validation lookups improved performance
+6. **Lucide icons** improved visual appeal without bloat
+7. **Pinia stores** made state management straightforward
+8. **Server-side pagination** prevented performance issues
+9. **Drizzle ORM** provided type safety and query composability
 
 ### What We'd Do Differently
 
-1. **Plan the UX earlier** - Multiple iterations on view/edit separation
-2. **Document as we build** - Easier than reconstructing later
-3. **Create reusable components first** - Would have saved refactoring time
-4. **More user testing** - Get feedback before full implementation
-5. **Backend update/delete** - Complete CRUD implementation (currently stubbed)
+1. **Plan validation rules upfront** – adding them later required refactoring the entire create flow
+2. **Document as we build** – easier than reconstructing later
+3. **Create reusable components first** – saves refactoring time
+4. **Plan the review workflow early** – the staff review/adjust flow was added iteratively
 
 ### Key Takeaways
 
-> **"Start with the user flow, not the code."**  
-> Understanding how users will interact with the feature led to better design decisions.
+> **"Two-phase submit is better than post-error rollback."**  
+> Running `/validate` before `/create` gives users a chance to review warnings without losing their form data.
 
 > **"Consistency over customization."**  
 > Using DataTable everywhere created a more cohesive experience.
 
-> **"Iterate based on feedback."**  
-> Each iteration made the feature significantly better.
-
-> **"Documentation is code."**  
-> This document will save countless hours for future features.
+> **"Database derives the truth."**  
+> Status should always be derived server-side based on real data, not trusted from client.
 
 ---
 
 ## Related Documentation
 
 - [DEVELOPMENT.md](./DEVELOPMENT.md) - Development workflow
-- [apps/api/src/ARCHITECTURE.md](./apps/api/src/ARCHITECTURE.md) - Backend architecture
-- [apps/web/IMPLEMENTATION.md](./apps/web/IMPLEMENTATION.md) - Frontend patterns
+- [MOC-IMPLEMENTATION.md](./MOC-IMPLEMENTATION.md) - MOC module (next step after Vessel Request)
 - [DOCUMENTATION-INDEX.md](./DOCUMENTATION-INDEX.md) - All documentation
 
 ---
@@ -1292,10 +1039,11 @@ describe('FormRequest', () => {
 **Status Colors:**
 ```javascript
 {
-  Waiting: 'bg-yellow-100 text-yellow-800',
-  Approved: 'bg-green-100 text-green-800',
-  Rejected: 'bg-red-100 text-red-800',
-  Pending: 'bg-blue-100 text-blue-800',
+  'Approved by system': 'bg-green-100 text-green-800',
+  Waiting:   'bg-yellow-100 text-yellow-800',
+  Approved:  'bg-green-100 text-green-800',
+  Rejected:  'bg-red-100 text-red-800',
+  Pending:   'bg-blue-100 text-blue-800',
   Completed: 'bg-purple-100 text-purple-800',
 }
 ```
@@ -1303,9 +1051,9 @@ describe('FormRequest', () => {
 **Priority Colors:**
 ```javascript
 {
-  High: 'bg-red-100 text-red-800',
+  High:   'bg-red-100 text-red-800',
   Medium: 'bg-yellow-100 text-yellow-800',
-  Low: 'bg-green-100 text-green-800',
+  Low:    'bg-green-100 text-green-800',
 }
 ```
 
@@ -1314,16 +1062,20 @@ describe('FormRequest', () => {
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | POST | `/vessel-requests` | Create new request |
-| POST | `/vessel-requests/list` | Get paginated list |
-| POST | `/vessel-requests/list/:id` | Get single request |
+| POST | `/vessel-requests/validate` | Pre-validate without creating |
+| POST | `/vessel-requests/list` | Get paginated list (supports search + status filter) |
+| POST | `/vessel-requests/list/:id` | Get single request with all items |
 | PUT | `/vessel-requests/:id` | Update request |
-| DELETE | `/vessel-requests/:id` | Delete request |
+| POST | `/vessel-requests/:id/review` | Staff approve or reject |
+| GET | `/vessel-requests/:id/pdf` | Generate & download PDF (full or `?itemId=n`) |
 
 ### Database Relations
 
 ```
 User ─┐
       ├──> VesselRequest ──> VesselRequestItem ──> MstItem
+      │         │                  │
+      │    (reviewedBy)          (mocs)──> MOC
 MstVessel ─┘
 ```
 

@@ -73,6 +73,17 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
       if (this.currentPO?.id === po.id) this.currentPO = po
     },
 
+    async downloadPdf(id) {
+      try {
+        return await poAPI.downloadPurchaseOrderPdf(id)
+      } catch (error) {
+        this.error = error.error || 'Failed to download PDF.'
+        throw error
+      } finally {
+        this.error = null
+      }
+    },
+
     clearError() {
       this.error = null
     },

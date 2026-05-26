@@ -253,7 +253,7 @@ const handleMocSaved = async () => {
 
 const handleGoToPO = (mocId) => {
   closeWizard()
-  router.push({ path: '/purchase-order', query: { moc_id: mocId } })
+  router.push({ path: '/purchase-orders', query: { moc_id: mocId } })
 }
 
 // Delete MOC

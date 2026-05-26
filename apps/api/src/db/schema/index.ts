@@ -11,3 +11,4 @@ export * from './role-modules';
 export * from './cities';
 export * from './moc';
 export * from './purchase-orders';
+export * from './good-receipts';

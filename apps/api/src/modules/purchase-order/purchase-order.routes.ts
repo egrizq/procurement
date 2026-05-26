@@ -17,6 +17,7 @@ router.use(apiAuth());
 
 router.post('/list', roleAuth(), validate(poListSchema), controller.getPOs);
 router.post('/', roleAuth(), validate(createPOSchema), controller.createPO);
+router.get('/:id/pdf', roleAuth(), validate(poByIdSchema), controller.generatePdf);
 router.get('/:id', roleAuth(), validate(poByIdSchema), controller.getPOById);
 router.post('/:id/approve', roleAuth(), validate(approvePOSchema), controller.approvePO);
 router.post('/:id/reject', roleAuth(), validate(rejectPOSchema), controller.rejectPO);

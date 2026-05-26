@@ -12,7 +12,8 @@
     "./vessel-request": "./src/vessel-request.js",
     "./master-data": "./src/master-data.js",
     "./moc": "./src/moc.js",
-    "./purchase-order": "./src/purchase-order.js"
+    "./purchase-order": "./src/purchase-order.js",
+    "./good-receipt": "./src/good-receipt.js"
   },
   "dependencies": {
     "zod": "^4.3.6"

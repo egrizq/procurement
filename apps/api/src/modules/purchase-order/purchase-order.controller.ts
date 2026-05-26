@@ -7,6 +7,7 @@ import PurchaseOrderRepository from './purchase-order.repository.ts';
 import db from '../../config/drizzle';
 import { mocs } from '../../db/schema/index.ts';
 import { eq } from 'drizzle-orm';
+import { generatePurchaseOrderPdf } from './purchase-order.pdf.ts';
 
 const poRepo = new PurchaseOrderRepository();
 
@@ -83,4 +84,26 @@ const rejectPO = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
-export default { createPO, getPOs, getPOById, approvePO, rejectPO };
+const generatePdf = asyncHandler(async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  if (Number.isNaN(id)) {
+    throw new AppError('Invalid purchase order ID', 400);
+  }
+
+  const po = await poRepo.getPOById(id);
+  if (!po) {
+    throw new AppError('Purchase Order not found', 404);
+  }
+
+  const pdfBuffer = await generatePurchaseOrderPdf(po);
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename=PurchaseOrder-${po.poNumber}.pdf`
+  );
+
+  res.send(pdfBuffer);
+});
+
+export default { createPO, getPOs, getPOById, approvePO, rejectPO, generatePdf };

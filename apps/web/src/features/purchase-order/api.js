@@ -24,3 +24,10 @@ export async function rejectPurchaseOrder(id, rejectionReason) {
   const { data } = await http.post(`/purchase-orders/${id}/reject`, { rejectionReason })
   return data
 }
+
+export async function downloadPurchaseOrderPdf(id) {
+  const data = await http.get(`/purchase-orders/${id}/pdf`, {
+    responseType: 'blob',
+  })
+  return data
+}

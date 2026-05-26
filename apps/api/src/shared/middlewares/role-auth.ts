@@ -24,6 +24,7 @@ const KNOWN_MODULE_SLUGS = [
 const API_ROUTE_TO_MODULE: Record<string, string> = {
   'master-data/vessels': 'vessels',
   'vessel-requests': 'request',
+  'good-receipts': 'good-receipt',
 };
 
 const hasModuleAccess = (permittedSlugs: string[], moduleSlug: string) => {

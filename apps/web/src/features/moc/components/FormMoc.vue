@@ -382,7 +382,9 @@
           <h4 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
             <UserCheck :size="16" class="text-indigo-500" />
             Pilih Vendor Final
-            <span class="text-xs font-normal text-gray-400">(SAW winner dipilih otomatis, Anda dapat mengubahnya)</span>
+            <span class="text-xs font-normal text-gray-400">
+              (SAW winner dipilih otomatis, {{ isVendorSelectionReadOnly ? 'pilihan ini hanya untuk dilihat' : 'Anda dapat mengubahnya' }})
+            </span>
           </h4>
 
           <!-- SAW-mismatch warning -->
@@ -400,11 +402,14 @@
           <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
             <div
               v-for="v in sawResults" :key="v.vendorId"
-              @click="selectedVendorId = v.vendorId"
-              class="relative flex flex-col gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all duration-150"
-              :class="selectedVendorId === v.vendorId
-                ? 'border-indigo-500 bg-indigo-50/60 shadow-sm ring-2 ring-indigo-500/20'
-                : 'border-gray-200 bg-white hover:border-gray-300'"
+              @click="selectVendorCard(v.vendorId)"
+              class="relative flex flex-col gap-2 p-4 rounded-xl border-2 transition-all duration-150"
+              :class="[
+                isVendorSelectionReadOnly ? 'pointer-events-none cursor-default' : 'cursor-pointer',
+                selectedVendorId === v.vendorId
+                  ? 'border-indigo-500 bg-indigo-50/60 shadow-sm ring-2 ring-indigo-500/20'
+                  : 'border-gray-200 bg-white hover:border-gray-300',
+              ]"
             >
               <!-- SAW rank badge -->
               <div class="flex items-center justify-between">
@@ -534,6 +539,7 @@ import { useMocStore } from '../store.js'
 import { useRequestStore } from '../../request/store.js'
 import { useVendorStore } from '../../master-data/vendors/store.js'
 import { showSuccess, showError } from '@/services/notification.js'
+import { createPurchaseOrder } from '../../purchase-order/api.js'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -565,6 +571,7 @@ const selectedVendorId = ref(null)
 
 // Computed winner from SAW
 const sawWinner = computed(() => sawResults.value.find((v) => v.rank === 1) || null)
+const isVendorSelectionReadOnly = computed(() => isCompleted.value)
 
 const makeEmptyVendor = () => ({
   vendorId: null, unitPrice: 0, availableQty: 0,
@@ -678,6 +685,11 @@ const goBack = () => {
   }
 }
 
+const selectVendorCard = (vendorId) => {
+  if (isVendorSelectionReadOnly.value) return
+  selectedVendorId.value = vendorId
+}
+
 const goToStep2 = () => {
   if (!wizardData.value.vesselRequestId) {
     showError('Please choose an approved crew request first.')
@@ -779,6 +791,7 @@ const initForm = async () => {
           status: current.status,
           vendors: loaded,
         }
+        selectedVendorId.value = current.selectedVendorId || loaded.find(v => v.isSelected)?.vendorId || null
       }
     } catch {
       showError('Failed to fetch MOC details.')
@@ -911,6 +924,7 @@ const completeWithVendorAndPO = async () => {
   savingMode.value = 'complete'
   mocStore.clearError()
   try {
+    // 1. Save MOC as Completed with selected vendor
     const payload = buildPayload('Completed')
     payload.selectedVendorId = selectedVendorId.value
 
@@ -921,9 +935,41 @@ const completeWithVendorAndPO = async () => {
       savedMoc = await mocStore.createMoc(payload)
     }
 
-    showSuccess('MOC selesai! Melanjutkan ke Purchase Order...')
+    const mocId = savedMoc?.id ?? (props.isEditMode ? props.mocId : null)
+
+    if (!mocId) {
+      throw new Error('MOC ID tidak ditemukan setelah disimpan. Coba lagi.')
+    }
+
+    // 2. Find the selected vendor's data from the matrix
+    const selectedVendorData = wizardData.value.vendors.find(
+      (v) => Number(v.vendorId) === Number(selectedVendorId.value)
+    )
+
+    // 3. Get vesselRequestItemId from saved MOC or wizard
+    const vesselRequestItemId = savedMoc?.vesselRequestItemId || wizardData.value.vesselRequestItemId
+
+    if (!vesselRequestItemId) {
+      throw new Error('Request item tidak ditemukan. Coba lagi.')
+    }
+
+    // 4. Auto-create PO immediately
+    if (selectedVendorData) {
+      await createPurchaseOrder({
+        mocId,
+        vendorId: Number(selectedVendorId.value),
+        vesselRequestItemId: Number(vesselRequestItemId),
+        unitPrice: Number(selectedVendorData.unitPrice) || 0,
+        qty: Number(selectedVendorData.availableQty) || 1,
+        notes: null,
+      })
+      showSuccess('MOC selesai dan Purchase Order berhasil dibuat!')
+    } else {
+      showSuccess('MOC selesai! Melanjutkan ke Purchase Order...')
+    }
+
     emit('saved')
-    emit('go-to-po', savedMoc?.id || props.mocId)
+    emit('go-to-po', mocId)
   } catch (err) {
     console.error('[MOC] Complete with PO failed:', err)
     showError(mocStore.error || err?.message || 'Gagal menyelesaikan MOC.')

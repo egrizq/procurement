@@ -11,6 +11,7 @@ import moduleAccessRoutes from '#modules/settings/module-access/module-access.ro
 import mocRoutes from '#modules/moc/moc.routes.ts';
 import dashboardRoutes from '#modules/dashboard/index.ts';
 import purchaseOrderRoutes from '#modules/purchase-order/purchase-order.routes.ts';
+import goodReceiptRoutes from '#modules/good-receipt/good-receipt.routes.ts';
 
 const router: Router = express.Router();
 
@@ -26,6 +27,7 @@ router.use('/settings/users', userRoutes);
 router.use('/settings/module-access', moduleAccessRoutes);
 router.use('/moc', mocRoutes);
 router.use('/purchase-orders', purchaseOrderRoutes);
+router.use('/good-receipts', goodReceiptRoutes);
 
 export default router;
 

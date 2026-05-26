@@ -119,6 +119,18 @@
           </span>
         </template>
 
+        <template #cell-pdf="{ row }">
+          <button
+            @click.stop="downloadPDF(row)"
+            class="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors disabled:opacity-50 inline-flex items-center justify-center cursor-pointer"
+            :disabled="downloadingPoId === row.id"
+            title="Download PDF"
+          >
+            <Loader2 v-if="downloadingPoId === row.id" class="w-4 h-4 animate-spin text-indigo-600" />
+            <FileText v-else :size="15" />
+          </button>
+        </template>
+
         <template #cell-actions="{ row }">
           <div class="flex items-center gap-1.5">
             <button
@@ -262,51 +274,13 @@
       </Transition>
     </Teleport>
 
-    <!-- Detail Modal -->
-    <Teleport to="body">
-      <Transition name="modal-fade">
-        <div v-if="detailPO" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="detailPO = null">
-          <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="detailPO = null" />
-          <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-700 to-slate-800">
-              <div>
-                <h2 class="text-white font-bold text-lg">{{ detailPO.poNumber }}</h2>
-                <p class="text-slate-300 text-xs">Detail Purchase Order</p>
-              </div>
-              <button @click="detailPO = null" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
-                <X :size="16" />
-              </button>
-            </div>
-            <div class="p-6 space-y-3 text-sm">
-              <div class="flex justify-between"><span class="text-gray-400">Status</span>
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border" :class="statusClass(detailPO.status)">{{ detailPO.status }}</span>
-              </div>
-              <div class="flex justify-between"><span class="text-gray-400">Request Code</span><strong>{{ detailPO.moc?.vesselRequest?.requestCode || '-' }}</strong></div>
-              <div class="flex justify-between"><span class="text-gray-400">Vessel</span><strong>{{ detailPO.moc?.vesselRequest?.vessel?.name || '-' }}</strong></div>
-              <div class="flex justify-between"><span class="text-gray-400">Item</span><strong>{{ detailPO.vesselRequestItem?.item?.name || '-' }}</strong></div>
-              <div class="flex justify-between"><span class="text-gray-400">Vendor</span><strong>{{ detailPO.vendor?.name || '-' }}</strong></div>
-              <div class="flex justify-between"><span class="text-gray-400">Unit Price</span><strong>Rp {{ formatNumber(detailPO.unitPrice) }}</strong></div>
-              <div class="flex justify-between"><span class="text-gray-400">Qty</span><strong>{{ detailPO.qty }}</strong></div>
-              <div class="flex justify-between border-t pt-2"><span class="text-gray-600 font-semibold">Total Amount</span><strong class="text-indigo-700 text-base">Rp {{ formatNumber(detailPO.totalAmount) }}</strong></div>
-              <div v-if="detailPO.notes" class="flex justify-between"><span class="text-gray-400">Catatan</span><span class="text-right max-w-[60%]">{{ detailPO.notes }}</span></div>
-              <div v-if="detailPO.approvedByUser" class="flex justify-between"><span class="text-gray-400">Diproses oleh</span><strong>{{ detailPO.approvedByUser.fullName }}</strong></div>
-              <div v-if="detailPO.rejectionReason" class="bg-red-50 border border-red-100 rounded-lg p-3 text-red-700">
-                <p class="font-semibold text-xs mb-1">Alasan Penolakan</p>
-                <p>{{ detailPO.rejectionReason }}</p>
-              </div>
-              <div v-if="isManager && detailPO.status === 'Pending Approval'" class="flex gap-2 pt-2 border-t">
-                <button @click="handleApprove(detailPO); detailPO = null" class="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
-                  <CheckCircle2 :size="14" /> Approve
-                </button>
-                <button @click="openReject(detailPO); detailPO = null" class="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-semibold text-red-600 border border-red-200 bg-red-50 rounded-lg hover:bg-red-100">
-                  <XCircle :size="14" /> Reject
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- Detail Dialog -->
+    <FormPO
+      :is-open="isDetailOpen"
+      :po="selectedPO"
+      @close="closeDetail"
+      @action-completed="fetchPOs"
+    />
 
     <!-- Reject Modal -->
     <Teleport to="body">
@@ -349,10 +323,11 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  ShoppingCart, Clock, CheckCircle2, Zap, Eye, XCircle, X, Info
+  ShoppingCart, Clock, CheckCircle2, Zap, Eye, XCircle, X, Info, FileText, Loader2
 } from 'lucide-vue-next'
 import SearchFilter from '@/components/base/data-table/SearchFilter.vue'
 import DataTable from '@/components/base/data-table/DataTable.vue'
+import FormPO from '../component/FormPO.vue'
 import { usePurchaseOrderStore } from '../store.js'
 import useProfileStore from '@/features/profile/store.js'
 import { showSuccess, showError } from '@/services/notification.js'
@@ -374,7 +349,9 @@ const itemsPerPage = 10
 
 const isCreateOpen = ref(false)
 const isSaving = ref(false)
-const detailPO = ref(null)
+const isDetailOpen = ref(false)
+const selectedPO = ref(null)
+const downloadingPoId = ref(null)
 const rejectTarget = ref(null)
 const rejectReason = ref('')
 
@@ -415,6 +392,7 @@ const columns = [
   { key: 'unitPrice', label: 'Unit Price' },
   { key: 'totalAmount', label: 'Total' },
   { key: 'status', label: 'Status' },
+  { key: 'pdf', label: 'PDF', cellClass: 'text-center' },
   { key: 'actions', label: 'Aksi' },
 ]
 
@@ -491,7 +469,44 @@ const loadMocForPO = async (mocId) => {
 }
 
 // ── Actions ────────────────────────────────────────────────────────────
-const openDetail = (row) => { detailPO.value = row }
+const openDetail = async (row) => {
+  try {
+    isLoading.value = true
+    await poStore.fetchPOById(row.id)
+    selectedPO.value = poStore.currentPO
+    isDetailOpen.value = true
+  } catch (err) {
+    showError('Gagal memuat detail Purchase Order.')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const closeDetail = () => {
+  isDetailOpen.value = false
+  selectedPO.value = null
+}
+
+const downloadPDF = async (row) => {
+  if (downloadingPoId.value !== null) return
+  downloadingPoId.value = row.id
+  try {
+    const blob = await poStore.downloadPdf(row.id)
+    const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `PurchaseOrder-${row.poNumber}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    showSuccess('PDF downloaded successfully')
+  } catch (error) {
+    showError(error.message || 'Failed to download PDF')
+  } finally {
+    downloadingPoId.value = null
+  }
+}
 
 const closeCreate = () => {
   isCreateOpen.value = false
@@ -561,9 +576,10 @@ const submitReject = async () => {
 onMounted(async () => {
   await Promise.all([fetchPOs(), profileStore.fetchProfile()])
 
+  // If redirected from MOC, PO was already auto-created — just clean the URL
   const mocId = route.query.moc_id
   if (mocId) {
-    await loadMocForPO(Number(mocId))
+    router.replace({ query: {} })
   }
 })
 
