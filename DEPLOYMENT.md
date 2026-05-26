@@ -26,13 +26,14 @@ The application automatically detects which method to use:
 ```typescript
 // env.ts checks if .env exists
 if (existsSync(envPath)) {
-  dotenvConfig({ path: envPath });  // Local dev
+  dotenvConfig({ path: envPath }); // Local dev
 } else {
   // Use environment variables from docker-compose
 }
 ```
 
 This means:
+
 - ✅ No need to copy `.env` into Docker images
 - ✅ Sensitive values stay in your local `.env` (not in images)
 - ✅ Same code works in both local and Docker environments
@@ -51,11 +52,13 @@ This means:
 ### System Requirements
 
 **Minimum:**
+
 - 2 CPU cores
 - 2GB RAM
 - 10GB disk space
 
 **Recommended:**
+
 - 4+ CPU cores
 - 4GB+ RAM
 - 20GB+ disk space
@@ -112,6 +115,7 @@ API_TOKEN_SECRET=x-api-token
 ```
 
 **Generate secure secrets:**
+
 ```bash
 # Linux/Mac
 openssl rand -base64 32
@@ -155,12 +159,14 @@ WEB_PORT=80
 ### Quick Start
 
 1. **Setup environment:**
+
    ```bash
    cp .env.example .env
    # Edit .env with your local database credentials
    ```
 
 2. **Make scripts executable:**
+
    ```bash
    chmod +x scripts/*.sh
    ```
@@ -233,6 +239,7 @@ docker-compose -f docker-compose.dev.yml down
 ```
 
 The script will:
+
 1. Validate environment configuration
 2. Build production images
 3. Prompt for database backup
@@ -432,6 +439,7 @@ Same as cloud platforms - install Docker and deploy using scripts.
 **Symptom**: API health check returns `database: 'disconnected'`
 
 **Solutions**:
+
 ```bash
 # Check database connectivity
 mysql -h ${DB_HOST} -u ${DB_USER} -p
@@ -452,6 +460,7 @@ docker network inspect procurement-network
 **Symptom**: Browser console shows CORS errors
 
 **Solutions**:
+
 ```bash
 # Update CORS_ORIGIN in .env
 CORS_ORIGIN=https://yourdomain.com,https://www.yourdomain.com
@@ -463,12 +472,14 @@ docker-compose -f docker-compose.prod.yml restart api
 #### 3. Container Won't Start
 
 **Check logs**:
+
 ```bash
 docker-compose -f docker-compose.prod.yml logs api
 docker-compose -f docker-compose.prod.yml logs web
 ```
 
 **Common causes**:
+
 - Port already in use: `sudo netstat -tulpn | grep :3000`
 - Invalid environment variables
 - Database migration needed
@@ -562,6 +573,7 @@ git pull origin main
 ```
 
 Or manual:
+
 ```bash
 ./scripts/build.sh prod production
 docker-compose -f docker-compose.prod.yml up -d

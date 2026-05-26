@@ -5,7 +5,7 @@ export async function getRequests(page, limit, search, status) {
     page,
     limit,
     search,
-    status
+    status,
   })
   return data
 }

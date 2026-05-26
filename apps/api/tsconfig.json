@@ -1,15 +1,15 @@
 {
-  "extends": "@procurement/config/tsconfig",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "types": ["node"],
-    "paths": {
-      "#shared/*": ["./src/shared/*"],
-      "#modules/*": ["./src/modules/*"],
-      "#config/*": ["./src/config/*"]
-    }
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+	"extends": "@procurement/config/tsconfig",
+	"compilerOptions": {
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"types": ["node"],
+		"paths": {
+			"#shared/*": ["./src/shared/*"],
+			"#modules/*": ["./src/modules/*"],
+			"#config/*": ["./src/config/*"]
+		}
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

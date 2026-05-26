@@ -1,6 +1,6 @@
-import db from '../../../config/drizzle';
-import { roleModules } from '../../../db/schema/index.ts';
-import { eq, and } from 'drizzle-orm';
+import db from "../../../config/drizzle";
+import { roleModules } from "../../../db/schema/index.ts";
+import { eq, and } from "drizzle-orm";
 
 class ModuleAccessRepository {
 	async getAllMappings() {
@@ -34,8 +34,8 @@ class ModuleAccessRepository {
 			.where(
 				and(
 					eq(roleModules.userType, userType as any),
-					eq(roleModules.moduleSlug, moduleSlug)
-				)
+					eq(roleModules.moduleSlug, moduleSlug),
+				),
 			);
 		return result[0].affectedRows > 0;
 	}

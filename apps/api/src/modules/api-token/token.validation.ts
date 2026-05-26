@@ -1,1 +1,1 @@
-export { createApiTokenSchema } from '@procurement/validators/token';
+export { createApiTokenSchema } from "@procurement/validators/token";

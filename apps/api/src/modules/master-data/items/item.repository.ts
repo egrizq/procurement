@@ -78,9 +78,7 @@ class MstItemRepository {
 	}
 
 	async deleteMasterItem(id: number) {
-		const result = await db
-			.delete(mstItems)
-			.where(sql`${mstItems.id} = ${id}`);
+		const result = await db.delete(mstItems).where(sql`${mstItems.id} = ${id}`);
 		return result.length > 0;
 	}
 }

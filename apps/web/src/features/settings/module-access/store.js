@@ -74,13 +74,12 @@ export const useModuleAccessStore = defineStore('module-access', {
       )
     },
     canOpen(moduleSlug) {
-      return (
-        this.myModules.length === 0 ||
-        this.myModules.includes(moduleSlug)
-      )
+      return this.myModules.length === 0 || this.myModules.includes(moduleSlug)
     },
     canOpenAny(moduleSlugs) {
-      return this.myModules.length === 0 || moduleSlugs.some((moduleSlug) => this.canOpen(moduleSlug))
+      return (
+        this.myModules.length === 0 || moduleSlugs.some((moduleSlug) => this.canOpen(moduleSlug))
+      )
     },
   },
 })

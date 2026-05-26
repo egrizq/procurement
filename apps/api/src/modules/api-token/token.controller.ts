@@ -1,9 +1,9 @@
-import type { Request, Response } from 'express';
-import asyncHandler from '#shared/utils/asyncHandler.ts';
-import { success } from '#shared/utils/response.ts';
-import { generateToken, hashToken } from './token.utils.ts';
-import ApiTokenRepository from './token.repository.ts';
-import AppError from '#shared/utils/error.ts';
+import type { Request, Response } from "express";
+import asyncHandler from "#shared/utils/asyncHandler.ts";
+import { success } from "#shared/utils/response.ts";
+import { generateToken, hashToken } from "./token.utils.ts";
+import ApiTokenRepository from "./token.repository.ts";
+import AppError from "#shared/utils/error.ts";
 
 const apiTokenRepo = new ApiTokenRepository();
 
@@ -11,7 +11,7 @@ const createApiToken = asyncHandler(async (req: Request, res: Response) => {
 	const { device_name, device_id } = req.body;
 
 	if (!device_name || !device_id) {
-		throw new AppError('Device name and device ID are required', 400);
+		throw new AppError("Device name and device ID are required", 400);
 	}
 
 	const rawToken = generateToken();
@@ -28,16 +28,16 @@ const createApiToken = asyncHandler(async (req: Request, res: Response) => {
 
 		const response = await apiTokenRepo.updateToken(findToken.token, data);
 		if (!response) {
-			throw new AppError('Failed to update API token', 500);
+			throw new AppError("Failed to update API token", 500);
 		}
 	} else {
 		const response = await apiTokenRepo.createToken(
 			hashedToken,
 			device_id,
-			device_name
+			device_name,
 		);
 		if (!response) {
-			throw new AppError('Failed to create API token', 500);
+			throw new AppError("Failed to create API token", 500);
 		}
 	}
 
@@ -52,17 +52,17 @@ const getTokenInfo = asyncHandler(async (req: Request, res: Response) => {
 	});
 
 	if (!findToken) {
-		throw new AppError('API token not found', 404);
+		throw new AppError("API token not found", 404);
 	}
 
 	const isExpired = new Date() > new Date(findToken.expiredAt);
 	if (isExpired) {
-		throw new AppError('API token has expired', 403);
+		throw new AppError("API token has expired", 403);
 	}
 
 	const isUserExists = findToken.userId;
 	if (!isUserExists) {
-		throw new AppError('API token is not associated with any user', 403);
+		throw new AppError("API token is not associated with any user", 403);
 	}
 
 	return success(res, {

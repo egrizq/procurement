@@ -1,7 +1,7 @@
-import type { Request, Response, NextFunction } from 'express';
-import AppError from '#shared/utils/error.ts';
-import { hashToken } from '#modules/api-token/token.utils.ts';
-import ApiTokenRepository from '#modules/api-token/token.repository.js';
+import type { Request, Response, NextFunction } from "express";
+import AppError from "#shared/utils/error.ts";
+import { hashToken } from "#modules/api-token/token.utils.ts";
+import ApiTokenRepository from "#modules/api-token/token.repository.js";
 
 interface ApiTokenData {
 	id: number;
@@ -23,8 +23,8 @@ const apiAuth = () => {
 	return async (req: Request, _res: Response, next: NextFunction) => {
 		const apiKey = req.headers[process.env.API_TOKEN_SECRET as string];
 
-		if (!apiKey || typeof apiKey !== 'string') {
-			throw new AppError('API key required', 401);
+		if (!apiKey || typeof apiKey !== "string") {
+			throw new AppError("API key required", 401);
 		}
 
 		const tokenHash = hashToken(apiKey);
@@ -33,7 +33,7 @@ const apiAuth = () => {
 			where: { token: tokenHash, expiredAt: { gt: new Date() } },
 		});
 		if (!token || !token.userId) {
-			throw new AppError('Login first!', 403);
+			throw new AppError("Login first!", 403);
 		}
 
 		req.apiToken = {

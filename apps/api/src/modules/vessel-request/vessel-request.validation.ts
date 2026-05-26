@@ -4,4 +4,4 @@ export {
 	vesselRequestByIdSchema,
 	updateVesselRequestSchema,
 	reviewVesselRequestSchema,
-} from '@procurement/validators/vessel-request';
+} from "@procurement/validators/vessel-request";

@@ -1,24 +1,26 @@
 import { z } from 'zod';
 
 export const createGoodReceiptSchema = z.object({
-  body: z.object({
-    purchaseOrderId: z.number().int().positive('Purchase Order ID is required'),
-    isSameItem: z.boolean({
-      required_error: 'Checklist status is required',
-    }),
-    reason: z.string().optional().nullable(),
-  }).refine(
-    (data) => {
-      if (!data.isSameItem && (!data.reason || !data.reason.trim())) {
-        return false;
+  body: z
+    .object({
+      purchaseOrderId: z.number().int().positive('Purchase Order ID is required'),
+      isSameItem: z.boolean({
+        required_error: 'Checklist status is required',
+      }),
+      reason: z.string().optional().nullable(),
+    })
+    .refine(
+      (data) => {
+        if (!data.isSameItem && (!data.reason || !data.reason.trim())) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: 'Reason is required when item does not match',
+        path: ['reason'],
       }
-      return true;
-    },
-    {
-      message: 'Reason is required when item does not match',
-      path: ['reason'],
-    }
-  ),
+    ),
 });
 
 export const goodReceiptListSchema = z.object({

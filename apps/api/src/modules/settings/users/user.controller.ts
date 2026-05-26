@@ -1,17 +1,24 @@
-import type { Request, Response } from 'express';
-import asyncHandler from '#shared/utils/asyncHandler.ts';
-import { success } from '#shared/utils/response.ts';
-import AppError from '#shared/utils/error.ts';
-import getPaginationMeta from '#shared/utils/paginate.ts';
-import { hashPassword } from '#shared/utils/password.ts';
-import UserRepository from './user.repository.ts';
-import MstVesselRepository from '../../master-data/vessels/vessel.repository.ts';
+import type { Request, Response } from "express";
+import asyncHandler from "#shared/utils/asyncHandler.ts";
+import { success } from "#shared/utils/response.ts";
+import AppError from "#shared/utils/error.ts";
+import getPaginationMeta from "#shared/utils/paginate.ts";
+import { hashPassword } from "#shared/utils/password.ts";
+import UserRepository from "./user.repository.ts";
+import MstVesselRepository from "../../master-data/vessels/vessel.repository.ts";
 
 const userRepo = new UserRepository();
 const mstVesselRepo = new MstVesselRepository();
 
 const getAll = asyncHandler(async (req: Request, res: Response) => {
-	const { page = 1, limit = 10, search = '', type, department, status } = req.body;
+	const {
+		page = 1,
+		limit = 10,
+		search = "",
+		type,
+		department,
+		status,
+	} = req.body;
 
 	const filters: { type?: string; department?: string; status?: string } = {};
 	if (type) filters.type = type;
@@ -35,36 +42,47 @@ const getById = asyncHandler(async (req: Request, res: Response) => {
 	const id = Number(req.params.id);
 
 	if (Number.isNaN(id)) {
-		throw new AppError('Invalid user ID', 400);
+		throw new AppError("Invalid user ID", 400);
 	}
 
 	const user = await userRepo.findById(id);
 	if (!user) {
-		throw new AppError('User not found', 404);
+		throw new AppError("User not found", 404);
 	}
 
 	return success(res, user);
 });
 
 const create = asyncHandler(async (req: Request, res: Response) => {
-	const { username, email, password, fullName, type, department, vesselId, position, status, imgUrl } = req.body;
+	const {
+		username,
+		email,
+		password,
+		fullName,
+		type,
+		department,
+		vesselId,
+		position,
+		status,
+		imgUrl,
+	} = req.body;
 
 	// Check username uniqueness
 	const existingUsername = await userRepo.findByUsername(username);
 	if (existingUsername) {
-		throw new AppError('Username already exists', 409);
+		throw new AppError("Username already exists", 409);
 	}
 
 	// Check email uniqueness
 	const existingEmail = await userRepo.findByEmail(email);
 	if (existingEmail) {
-		throw new AppError('Email already exists', 409);
+		throw new AppError("Email already exists", 409);
 	}
 
 	// Validate vesselId exists
 	const vessel = await mstVesselRepo.findVessel({ id: vesselId });
 	if (!vessel) {
-		throw new AppError('Vessel does not exist', 400);
+		throw new AppError("Vessel does not exist", 400);
 	}
 
 	// Hash password
@@ -90,23 +108,34 @@ const update = asyncHandler(async (req: Request, res: Response) => {
 	const id = Number(req.params.id);
 
 	if (Number.isNaN(id)) {
-		throw new AppError('Invalid user ID', 400);
+		throw new AppError("Invalid user ID", 400);
 	}
 
 	// Check user exists
 	const existing = await userRepo.findById(id);
 	if (!existing) {
-		throw new AppError('User not found', 404);
+		throw new AppError("User not found", 404);
 	}
 
-	const { username, email, password, fullName, type, department, vesselId, position, status, leaveDate, imgUrl } =
-		req.body;
+	const {
+		username,
+		email,
+		password,
+		fullName,
+		type,
+		department,
+		vesselId,
+		position,
+		status,
+		leaveDate,
+		imgUrl,
+	} = req.body;
 
 	// Check username uniqueness (excluding current user)
 	if (username) {
 		const existingUsername = await userRepo.findByUsername(username);
 		if (existingUsername && existingUsername.id !== id) {
-			throw new AppError('Username already exists', 409);
+			throw new AppError("Username already exists", 409);
 		}
 	}
 
@@ -114,7 +143,7 @@ const update = asyncHandler(async (req: Request, res: Response) => {
 	if (email) {
 		const existingEmail = await userRepo.findByEmail(email);
 		if (existingEmail && existingEmail.id !== id) {
-			throw new AppError('Email already exists', 409);
+			throw new AppError("Email already exists", 409);
 		}
 	}
 
@@ -122,7 +151,7 @@ const update = asyncHandler(async (req: Request, res: Response) => {
 	if (vesselId) {
 		const vessel = await mstVesselRepo.findVessel({ id: vesselId });
 		if (!vessel) {
-			throw new AppError('Vessel does not exist', 400);
+			throw new AppError("Vessel does not exist", 400);
 		}
 	}
 
@@ -153,18 +182,18 @@ const remove = asyncHandler(async (req: Request, res: Response) => {
 	const id = Number(req.params.id);
 
 	if (Number.isNaN(id)) {
-		throw new AppError('Invalid user ID', 400);
+		throw new AppError("Invalid user ID", 400);
 	}
 
 	// Check user exists
 	const existing = await userRepo.findById(id);
 	if (!existing) {
-		throw new AppError('User not found', 404);
+		throw new AppError("User not found", 404);
 	}
 
 	// Check if user is already deactivated
-	if (existing.status === 'Leave') {
-		throw new AppError('User is already deactivated', 409);
+	if (existing.status === "Leave") {
+		throw new AppError("User is already deactivated", 409);
 	}
 
 	const user = await userRepo.softDelete(id);

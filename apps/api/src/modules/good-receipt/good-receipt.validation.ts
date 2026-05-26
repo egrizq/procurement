@@ -1,5 +1,5 @@
 export {
-  createGoodReceiptSchema,
-  goodReceiptListSchema,
-  goodReceiptByIdSchema,
-} from '@procurement/validators/good-receipt';
+	createGoodReceiptSchema,
+	goodReceiptListSchema,
+	goodReceiptByIdSchema,
+} from "@procurement/validators/good-receipt";

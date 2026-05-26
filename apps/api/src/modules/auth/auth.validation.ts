@@ -1,1 +1,1 @@
-export { registerSchema, loginSchema } from '@procurement/validators/auth';
+export { registerSchema, loginSchema } from "@procurement/validators/auth";

@@ -4,10 +4,6 @@ import apiAuth from "#modules/auth/auth.middleware.ts";
 
 const router: Router = express.Router();
 
-router.get(
-	"/",
-	apiAuth(),
-	itemController.getMasterCities,
-);
+router.get("/", apiAuth(), itemController.getMasterCities);
 
 export default router;

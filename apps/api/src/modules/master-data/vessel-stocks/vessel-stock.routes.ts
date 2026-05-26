@@ -1,54 +1,54 @@
-import express, { Router } from 'express';
-import vesselStockController from './vessel-stock.controller.ts';
-import validate from '#shared/middlewares/validate.ts';
+import express, { Router } from "express";
+import vesselStockController from "./vessel-stock.controller.ts";
+import validate from "#shared/middlewares/validate.ts";
 import {
 	getMasterSchema,
 	createVesselStockSchema,
 	updateVesselStockSchema,
 	vesselStockByIdSchema,
-} from './vessel-stock.validation.ts';
-import apiAuth from '#modules/auth/auth.middleware.ts';
+} from "./vessel-stock.validation.ts";
+import apiAuth from "#modules/auth/auth.middleware.ts";
 
 const router: Router = express.Router();
 
 // List vessel stocks (paginated + search)
 router.post(
-	'/',
+	"/",
 	apiAuth(),
 	validate(getMasterSchema),
-	vesselStockController.getVesselStocks
+	vesselStockController.getVesselStocks,
 );
 
 // Get vessel stock by ID
 router.get(
-	'/:id',
+	"/:id",
 	apiAuth(),
 	validate(vesselStockByIdSchema),
-	vesselStockController.getById
+	vesselStockController.getById,
 );
 
 // Create vessel stock
 router.post(
-	'/create',
+	"/create",
 	apiAuth(),
 	validate(createVesselStockSchema),
-	vesselStockController.create
+	vesselStockController.create,
 );
 
 // Update vessel stock
 router.put(
-	'/:id',
+	"/:id",
 	apiAuth(),
 	validate(updateVesselStockSchema),
-	vesselStockController.update
+	vesselStockController.update,
 );
 
 // Delete vessel stock
 router.delete(
-	'/:id',
+	"/:id",
 	apiAuth(),
 	validate(vesselStockByIdSchema),
-	vesselStockController.remove
+	vesselStockController.remove,
 );
 
 export default router;

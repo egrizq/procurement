@@ -1,18 +1,18 @@
-import type { Request, Response } from 'express';
-import asyncHandler from '#shared/utils/asyncHandler.ts';
-import { success } from '#shared/utils/response.ts';
-import AppError from '#shared/utils/error.ts';
-import ModuleAccessRepository from './module-access.repository.ts';
-import db from '#config/drizzle.ts';
-import { users } from '../../../db/schema/index.ts';
-import { eq } from 'drizzle-orm';
+import type { Request, Response } from "express";
+import asyncHandler from "#shared/utils/asyncHandler.ts";
+import { success } from "#shared/utils/response.ts";
+import AppError from "#shared/utils/error.ts";
+import ModuleAccessRepository from "./module-access.repository.ts";
+import db from "#config/drizzle.ts";
+import { users } from "../../../db/schema/index.ts";
+import { eq } from "drizzle-orm";
 
 const repo = new ModuleAccessRepository();
 
 const getMyModules = asyncHandler(async (req: Request, res: Response) => {
 	const userId = req.apiToken?.userId;
 	if (!userId) {
-		throw new AppError('Authentication required', 401);
+		throw new AppError("Authentication required", 401);
 	}
 
 	const user = await db.query.users.findFirst({
@@ -21,7 +21,7 @@ const getMyModules = asyncHandler(async (req: Request, res: Response) => {
 	});
 
 	if (!user) {
-		throw new AppError('User account not found', 401);
+		throw new AppError("User account not found", 401);
 	}
 
 	const modules = await repo.getPermittedSlugs(user.type);
@@ -41,7 +41,7 @@ const addMapping = asyncHandler(async (req: Request, res: Response) => {
 	const existing = await repo.getMappingsByUserType(userType);
 	const alreadyExists = existing.some((m) => m.moduleSlug === moduleSlug);
 	if (alreadyExists) {
-		throw new AppError('Mapping already exists', 409);
+		throw new AppError("Mapping already exists", 409);
 	}
 
 	// Insert the new mapping
@@ -56,8 +56,16 @@ const removeMapping = asyncHandler(async (req: Request, res: Response) => {
 	const { userType, moduleSlug } = req.body;
 
 	// Prevent removing Admin access to the access-management screens
-	if (userType === 'Admin' && ['settings', 'settings/users', 'settings/module-access'].includes(moduleSlug)) {
-		throw new AppError('Cannot remove Admin access to user and role access settings', 400);
+	if (
+		userType === "Admin" &&
+		["settings", "settings/users", "settings/module-access"].includes(
+			moduleSlug,
+		)
+	) {
+		throw new AppError(
+			"Cannot remove Admin access to user and role access settings",
+			400,
+		);
 	}
 
 	// Delete the mapping

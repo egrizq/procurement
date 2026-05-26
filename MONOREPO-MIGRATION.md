@@ -12,6 +12,7 @@
 This document outlines the complete migration strategy from a traditional client-server separation to a Turborepo monorepo architecture. The migration is designed in three phases to minimize disruption while modernizing the codebase with ESM modules and shared packages.
 
 ### Key Objectives
+
 - ✅ Consolidate backend and frontend into unified monorepo
 - ✅ Standardize on Node.js 20 LTS across all packages
 - ✅ Migrate backend from CommonJS to ESM for consistency
@@ -20,20 +21,22 @@ This document outlines the complete migration strategy from a traditional client
 - ✅ Maintain backward compatibility with existing deployment (PM2)
 
 ### Technology Decisions
-| Aspect | Current State | Target State | Rationale |
-|--------|--------------|--------------|-----------|
-| **Repository** | Separate `be/` and `fe/` folders | Turborepo monorepo | Better code sharing, unified tooling, improved caching |
-| **Node Version** | BE: v18+, FE: v20.19+ | Unified v20.19.0 LTS | Long-term support, modern features, frontend requirement |
-| **Module System** | BE: CommonJS, FE: ESM | Unified ESM | Better tree-shaking, native Node.js support, modern standard |
-| **Code Sharing** | None (implicit API contract) | Shared packages (`@procurement/*`) | Type safety, DRY principle, single source of truth |
-| **Package Manager** | npm (separate) | npm workspaces + Turborepo | Workspace linking, faster installs, build caching |
-| **Deployment** | PM2 from `be/` | PM2 from `apps/api/` | Preserve existing deployment workflow |
+
+| Aspect              | Current State                    | Target State                       | Rationale                                                    |
+| ------------------- | -------------------------------- | ---------------------------------- | ------------------------------------------------------------ |
+| **Repository**      | Separate `be/` and `fe/` folders | Turborepo monorepo                 | Better code sharing, unified tooling, improved caching       |
+| **Node Version**    | BE: v18+, FE: v20.19+            | Unified v20.19.0 LTS               | Long-term support, modern features, frontend requirement     |
+| **Module System**   | BE: CommonJS, FE: ESM            | Unified ESM                        | Better tree-shaking, native Node.js support, modern standard |
+| **Code Sharing**    | None (implicit API contract)     | Shared packages (`@procurement/*`) | Type safety, DRY principle, single source of truth           |
+| **Package Manager** | npm (separate)                   | npm workspaces + Turborepo         | Workspace linking, faster installs, build caching            |
+| **Deployment**      | PM2 from `be/`                   | PM2 from `apps/api/`               | Preserve existing deployment workflow                        |
 
 ---
 
 ## Current Architecture Analysis
 
 ### Project Structure (Before Migration)
+
 ```
 Procurement/
 ├── be/                          # Backend application (Node.js/Express)
@@ -63,6 +66,7 @@ Procurement/
 ### Technology Stack Inventory
 
 #### Backend (`be/`)
+
 - **Runtime:** Node.js v18+
 - **Framework:** Express v5.2.1
 - **Language:** JavaScript (CommonJS)
@@ -75,6 +79,7 @@ Procurement/
 - **Dev Tools:** nodemon v3.1.11
 
 **Key Dependencies:**
+
 ```json
 {
   "express": "^5.2.1",
@@ -91,6 +96,7 @@ Procurement/
 ```
 
 #### Frontend (`fe/`)
+
 - **Runtime:** Node.js v20.19.0 or v22.12.0+ (enforced)
 - **Framework:** Vue.js v3.5.26 (Composition API)
 - **Build Tool:** Vite v7.3.1
@@ -105,6 +111,7 @@ Procurement/
 - **Code Formatting:** Prettier v3.8.1
 
 **Key Dependencies:**
+
 ```json
 {
   "vue": "^3.5.26",
@@ -123,7 +130,9 @@ Procurement/
 ### Architecture Patterns
 
 #### Backend: Feature-Based / Domain-Driven Design
+
 Each feature module is self-contained:
+
 ```
 modules/{feature}/
 ├── {feature}.controller.js     # HTTP request handlers
@@ -134,6 +143,7 @@ modules/{feature}/
 ```
 
 **Design Principles:**
+
 - **Repository Pattern:** Database logic isolated in repository layer
 - **Controller Pattern:** Business logic in controllers
 - **Validation Middleware:** Zod schemas validate requests before controller execution
@@ -141,7 +151,9 @@ modules/{feature}/
 - **Response Format:** Standardized success/error JSON responses
 
 #### Frontend: Feature-Based with Lazy Loading
+
 Each feature module contains:
+
 ```
 features/{feature}/
 ├── api.js              # Feature-specific API calls
@@ -152,6 +164,7 @@ features/{feature}/
 ```
 
 **Design Principles:**
+
 - **Lazy Loading:** Routes use `() => import('./views/...')`
 - **State Management:** Feature-specific Pinia stores
 - **Service Layer:** Shared HTTP client with token injection
@@ -162,6 +175,7 @@ features/{feature}/
 **API Base URL:** `http://localhost:3000/api`
 
 **Authentication Flow:**
+
 1. Frontend requests API token: `POST /api/token` with device ID
 2. Token stored in `localStorage` under key from `VITE_TOKEN_SECRET`
 3. Axios interceptor injects token into header: `Authorization: Bearer {token}`
@@ -169,6 +183,7 @@ features/{feature}/
 5. Login associates token with user ID: `POST /api/auth/login`
 
 **Response Format:**
+
 ```javascript
 // Success
 { success: true, data: {...}, message: "Success message" }
@@ -180,18 +195,21 @@ features/{feature}/
 ### Critical Issues Identified
 
 #### 1. Module System Divergence ⚠️
+
 - **Backend:** CommonJS (`require`, `module.exports`)
 - **Frontend:** ESM (`import`, `export`)
 - **Impact:** Mixed module systems complicate tooling and build optimization
 - **Solution:** Migrate backend to ESM in Phase 2
 
 #### 2. Node Version Mismatch ⚠️
+
 - **Backend:** Requires Node v18+
 - **Frontend:** Enforces Node v20.19+ or v22.12+
 - **Impact:** Developers need to switch Node versions between projects
 - **Solution:** Standardize on Node v20.19.0 LTS
 
 #### 3. No Shared Code ⚠️
+
 - API contract is implicit (no shared types)
 - Validation schemas duplicated (if used in FE)
 - Constants and enums duplicated
@@ -199,16 +217,19 @@ features/{feature}/
 - **Solution:** Create shared packages in Phase 3
 
 #### 4. Database Migrations Not Version Controlled ⚠️
+
 - `be/drizzle/migrations/` is in `.gitignore`
 - **Impact:** Migration history lost, deployment issues
 - **Solution:** Remove from `.gitignore`, commit migration history
 
 #### 5. No Testing Infrastructure ⚠️
+
 - No test files, frameworks, or configuration
 - **Impact:** No automated quality assurance
 - **Solution:** Add in future phase (post-migration)
 
 #### 6. Inconsistent Code Formatting ⚠️
+
 - **Backend:** Tabs (width: 4), semicolons: yes
 - **Frontend:** Spaces (width: 2), semicolons: no, single quotes
 - **Impact:** Inconsistent codebase, merge conflicts
@@ -219,6 +240,7 @@ features/{feature}/
 ## Target Architecture
 
 ### Project Structure (After Migration)
+
 ```
 Procurement/                     # Monorepo root
 ├── apps/
@@ -302,6 +324,7 @@ Root
 ```
 
 **Turborepo Build Order:**
+
 1. `packages/types`, `packages/config` (parallel)
 2. `packages/validators` (depends on types)
 3. `apps/api`, `apps/web` (parallel, after packages)
@@ -318,17 +341,16 @@ Root
 ### Step 1.1: Initialize Turborepo at Root
 
 **Actions:**
+
 1. Create root `package.json`:
+
 ```json
 {
   "name": "procurement-monorepo",
   "version": "1.0.0",
   "private": true,
   "description": "Procurement Vessel Management System - Turborepo Monorepo",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "engines": {
     "node": ">=20.19.0",
     "npm": ">=10.0.0"
@@ -349,17 +371,20 @@ Root
 ```
 
 2. Install Turborepo:
+
 ```bash
 cd d:/personal-project/Procurement
 npm install
 ```
 
 3. Create `.nvmrc`:
+
 ```
 20.19.0
 ```
 
 4. Create root `.gitignore` (merge BE + FE patterns):
+
 ```gitignore
 # Dependencies
 node_modules/
@@ -458,6 +483,7 @@ drizzle/migrations/ # REMOVE THIS - migrations should be version controlled
 ```
 
 **Key Configuration:**
+
 - `dependsOn: ["^build"]` - Build dependencies first
 - `persistent: true` for `dev` - Keep dev servers running
 - `cache: false` for `dev` - Don't cache dev server output
@@ -468,21 +494,25 @@ drizzle/migrations/ # REMOVE THIS - migrations should be version controlled
 **Actions:**
 
 1. **Create apps directory:**
+
 ```bash
 mkdir apps
 ```
 
 2. **Move backend to apps/api:**
+
 ```bash
 mv be apps/api
 ```
 
 3. **Move frontend to apps/web:**
+
 ```bash
 mv fe apps/web
 ```
 
 4. **Verify structure:**
+
 ```
 Procurement/
 ├── apps/
@@ -496,11 +526,13 @@ Procurement/
 **File:** `apps/api/package.json`
 
 **Changes:**
+
 1. Add `"name": "@procurement/api"`
 2. Update Node engine: `"node": ">=20.19.0"`
 3. Keep existing scripts (Turbo will call them)
 
 **Updated fields:**
+
 ```json
 {
   "name": "@procurement/api",
@@ -541,10 +573,12 @@ Procurement/
 **File:** `apps/web/package.json`
 
 **Changes:**
+
 1. Add `"name": "@procurement/web"`
 2. Keep existing scripts and engines
 
 **Updated fields:**
+
 ```json
 {
   "name": "@procurement/web",
@@ -583,6 +617,7 @@ Procurement/
 ```
 
 **Rationale:**
+
 - `semi: true` - Explicit statement termination
 - `singleQuote: true` - Consistent string literals
 - `tabWidth: 2, useTabs: false` - Modern JavaScript standard
@@ -596,6 +631,7 @@ Procurement/
 ### Step 1.7: Install Dependencies
 
 **Commands:**
+
 ```bash
 # From root directory
 cd d:/personal-project/Procurement
@@ -612,6 +648,7 @@ npm install
 **Verification Checklist:**
 
 1. **Install successful:**
+
 ```bash
 npm install
 # Should complete without errors
@@ -619,6 +656,7 @@ npm install
 ```
 
 2. **Turbo dev works:**
+
 ```bash
 npm run dev
 # Should start both API (port 3000) and Web (port 5173)
@@ -628,6 +666,7 @@ npm run dev
 ```
 
 3. **API accessible:**
+
 ```bash
 # Test API health endpoint
 curl http://localhost:3000/api/token
@@ -635,16 +674,19 @@ curl http://localhost:3000/api/token
 ```
 
 4. **Web accessible:**
+
 - Open browser: `http://localhost:5173`
 - Should see login page
 - Check browser console for errors
 
 5. **Login flow:**
+
 - Enter credentials in web app
 - Test login functionality
 - Verify API token generation and authentication
 
 6. **PM2 still works:**
+
 ```bash
 cd apps/api
 npm run pm2:start:dev
@@ -654,6 +696,7 @@ npm run pm2:delete
 ```
 
 7. **Build pipeline:**
+
 ```bash
 npm run build
 # API: Should complete (no build step currently)
@@ -661,12 +704,14 @@ npm run build
 ```
 
 8. **Turbo caching:**
+
 ```bash
 npm run build
 npm run build  # Second run should be faster with cache
 ```
 
 **Success Criteria:**
+
 - ✅ Both apps start with `npm run dev`
 - ✅ API responds to requests
 - ✅ Web UI loads and functions
@@ -675,6 +720,7 @@ npm run build  # Second run should be faster with cache
 - ✅ No errors in console or logs
 
 **Rollback Plan (if Phase 1 fails):**
+
 ```bash
 # Move directories back
 mv apps/api be
@@ -694,6 +740,7 @@ rm package.json turbo.json .nvmrc
 **Risk Level:** 🟡 Medium (significant code changes, but mechanical transformation)
 
 **Prerequisites:**
+
 - ✅ Phase 1 completed and verified
 - ✅ All tests passing (or smoke tests if no formal tests)
 - ✅ Git commit with Phase 1 changes
@@ -703,6 +750,7 @@ rm package.json turbo.json .nvmrc
 **File:** `apps/api/package.json`
 
 **Changes:**
+
 1. Add `"type": "module"` (enables ESM)
 2. Update Node engine to `>=20.19.0`
 3. Remove `module-alias` from dependencies
@@ -710,6 +758,7 @@ rm package.json turbo.json .nvmrc
 5. Add `imports` field for subpath imports
 
 **Updated `apps/api/package.json`:**
+
 ```json
 {
   "name": "@procurement/api",
@@ -734,6 +783,7 @@ rm package.json turbo.json .nvmrc
 ```
 
 **Subpath Imports Explanation:**
+
 - `#shared/*` - Replaces `@shared` module alias
 - `#modules/*` - Replaces `@modules` module alias
 - `#config/*` - Replaces `@config` module alias
@@ -746,6 +796,7 @@ rm package.json turbo.json .nvmrc
 **File:** `apps/api/src/server.js`
 
 **Before:**
+
 ```javascript
 // Register module aliases
 require('module-alias/register');
@@ -755,12 +806,14 @@ const app = require('./app');
 ```
 
 **After:**
+
 ```javascript
 import app from './app.js';
 // ... rest of file
 ```
 
 **Pattern to apply everywhere:**
+
 - Remove `require('module-alias/register')`
 - Remove any `module-alias` imports
 
@@ -769,6 +822,7 @@ import app from './app.js';
 **Conversion Pattern:**
 
 **CommonJS:**
+
 ```javascript
 const express = require('express');
 const { someFunction } = require('./utils');
@@ -783,6 +837,7 @@ module.exports = { myFunction, otherFunction };
 ```
 
 **ESM:**
+
 ```javascript
 import express from 'express';
 import { someFunction } from './utils.js';
@@ -797,6 +852,7 @@ export { myFunction, otherFunction };
 ```
 
 **Critical Rules:**
+
 1. **Always add `.js` extension** to relative imports: `'./utils.js'`
 2. **No extension for npm packages:** `'express'`
 3. **Named exports:** `export { name }` or `export const name = ...`
@@ -818,17 +874,18 @@ export { myFunction, otherFunction };
 
 **Find and replace across all files:**
 
-| Old (module-alias) | New (subpath import) |
-|-------------------|---------------------|
-| `require('@shared/utils/...')` | `import ... from '#shared/utils/....js'` |
+| Old (module-alias)                   | New (subpath import)                           |
+| ------------------------------------ | ---------------------------------------------- |
+| `require('@shared/utils/...')`       | `import ... from '#shared/utils/....js'`       |
 | `require('@shared/middlewares/...')` | `import ... from '#shared/middlewares/....js'` |
-| `require('@modules/...')` | `import ... from '#modules/....js'` |
-| `require('@config/...')` | `import ... from '#config/....js'` |
-| `require('@routes')` | `import ... from '#routes'` |
+| `require('@modules/...')`            | `import ... from '#modules/....js'`            |
+| `require('@config/...')`             | `import ... from '#config/....js'`             |
+| `require('@routes')`                 | `import ... from '#routes'`                    |
 
 **Example Transformation:**
 
 **Before:**
+
 ```javascript
 const { AppError } = require('@shared/utils/error');
 const asyncHandler = require('@shared/utils/asyncHandler');
@@ -836,6 +893,7 @@ const validate = require('@shared/middlewares/validate');
 ```
 
 **After:**
+
 ```javascript
 import { AppError } from '#shared/utils/error.js';
 import asyncHandler from '#shared/utils/asyncHandler.js';
@@ -847,18 +905,21 @@ import validate from '#shared/middlewares/validate.js';
 #### Pattern 1: `__dirname` and `__filename`
 
 **CommonJS:**
+
 ```javascript
 const path = require('path');
 const logPath = path.join(__dirname, '../logs');
 ```
 
 **ESM (Node.js 20.11+):**
+
 ```javascript
 import path from 'path';
 const logPath = path.join(import.meta.dirname, '../logs');
 ```
 
 **Alternative (if Node < 20.11):**
+
 ```javascript
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -874,11 +935,13 @@ const logPath = path.join(__dirname, '../logs');
 #### Pattern 2: Dynamic Requires
 
 **CommonJS:**
+
 ```javascript
 const config = require(`./${env}.config.js`);
 ```
 
 **ESM:**
+
 ```javascript
 const config = await import(`./${env}.config.js`);
 // or use static imports with switch/if
@@ -887,11 +950,13 @@ const config = await import(`./${env}.config.js`);
 #### Pattern 3: require.resolve
 
 **CommonJS:**
+
 ```javascript
 const modulePath = require.resolve('./module');
 ```
 
 **ESM:**
+
 ```javascript
 import { resolve } from 'import-meta-resolve';
 const modulePath = await resolve('./module', import.meta.url);
@@ -900,11 +965,13 @@ const modulePath = await resolve('./module', import.meta.url);
 #### Pattern 4: JSON Imports
 
 **CommonJS:**
+
 ```javascript
 const package = require('./package.json');
 ```
 
 **ESM (Node.js 20.10+):**
+
 ```javascript
 import packageJson from './package.json' with { type: 'json' };
 // or
@@ -917,6 +984,7 @@ const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
 **File:** `apps/api/src/config/drizzle.js`
 
 **Before:**
+
 ```javascript
 const { Drizzle } = require('@drizzle/client');
 const { createDrizzle } = require('@drizzle/adapter-mariadb');
@@ -928,6 +996,7 @@ module.exports = drizzle;
 ```
 
 **After:**
+
 ```javascript
 import { Drizzle } from '@drizzle/client';
 import { createDrizzle } from '@drizzle/adapter-mariadb';
@@ -945,6 +1014,7 @@ export default drizzle;
 **File:** `apps/api/src/app.js`
 
 **Before:**
+
 ```javascript
 const express = require('express');
 const helmet = require('helmet');
@@ -958,6 +1028,7 @@ module.exports = app;
 ```
 
 **After:**
+
 ```javascript
 import express from 'express';
 import helmet from 'helmet';
@@ -979,6 +1050,7 @@ export default app;
 **File:** `apps/api/src/modules/auth/auth.controller.js`
 
 **Before:**
+
 ```javascript
 const bcrypt = require('bcrypt');
 const { AppError } = require('@shared/utils/error');
@@ -995,6 +1067,7 @@ module.exports = {
 ```
 
 **After:**
+
 ```javascript
 import bcrypt from 'bcrypt';
 import { AppError } from '#shared/utils/error.js';
@@ -1015,6 +1088,7 @@ export { login };
 **File:** `apps/api/src/modules/auth/auth.repository.js`
 
 **Before:**
+
 ```javascript
 const drizzle = require('@config/drizzle');
 
@@ -1029,6 +1103,7 @@ module.exports = {
 ```
 
 **After:**
+
 ```javascript
 import drizzle from '#config/drizzle.js';
 
@@ -1047,6 +1122,7 @@ export { findUser };
 **File:** `apps/api/src/modules/auth/auth.routes.js`
 
 **Before:**
+
 ```javascript
 const express = require('express');
 const router = express.Router();
@@ -1060,6 +1136,7 @@ module.exports = router;
 ```
 
 **After:**
+
 ```javascript
 import express from 'express';
 import * as authController from './auth.controller.js';
@@ -1074,6 +1151,7 @@ export default router;
 ```
 
 **Repeat for all modules:**
+
 - `modules/api-token/*`
 - `modules/master-data/items/*`
 - `modules/master-data/vendors/*`
@@ -1086,6 +1164,7 @@ export default router;
 **File:** `apps/api/src/routes/index.js`
 
 **Before:**
+
 ```javascript
 const express = require('express');
 const router = express.Router();
@@ -1102,6 +1181,7 @@ module.exports = router;
 ```
 
 **After:**
+
 ```javascript
 import express from 'express';
 import authRoutes from '#modules/auth/auth.routes.js';
@@ -1122,6 +1202,7 @@ export default router;
 **Verification Checklist:**
 
 1. **No CommonJS syntax remains:**
+
 ```bash
 cd apps/api
 # Should return no results:
@@ -1130,6 +1211,7 @@ grep -r "module.exports" src/
 ```
 
 2. **All imports have .js extension:**
+
 ```bash
 # Check for missing extensions in relative imports:
 grep -r "from '\\./" src/ | grep -v "\\.js'"
@@ -1137,6 +1219,7 @@ grep -r "from '\\./" src/ | grep -v "\\.js'"
 ```
 
 3. **Server starts:**
+
 ```bash
 npm run dev
 # Should start without errors
@@ -1144,6 +1227,7 @@ npm run dev
 ```
 
 4. **API endpoints work:**
+
 ```bash
 # Test token generation
 curl http://localhost:3000/api/token
@@ -1159,6 +1243,7 @@ curl http://localhost:3000/api/master-data/vessels \
 ```
 
 5. **Frontend still works:**
+
 ```bash
 cd apps/web
 npm run dev
@@ -1168,6 +1253,7 @@ npm run dev
 ```
 
 6. **PM2 deployment:**
+
 ```bash
 cd apps/api
 npm run pm2:start:dev
@@ -1179,6 +1265,7 @@ npm run pm2:delete
 ```
 
 7. **Drizzle operations:**
+
 ```bash
 cd apps/api
 npx drizzle migrate status
@@ -1187,6 +1274,7 @@ npx drizzle-kit generate
 ```
 
 **Success Criteria:**
+
 - ✅ No CommonJS syntax in codebase
 - ✅ All imports use ESM syntax with `.js` extensions
 - ✅ Server starts and responds to requests
@@ -1198,16 +1286,17 @@ npx drizzle-kit generate
 
 **Common Issues & Solutions:**
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| `Cannot use import outside a module` | Missing `"type": "module"` | Add to package.json |
-| `Cannot find module './file'` | Missing `.js` extension | Add `.js` to all relative imports |
-| `__dirname is not defined` | CommonJS global in ESM | Use `import.meta.dirname` |
-| `require is not defined` | Missed CommonJS syntax | Convert to `import` |
-| Module alias not working | Old `@shared` syntax | Update to `#shared` subpath imports |
-| Circular dependency error | Mutual imports | Refactor to remove circular dependencies |
+| Issue                                | Cause                      | Solution                                 |
+| ------------------------------------ | -------------------------- | ---------------------------------------- |
+| `Cannot use import outside a module` | Missing `"type": "module"` | Add to package.json                      |
+| `Cannot find module './file'`        | Missing `.js` extension    | Add `.js` to all relative imports        |
+| `__dirname is not defined`           | CommonJS global in ESM     | Use `import.meta.dirname`                |
+| `require is not defined`             | Missed CommonJS syntax     | Convert to `import`                      |
+| Module alias not working             | Old `@shared` syntax       | Update to `#shared` subpath imports      |
+| Circular dependency error            | Mutual imports             | Refactor to remove circular dependencies |
 
 **Rollback Plan (if Phase 2 fails):**
+
 ```bash
 # Git rollback
 git checkout apps/api
@@ -1227,6 +1316,7 @@ git clean -fd apps/api
 **Risk Level:** 🟢 Low (additive changes, doesn't break existing functionality)
 
 **Prerequisites:**
+
 - ✅ Phase 1 and 2 completed and verified
 - ✅ Backend on ESM
 - ✅ Git commit with Phase 2 changes
@@ -1234,6 +1324,7 @@ git clean -fd apps/api
 ### Step 3.1: Create Package Structure
 
 **Actions:**
+
 ```bash
 cd d:/personal-project/Procurement
 
@@ -1254,11 +1345,13 @@ mkdir packages/config/src
 ### Step 3.2: Set Up TypeScript for Packages
 
 **Install TypeScript at root:**
+
 ```bash
 npm install -D -w typescript @types/node
 ```
 
 **Create root `tsconfig.json`:**
+
 ```json
 {
   "compilerOptions": {
@@ -1323,6 +1416,7 @@ npm install -D -w typescript @types/node
 **Create Type Files Based on Drizzle Schema:**
 
 **File:** `packages/types/src/user.ts`
+
 ```typescript
 export enum UserType {
   ADMIN = 'ADMIN',
@@ -1373,6 +1467,7 @@ export interface UserDTO {
 ```
 
 **File:** `packages/types/src/vessel.ts`
+
 ```typescript
 export interface Vessel {
   id: string;
@@ -1400,6 +1495,7 @@ export interface VesselStock {
 ```
 
 **File:** `packages/types/src/request.ts`
+
 ```typescript
 export enum Priority {
   LOW = 'LOW',
@@ -1450,6 +1546,7 @@ export interface VesselRequestWithItems extends VesselRequest {
 ```
 
 **File:** `packages/types/src/item.ts`
+
 ```typescript
 export enum Unit {
   PCS = 'PCS',
@@ -1492,6 +1589,7 @@ export interface ItemWithCategory extends Item {
 ```
 
 **File:** `packages/types/src/vendor.ts`
+
 ```typescript
 export enum CategoryVendor {
   FOOD = 'FOOD',
@@ -1521,6 +1619,7 @@ export interface Vendor {
 ```
 
 **File:** `packages/types/src/api.ts`
+
 ```typescript
 // API Request/Response types
 
@@ -1590,6 +1689,7 @@ export interface TokenResponse {
 ```
 
 **File:** `packages/types/src/index.ts`
+
 ```typescript
 // User types
 export * from './user.js';
@@ -1651,6 +1751,7 @@ export * from './api.js';
 ```
 
 **File:** `packages/config/src/routes.ts`
+
 ```typescript
 /**
  * API route definitions
@@ -1712,6 +1813,7 @@ export const PROFILE_ROUTES = {
 ```
 
 **File:** `packages/config/src/constants.ts`
+
 ```typescript
 /**
  * Shared constants across API and Web
@@ -1766,6 +1868,7 @@ export const SUCCESS_MESSAGES = {
 ```
 
 **File:** `packages/config/src/index.ts`
+
 ```typescript
 export * from './routes.js';
 export * from './constants.js';
@@ -1812,13 +1915,12 @@ export * from './constants.js';
     "rootDir": "./src"
   },
   "include": ["src/**/*"],
-  "references": [
-    { "path": "../types" }
-  ]
+  "references": [{ "path": "../types" }]
 }
 ```
 
 **File:** `packages/validators/src/auth.ts`
+
 ```typescript
 import { z } from 'zod';
 
@@ -1840,6 +1942,7 @@ export type TokenInput = z.infer<typeof tokenSchema>;
 ```
 
 **File:** `packages/validators/src/vessel.ts`
+
 ```typescript
 import { z } from 'zod';
 
@@ -1884,6 +1987,7 @@ export type DeleteVesselInput = z.infer<typeof deleteVesselSchema>;
 ```
 
 **File:** `packages/validators/src/request.ts`
+
 ```typescript
 import { z } from 'zod';
 import { Priority, RequestStatus } from '@procurement/types';
@@ -1895,14 +1999,16 @@ export const createRequestSchema = z.object({
     requiredDate: z.string().datetime().or(z.date()).optional(),
     priority: z.nativeEnum(Priority),
     remarks: z.string().optional(),
-    items: z.array(
-      z.object({
-        itemId: z.string().uuid('Invalid item ID'),
-        quantity: z.number().positive('Quantity must be positive'),
-        unit: z.string(),
-        remarks: z.string().optional(),
-      })
-    ).min(1, 'At least one item is required'),
+    items: z
+      .array(
+        z.object({
+          itemId: z.string().uuid('Invalid item ID'),
+          quantity: z.number().positive('Quantity must be positive'),
+          unit: z.string(),
+          remarks: z.string().optional(),
+        })
+      )
+      .min(1, 'At least one item is required'),
   }),
 });
 
@@ -1917,15 +2023,17 @@ export const updateRequestSchema = z.object({
     priority: z.nativeEnum(Priority).optional(),
     status: z.nativeEnum(RequestStatus).optional(),
     remarks: z.string().optional(),
-    items: z.array(
-      z.object({
-        id: z.string().uuid().optional(),
-        itemId: z.string().uuid(),
-        quantity: z.number().positive(),
-        unit: z.string(),
-        remarks: z.string().optional(),
-      })
-    ).optional(),
+    items: z
+      .array(
+        z.object({
+          id: z.string().uuid().optional(),
+          itemId: z.string().uuid(),
+          quantity: z.number().positive(),
+          unit: z.string(),
+          remarks: z.string().optional(),
+        })
+      )
+      .optional(),
   }),
 });
 
@@ -1935,12 +2043,14 @@ export const approveRequestSchema = z.object({
   }),
   body: z.object({
     remarks: z.string().optional(),
-    items: z.array(
-      z.object({
-        id: z.string().uuid(),
-        approvedQuantity: z.number().positive('Approved quantity must be positive'),
-      })
-    ).optional(),
+    items: z
+      .array(
+        z.object({
+          id: z.string().uuid(),
+          approvedQuantity: z.number().positive('Approved quantity must be positive'),
+        })
+      )
+      .optional(),
   }),
 });
 
@@ -1950,6 +2060,7 @@ export type ApproveRequestInput = z.infer<typeof approveRequestSchema>;
 ```
 
 **File:** `packages/validators/src/pagination.ts`
+
 ```typescript
 import { z } from 'zod';
 import { DEFAULT_PAGE, DEFAULT_LIMIT, MAX_LIMIT } from '@procurement/config';
@@ -1968,6 +2079,7 @@ export type PaginationInput = z.infer<typeof paginationSchema>;
 ```
 
 **File:** `packages/validators/src/index.ts`
+
 ```typescript
 export * from './auth.js';
 export * from './vessel.js';
@@ -1980,6 +2092,7 @@ export * from './pagination.js';
 **File:** `turbo.json`
 
 **Add package build tasks:**
+
 ```json
 {
   "$schema": "https://turbo.build/schema.json",
@@ -2011,6 +2124,7 @@ export * from './pagination.js';
 ```
 
 **Key points:**
+
 - `"dependsOn": ["^build"]` ensures packages build before apps
 - `^build` means "build all dependencies first"
 
@@ -2019,6 +2133,7 @@ export * from './pagination.js';
 **File:** `apps/api/package.json`
 
 **Add to dependencies:**
+
 ```json
 {
   "dependencies": {
@@ -2034,6 +2149,7 @@ export * from './pagination.js';
 Although API remains JavaScript, you can use JSDoc comments to get type checking:
 
 **Example in controller:**
+
 ```javascript
 import { loginSchema } from '@procurement/validators';
 import { ERROR_MESSAGES } from '@procurement/config';
@@ -2053,6 +2169,7 @@ export const login = async (req, res) => {
 **File:** `apps/web/package.json`
 
 **Add to dependencies:**
+
 ```json
 {
   "dependencies": {
@@ -2071,6 +2188,7 @@ export const login = async (req, res) => {
 **File:** `apps/api/src/modules/auth/auth.validation.js`
 
 **Before:**
+
 ```javascript
 import { z } from 'zod';
 
@@ -2083,6 +2201,7 @@ export const login = z.object({
 ```
 
 **After:**
+
 ```javascript
 import { loginSchema } from '@procurement/validators';
 
@@ -2103,6 +2222,7 @@ export const login = loginSchema;
 **File:** `apps/web/src/features/vessel/views/Index.vue`
 
 **Before:**
+
 ```vue
 <script setup>
 import { ref } from 'vue';
@@ -2117,6 +2237,7 @@ const fetchVessels = async () => {
 ```
 
 **After (with JSDoc types):**
+
 ```vue
 <script setup>
 import { ref } from 'vue';
@@ -2136,6 +2257,7 @@ const fetchVessels = async () => {
 ```
 
 **Or migrate to TypeScript SFC:**
+
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue';
@@ -2157,6 +2279,7 @@ const fetchVessels = async () => {
 **File:** `apps/web/src/services/http.js`
 
 **Add route imports:**
+
 ```javascript
 import axios from 'axios';
 import { API_BASE, AUTH_ROUTES, VESSEL_ROUTES } from '@procurement/config';
@@ -2180,6 +2303,7 @@ export const getVessels = (params) => {
 ### Step 3.12: Install Package Dependencies
 
 **Commands:**
+
 ```bash
 cd d:/personal-project/Procurement
 
@@ -2195,6 +2319,7 @@ npm install
 ### Step 3.13: Build Shared Packages
 
 **Commands:**
+
 ```bash
 npm run build
 
@@ -2205,6 +2330,7 @@ cd packages/validators && npm run build
 ```
 
 **Watch mode during development:**
+
 ```bash
 # In separate terminals:
 cd packages/types && npm run dev
@@ -2217,6 +2343,7 @@ cd packages/validators && npm run dev
 **Verification Checklist:**
 
 1. **Packages build successfully:**
+
 ```bash
 npm run build
 # Check dist/ directories created in each package
@@ -2226,6 +2353,7 @@ ls packages/validators/dist
 ```
 
 2. **API imports shared packages:**
+
 ```bash
 cd apps/api
 # Check imports resolve
@@ -2235,6 +2363,7 @@ node -e "import('@procurement/config').then(console.log)"
 ```
 
 3. **Web imports shared packages:**
+
 ```bash
 cd apps/web
 # Vite should resolve workspace packages
@@ -2243,6 +2372,7 @@ npm run build
 ```
 
 4. **Type safety works:**
+
 ```bash
 # If using TypeScript
 npx tsc --noEmit
@@ -2250,6 +2380,7 @@ npx tsc --noEmit
 ```
 
 5. **Full application works:**
+
 ```bash
 npm run dev
 # Both API and Web start
@@ -2258,16 +2389,19 @@ npm run dev
 ```
 
 6. **Shared validators work:**
+
 - Test API validation with invalid data
 - Verify Zod errors returned correctly
 - Check error messages match new shared constants
 
 7. **Hot reload works:**
+
 - Change a type in `packages/types/src/user.ts`
 - Verify both API and Web detect change
 - Verify rebuild triggers (with watch mode)
 
 **Success Criteria:**
+
 - ✅ All packages build without errors
 - ✅ API imports and uses shared packages
 - ✅ Web imports and uses shared packages
@@ -2279,14 +2413,14 @@ npm run dev
 
 **Common Issues & Solutions:**
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| Package not found | Not installed | Run `npm install` at root |
-| Type errors | Wrong import path | Use `@procurement/types` not relative path |
-| Circular dependency | Types depend on validators | Refactor: types should have no deps |
-| Vite can't resolve | Missing in package.json | Add to `apps/web/package.json` dependencies |
-| Build fails | TypeScript error | Fix type errors in packages |
-| Watch mode not working | Not using `tsc --watch` | Run `npm run dev` in package |
+| Issue                  | Cause                      | Solution                                    |
+| ---------------------- | -------------------------- | ------------------------------------------- |
+| Package not found      | Not installed              | Run `npm install` at root                   |
+| Type errors            | Wrong import path          | Use `@procurement/types` not relative path  |
+| Circular dependency    | Types depend on validators | Refactor: types should have no deps         |
+| Vite can't resolve     | Missing in package.json    | Add to `apps/web/package.json` dependencies |
+| Build fails            | TypeScript error           | Fix type errors in packages                 |
+| Watch mode not working | Not using `tsc --watch`    | Run `npm run dev` in package                |
 
 ---
 
@@ -2295,41 +2429,50 @@ npm run dev
 ### 1. Version Control Cleanup
 
 **Actions:**
+
 1. **Remove `drizzle/migrations/` from `.gitignore`:**
+
 ```bash
 # Edit apps/api/.gitignore
 # Remove line: drizzle/migrations/
 ```
 
 2. **Commit migration history:**
+
 ```bash
 git add apps/api/drizzle/migrations/
 git commit -m "chore: add Drizzle migration history to version control"
 ```
 
 3. **Create comprehensive `.gitignore`:**
+
 - Already done in Phase 1
 - Verify no critical files ignored
 
 ### 2. Update Documentation
 
 **Actions:**
+
 1. **Update root README.md:**
+
 - Add monorepo structure overview
 - Add development setup instructions
 - Add workspace commands
 
 2. **Update API README:**
+
 - Move to `apps/api/README.md`
 - Add ESM migration notes
 - Update import examples
 
 3. **Update Web README:**
+
 - Move to `apps/web/README.md`
 - Add shared package usage
 - Update type safety notes
 
 4. **Create DEVELOPMENT.md:**
+
 - Development workflow
 - Package development guide
 - Turborepo caching guide
@@ -2339,6 +2482,7 @@ git commit -m "chore: add Drizzle migration history to version control"
 **ESLint Configuration:**
 
 **File:** `.eslintrc.json` (root)
+
 ```json
 {
   "root": true,
@@ -2346,9 +2490,7 @@ git commit -m "chore: add Drizzle migration history to version control"
     "node": true,
     "es2022": true
   },
-  "extends": [
-    "eslint:recommended"
-  ],
+  "extends": ["eslint:recommended"],
   "parserOptions": {
     "ecmaVersion": 2022,
     "sourceType": "module"
@@ -2362,21 +2504,20 @@ git commit -m "chore: add Drizzle migration history to version control"
       "files": ["packages/**/*.ts"],
       "parser": "@typescript-eslint/parser",
       "plugins": ["@typescript-eslint"],
-      "extends": [
-        "eslint:recommended",
-        "plugin:@typescript-eslint/recommended"
-      ]
+      "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"]
     }
   ]
 }
 ```
 
 **Install ESLint:**
+
 ```bash
 npm install -D -w eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser
 ```
 
 **Add lint script to root package.json:**
+
 ```json
 {
   "scripts": {
@@ -2387,6 +2528,7 @@ npm install -D -w eslint @typescript-eslint/eslint-plugin @typescript-eslint/par
 ```
 
 **Add lint scripts to each package/app:**
+
 ```json
 {
   "scripts": {
@@ -2401,6 +2543,7 @@ npm install -D -w eslint @typescript-eslint/eslint-plugin @typescript-eslint/par
 **Recommended: GitHub Actions**
 
 **File:** `.github/workflows/ci.yml`
+
 ```yaml
 name: CI
 
@@ -2413,25 +2556,25 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20.19.0'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm install
-      
+
       - name: Lint
         run: npm run lint
-      
+
       - name: Build
         run: npm run build
-      
+
       - name: Test
         run: npm run test
 ```
@@ -2439,6 +2582,7 @@ jobs:
 ### 5. Testing Framework Setup (Future)
 
 **Recommended Stack:**
+
 - **API:** Vitest + Supertest
 - **Web:** Vitest + Vue Test Utils
 - **E2E:** Playwright
@@ -2448,6 +2592,7 @@ jobs:
 ### 6. Performance Optimization
 
 **Turborepo Remote Caching:**
+
 ```bash
 # Link to Vercel Remote Cache (free for personal projects)
 npx turbo login
@@ -2455,6 +2600,7 @@ npx turbo link
 ```
 
 **Benefits:**
+
 - Share build cache across team
 - Faster CI/CD builds
 - Skip unchanged package builds
@@ -2468,6 +2614,7 @@ npx turbo link
 **No changes needed** - PM2 still works from `apps/api/` directory.
 
 **Deployment script (example):**
+
 ```bash
 #!/bin/bash
 # deploy.sh
@@ -2498,12 +2645,14 @@ rsync -av dist/ /var/www/html/
 ### Issue: Turborepo Command Not Found
 
 **Symptom:**
+
 ```bash
 npm run dev
 # Error: turbo: command not found
 ```
 
 **Solution:**
+
 ```bash
 npm install -D turbo -w
 # Force reinstall
@@ -2514,11 +2663,13 @@ npm install
 ### Issue: Package Not Found
 
 **Symptom:**
+
 ```bash
 Error: Cannot find package '@procurement/types'
 ```
 
 **Solution:**
+
 ```bash
 # Check package name in package.json
 cat packages/types/package.json | grep "name"
@@ -2534,12 +2685,14 @@ ls node_modules/@procurement/
 ### Issue: TypeScript Errors in Packages
 
 **Symptom:**
+
 ```bash
 npm run build
 # TypeScript compilation errors
 ```
 
 **Solution:**
+
 ```bash
 # Check tsconfig.json extends root
 cat packages/types/tsconfig.json
@@ -2556,11 +2709,13 @@ npm run build
 ### Issue: ESM Import Errors
 
 **Symptom:**
+
 ```bash
 Error [ERR_MODULE_NOT_FOUND]: Cannot find module './file'
 ```
 
 **Solution:**
+
 ```bash
 # Add .js extension to all relative imports
 # Before: import x from './file'
@@ -2573,18 +2728,22 @@ cat apps/api/package.json | grep "type"
 ### Issue: Circular Dependencies
 
 **Symptom:**
+
 ```bash
 ReferenceError: Cannot access 'X' before initialization
 ```
 
 **Solution:**
+
 1. Identify circular dependency:
+
 ```bash
 npm install -g madge
 madge --circular apps/api/src
 ```
 
 2. Refactor to break cycle:
+
 - Extract shared interface to separate file
 - Use dependency injection
 - Lazy import: `const X = await import('./x.js')`
@@ -2592,12 +2751,14 @@ madge --circular apps/api/src
 ### Issue: PM2 Won't Start After Migration
 
 **Symptom:**
+
 ```bash
 npm run pm2:start
 # PM2 error or constant restart
 ```
 
 **Solution:**
+
 ```bash
 # Check PM2 logs
 npm run pm2:logs
@@ -2614,12 +2775,14 @@ npm run start
 ### Issue: Vite Can't Resolve Workspace Package
 
 **Symptom:**
+
 ```bash
 npm run dev
 # Vite error: Failed to resolve '@procurement/types'
 ```
 
 **Solution:**
+
 ```bash
 # 1. Check package.json dependencies
 cat apps/web/package.json | grep "@procurement"
@@ -2638,10 +2801,12 @@ cat apps/web/vite.config.js
 ### Issue: Hot Reload Not Working for Packages
 
 **Symptom:**
+
 - Change file in `packages/types/src/user.ts`
 - Apps don't rebuild
 
 **Solution:**
+
 ```bash
 # Run package in watch mode
 cd packages/types
@@ -2658,13 +2823,13 @@ npm run dev  # tsc --watch
 
 **Expected improvements after migration:**
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Initial install | ~60s | ~45s | 25% faster (with hoisting) |
-| Repeated builds | No cache | ~5s | 95% faster (with Turbo cache) |
-| Dev server start | ~3s | ~3s | Same (parallel start) |
-| Type safety | None | Full | ✅ Reduced runtime errors |
-| Code duplication | ~15% | 0% | ✅ DRY principle |
+| Metric           | Before   | After | Improvement                   |
+| ---------------- | -------- | ----- | ----------------------------- |
+| Initial install  | ~60s     | ~45s  | 25% faster (with hoisting)    |
+| Repeated builds  | No cache | ~5s   | 95% faster (with Turbo cache) |
+| Dev server start | ~3s      | ~3s   | Same (parallel start)         |
+| Type safety      | None     | Full  | ✅ Reduced runtime errors     |
+| Code duplication | ~15%     | 0%    | ✅ DRY principle              |
 
 ---
 
@@ -2673,12 +2838,14 @@ npm run dev  # tsc --watch
 ### Development Workflow
 
 1. **Start development:**
+
 ```bash
 npm run dev
 # Starts all apps and watches packages
 ```
 
 2. **Work on API:**
+
 ```bash
 cd apps/api
 # Edit files
@@ -2686,6 +2853,7 @@ cd apps/api
 ```
 
 3. **Work on Web:**
+
 ```bash
 cd apps/web
 # Edit files
@@ -2693,6 +2861,7 @@ cd apps/web
 ```
 
 4. **Work on shared package:**
+
 ```bash
 cd packages/types
 npm run dev  # tsc --watch
@@ -2701,17 +2870,20 @@ npm run dev  # tsc --watch
 ```
 
 5. **Format code:**
+
 ```bash
 npm run format
 ```
 
 6. **Lint:**
+
 ```bash
 npm run lint
 npm run lint:fix
 ```
 
 7. **Build for production:**
+
 ```bash
 npm run build
 ```
@@ -2719,12 +2891,14 @@ npm run build
 ### Git Workflow
 
 **Recommended branch structure:**
+
 - `main` - Production-ready code
 - `develop` - Integration branch
 - `feature/*` - Feature branches
 - `hotfix/*` - Emergency fixes
 
 **Commit message convention:**
+
 ```
 type(scope): description
 
@@ -2754,6 +2928,7 @@ refactor(validators): extract common schemas
 ## Migration Checklist
 
 ### Pre-Migration
+
 - [ ] Backup current codebase
 - [ ] Create git branch: `migration/turborepo`
 - [ ] Document current API endpoints
@@ -2761,6 +2936,7 @@ refactor(validators): extract common schemas
 - [ ] Test database backup/restore
 
 ### Phase 1: Turborepo Foundation
+
 - [ ] Create root `package.json` with workspaces
 - [ ] Install Turborepo
 - [ ] Create `turbo.json` configuration
@@ -2781,6 +2957,7 @@ refactor(validators): extract common schemas
 - [ ] Git commit: "chore: migrate to Turborepo structure"
 
 ### Phase 2: Backend ESM Migration
+
 - [ ] Add `"type": "module"` to `apps/api/package.json`
 - [ ] Add `imports` subpath configuration
 - [ ] Remove `module-alias` dependency
@@ -2807,6 +2984,7 @@ refactor(validators): extract common schemas
 - [ ] Git commit: "refactor: migrate API to ESM"
 
 ### Phase 3: Shared Packages
+
 - [ ] Create `packages/` directory
 - [ ] Install TypeScript at root
 - [ ] Create root `tsconfig.json`
@@ -2836,6 +3014,7 @@ refactor(validators): extract common schemas
 - [ ] Git commit: "feat: add shared packages for types, config, validators"
 
 ### Post-Migration
+
 - [ ] Remove `drizzle/migrations/` from `.gitignore`
 - [ ] Commit Drizzle migrations to version control
 - [ ] Update root README.md with monorepo docs
@@ -2865,11 +3044,12 @@ This migration plan provides a comprehensive, phased approach to transitioning f
 ✅ **Type-safe development** with shared types and validators  
 ✅ **Faster builds** with Turborepo caching  
 ✅ **Reduced code duplication** with shared packages  
-✅ **Better developer experience** with unified tooling  
+✅ **Better developer experience** with unified tooling
 
 The migration is designed to minimize risk through incremental changes, with comprehensive testing at each phase and clear rollback procedures.
 
 **Next Steps:**
+
 1. Review this plan with your team
 2. Schedule migration windows for each phase
 3. Begin with Phase 1 (lowest risk)

@@ -59,18 +59,23 @@ src/
 ## Keuntungan Struktur Ini
 
 ### 1. **High Cohesion**
+
 Semua file yang terkait dengan satu fitur berada dalam satu folder. Misalnya, untuk module `auth`, semua file (controller, repository, validation, routes, middleware) ada di `modules/auth/`.
 
 ### 2. **Easy Navigation**
+
 Tidak perlu loncat-loncat antara folder `controllers/`, `repository/`, `validations/`, dll. Semua ada dalam satu tempat.
 
 ### 3. **Better Developer Experience**
+
 - Saat develop fitur baru, cukup buat 1 folder baru di `modules/`
 - Tidak perlu membuat file di 5-6 folder berbeda
 - Lebih mudah untuk mencari dan memodifikasi kode
 
 ### 4. **Scalable**
+
 Menambah module baru sangat mudah:
+
 ```bash
 modules/
   └── new-feature/
@@ -81,12 +86,15 @@ modules/
 ```
 
 ### 5. **Clear Separation of Concerns**
+
 - `shared/` → Utilities dan middlewares yang dipakai oleh semua module
 - `modules/` → Business logic per feature/domain
 - `config/` → Database, logger, dan konfigurasi aplikasi
 
 ### 6. **Easier Testing**
+
 Test files bisa diletakkan dekat dengan module yang di-test:
+
 ```
 modules/
   └── auth/
@@ -97,11 +105,13 @@ modules/
 ```
 
 ### 7. **Better Code Review**
+
 Reviewer bisa fokus pada satu folder untuk mereview satu feature, tanpa perlu membuka banyak folder berbeda.
 
 ## Import Convention
 
 ### Relative Imports dalam Module
+
 ```javascript
 // Dalam modules/auth/auth.controller.js
 const authRepo = require("./auth.repository");
@@ -109,17 +119,20 @@ const validate = require("./auth.validation");
 ```
 
 ### Import dari Shared
+
 ```javascript
 const asyncHandler = require("../../shared/utils/asyncHandler");
 const AppError = require("../../shared/utils/error");
 ```
 
 ### Import dari Config
+
 ```javascript
 const drizzle = require("../../config/drizzle");
 ```
 
 ### Import dari Module Lain
+
 ```javascript
 // Dalam modules/vessel-request/vessel-request.controller.js
 const MstItemRepo = require("../master-data/items/item.repository");
@@ -141,6 +154,7 @@ const MstVesselRepo = require("../master-data/vessels/vessel.repository");
 ## Migration dari Struktur Lama
 
 ### Struktur Lama
+
 ```
 src/
 ├── controllers/
@@ -152,6 +166,7 @@ src/
 ```
 
 ### Mapping ke Struktur Baru
+
 - `controllers/` → `modules/{module-name}/{module}.controller.js`
 - `repository/` → `modules/{module-name}/{module}.repository.js`
 - `validations/` → `modules/{module-name}/{module}.validation.js`

@@ -52,10 +52,10 @@ Vessel Request → (Approved) → MOC → (Vendor Selected) → Purchase Order
 
 ### Statuses
 
-| Status | Description |
-|--------|-------------|
-| `Draft` | MOC saved with vendor data but not finalized |
-| `Completed` | SAW run, vendor selected, ready for PO |
+| Status      | Description                                  |
+| ----------- | -------------------------------------------- |
+| `Draft`     | MOC saved with vendor data but not finalized |
+| `Completed` | SAW run, vendor selected, ready for PO       |
 
 ### User Flow
 
@@ -82,6 +82,7 @@ Vessel Request → (Approved) → MOC → (Vendor Selected) → Purchase Order
 ### Technology Stack
 
 **Backend:**
+
 - Express.js (REST API)
 - Drizzle ORM (MySQL)
 - Zod (Validation)
@@ -89,6 +90,7 @@ Vessel Request → (Approved) → MOC → (Vendor Selected) → Purchase Order
 - SAW scoring implemented in pure TypeScript (no external library)
 
 **Frontend:**
+
 - Vue 3 (Composition API, `<script setup>`)
 - Pinia (State Management)
 - Vite (Build Tool)
@@ -133,37 +135,49 @@ Frontend (apps/web):
 ```typescript
 // mocs table
 export const mocs = mysqlTable('mocs', {
-  id:                 int('id').primaryKey().autoincrement(),
-  vesselRequestId:    int('vessel_request_id').notNull().references(() => vesselRequests.id),
-  vesselRequestItemId:int('vessel_request_item_id').notNull().references(() => vesselRequestItems.id),
-  status:             mysqlEnum('status', mocStatusEnum).default('Draft').notNull(),
-  selectedVendorId:   int('selected_vendor_id').references(() => mstVendors.id),  // nullable until Completed
-  createdBy:          int('created_by').notNull().references(() => users.id),
-  createdAt:          timestamp('created_at').defaultNow().notNull(),
-  updatedAt:          timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
+  id: int('id').primaryKey().autoincrement(),
+  vesselRequestId: int('vessel_request_id')
+    .notNull()
+    .references(() => vesselRequests.id),
+  vesselRequestItemId: int('vessel_request_item_id')
+    .notNull()
+    .references(() => vesselRequestItems.id),
+  status: mysqlEnum('status', mocStatusEnum).default('Draft').notNull(),
+  selectedVendorId: int('selected_vendor_id').references(() => mstVendors.id), // nullable until Completed
+  createdBy: int('created_by')
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
 });
 
 // moc_vendors table
 export const mocVendors = mysqlTable('moc_vendors', {
-  id:           int('id').primaryKey().autoincrement(),
-  mocId:        int('moc_id').notNull().references(() => mocs.id, { onDelete: 'cascade' }),
-  vendorId:     int('vendor_id').notNull().references(() => mstVendors.id),
-  unitPrice:    int('unit_price').notNull(),
+  id: int('id').primaryKey().autoincrement(),
+  mocId: int('moc_id')
+    .notNull()
+    .references(() => mocs.id, { onDelete: 'cascade' }),
+  vendorId: int('vendor_id')
+    .notNull()
+    .references(() => mstVendors.id),
+  unitPrice: int('unit_price').notNull(),
   availableQty: int('available_qty').notNull().default(0),
-  warranty:     int('warranty').notNull().default(0),         // months
-  discount:     int('discount').notNull().default(0),          // percentage
-  sawScore:     decimal('saw_score', { precision: 10, scale: 4 }),  // set after scoring
-  remarks:      text('remarks'),
-  isSelected:   boolean('is_selected').default(false).notNull(),
+  warranty: int('warranty').notNull().default(0), // months
+  discount: int('discount').notNull().default(0), // percentage
+  sawScore: decimal('saw_score', { precision: 10, scale: 4 }), // set after scoring
+  remarks: text('remarks'),
+  isSelected: boolean('is_selected').default(false).notNull(),
 });
 ```
 
 **Status Enum:**
+
 ```typescript
 export const mocStatusEnum = ['Draft', 'Completed', 'Approved'] as const;
 ```
 
 **Relations:**
+
 - `mocs` → `vesselRequests` (many-to-one)
 - `mocs` → `vesselRequestItems` (many-to-one)
 - `mocs` → `users` (many-to-one, createdBy)
@@ -181,32 +195,33 @@ export const mocStatusEnum = ['Draft', 'Completed', 'Approved'] as const;
 ```typescript
 class MocRepository {
   // Create MOC with vendors in a transaction
-  async createMoc(data: any, createdBy: number): Promise<Moc>
+  async createMoc(data: any, createdBy: number): Promise<Moc>;
   // If status === 'Completed': runs calculateSAW() on vendors before insert
 
   // Get paginated list with search across request code, item name, vessel name
-  async getMocs(page, limit, search, status?): Promise<{ items, total }>
+  async getMocs(page, limit, search, status?): Promise<{ items; total }>;
 
   // Get single MOC with full relations
-  async getMocById(id: number): Promise<Moc | null>
+  async getMocById(id: number): Promise<Moc | null>;
   // Includes: user, vesselRequest (+ vessel), vesselRequestItem (+ item), mocVendors (+ vendor), selectedVendor, purchaseOrders
 
   // Update MOC: delete all existing vendors, re-insert
-  async updateMoc(id: number, data: any): Promise<Moc>
+  async updateMoc(id: number, data: any): Promise<Moc>;
   // Uses transaction: update header → delete mocVendors → insert new mocVendors
   // If status === 'Completed': runs calculateSAW() on vendors before insert
 
   // Delete MOC (cascade deletes mocVendors via FK constraint)
-  async deleteMoc(id: number): Promise<void>
+  async deleteMoc(id: number): Promise<void>;
 
   // Dedicated scoring: runs calculateSAWWithBreakdown(), persists scores
-  async scoreMoc(id: number): Promise<{ moc, breakdown }>
+  async scoreMoc(id: number): Promise<{ moc; breakdown }>;
   // Requires minimum 2 vendors
   // Returns full breakdown for UI display
 }
 ```
 
 **Design Decisions:**
+
 - ✅ `updateMoc` deletes and re-inserts all vendors (simpler than diff-based update)
 - ✅ `onDelete: 'cascade'` on `mocVendors.mocId` ensures vendor rows are cleaned up
 - ✅ SAW calculation runs server-side on every create/update with `Completed` status
@@ -219,35 +234,36 @@ class MocRepository {
 ```typescript
 // SAW Weights
 const SAW_WEIGHTS = {
-  unitPrice:    0.40,  // cost   → lower is better (minimized)
-  availableQty: 0.25,  // benefit → higher is better (maximized)
-  warranty:     0.20,  // benefit → higher is better
-  discount:     0.15,  // benefit → higher is better
+  unitPrice: 0.4, // cost   → lower is better (minimized)
+  availableQty: 0.25, // benefit → higher is better (maximized)
+  warranty: 0.2, // benefit → higher is better
+  discount: 0.15, // benefit → higher is better
 };
 
 // Simple scoring (used at create/update)
 function calculateSAW(vendors: any[]): any[] {
-  const minPrice = Math.min(...vendors.map(v => v.unitPrice || 1));
-  const maxQty   = Math.max(...vendors.map(v => v.availableQty || 0));
-  const maxWar   = Math.max(...vendors.map(v => v.warranty || 0));
-  const maxDis   = Math.max(...vendors.map(v => v.discount || 0));
+  const minPrice = Math.min(...vendors.map((v) => v.unitPrice || 1));
+  const maxQty = Math.max(...vendors.map((v) => v.availableQty || 0));
+  const maxWar = Math.max(...vendors.map((v) => v.warranty || 0));
+  const maxDis = Math.max(...vendors.map((v) => v.discount || 0));
 
-  const scored = vendors.map(v => {
-    const rPrice = minPrice / (v.unitPrice || 1);          // cost: min/value
-    const rQty   = maxQty > 0 ? (v.availableQty || 0) / maxQty : 0;  // benefit: value/max
-    const rWar   = maxWar > 0 ? (v.warranty || 0) / maxWar : 0;
-    const rDis   = maxDis > 0 ? (v.discount || 0) / maxDis : 0;
+  const scored = vendors.map((v) => {
+    const rPrice = minPrice / (v.unitPrice || 1); // cost: min/value
+    const rQty = maxQty > 0 ? (v.availableQty || 0) / maxQty : 0; // benefit: value/max
+    const rWar = maxWar > 0 ? (v.warranty || 0) / maxWar : 0;
+    const rDis = maxDis > 0 ? (v.discount || 0) / maxDis : 0;
 
-    const score = SAW_WEIGHTS.unitPrice * rPrice +
-                  SAW_WEIGHTS.availableQty * rQty +
-                  SAW_WEIGHTS.warranty * rWar +
-                  SAW_WEIGHTS.discount * rDis;
+    const score =
+      SAW_WEIGHTS.unitPrice * rPrice +
+      SAW_WEIGHTS.availableQty * rQty +
+      SAW_WEIGHTS.warranty * rWar +
+      SAW_WEIGHTS.discount * rDis;
 
     return { ...v, sawScore: parseFloat(score.toFixed(4)) };
   });
 
-  const maxScore = Math.max(...scored.map(v => v.sawScore));
-  return scored.map(v => ({ ...v, isSelected: v.sawScore === maxScore }));
+  const maxScore = Math.max(...scored.map((v) => v.sawScore));
+  return scored.map((v) => ({ ...v, isSelected: v.sawScore === maxScore }));
 }
 
 // Detailed scoring with full breakdown (used by /score endpoint)
@@ -293,7 +309,7 @@ const deleteMoc = asyncHandler(async (req, res) => {
 const scoreMoc = asyncHandler(async (req, res) => {
   try {
     const result = await mocRepo.scoreMoc(Number(req.params.id));
-    return success(res, result);  // { moc, breakdown }
+    return success(res, result); // { moc, breakdown }
   } catch (err: any) {
     throw new AppError(err.message || 'Failed to calculate SAW score', 400);
   }
@@ -308,15 +324,16 @@ const scoreMoc = asyncHandler(async (req, res) => {
 // All routes use apiAuth() middleware (applied globally via router.use)
 router.use(apiAuth());
 
-router.post('/list',       validate(mocListSchema),   controller.getMocs);
-router.post('/',           validate(mocSchema),        controller.createMoc);
-router.get('/:id',         validate(mocByIdSchema),    controller.getMocById);
-router.put('/:id',         validate(mocSchema),        controller.updateMoc);
-router.delete('/:id',      validate(mocByIdSchema),    controller.deleteMoc);
-router.post('/:id/score',  validate(mocByIdSchema),    controller.scoreMoc);
+router.post('/list', validate(mocListSchema), controller.getMocs);
+router.post('/', validate(mocSchema), controller.createMoc);
+router.get('/:id', validate(mocByIdSchema), controller.getMocById);
+router.put('/:id', validate(mocSchema), controller.updateMoc);
+router.delete('/:id', validate(mocByIdSchema), controller.deleteMoc);
+router.post('/:id/score', validate(mocByIdSchema), controller.scoreMoc);
 ```
 
 **Design Decisions:**
+
 - ✅ `GET /:id` (not `POST /list/:id`) for single item – MOC doesn't reuse the POST-for-get pattern
 - ✅ `POST /:id/score` – dedicated scoring endpoint that persists scores in DB
 - ✅ Auth applied globally with `router.use(apiAuth())`
@@ -330,6 +347,7 @@ router.post('/:id/score',  validate(mocByIdSchema),    controller.scoreMoc);
 **Location:** `apps/web/src/features/moc/views/Index.vue`
 
 **Key Features:**
+
 - Server-side pagination
 - Real-time search with debouncing (500ms) across request code, item name, vessel name
 - Row-click navigation to open edit wizard
@@ -337,45 +355,52 @@ router.post('/:id/score',  validate(mocByIdSchema),    controller.scoreMoc);
 - Delete with SweetAlert2 confirmation
 
 **Table Columns:**
+
 ```javascript
 const columns = [
-  { key: 'requestCode',  label: 'Request Code' },
-  { key: 'vessel',       label: 'Vessel' },
-  { key: 'item',         label: 'Item Details' },    // Shows item name + qty approved + unit
-  { key: 'vendorsCount', label: 'Vendors' },          // Shows vendor count badge
-  { key: 'winner',       label: 'Selected Option' },  // Shows winning vendor name + SAW score
-  { key: 'poStatus',     label: 'PO' },               // Shows PO number + PO status if exists
-  { key: 'status',       label: 'Status' },           // Draft / Completed / Approved
-  { key: 'updatedAt',    label: 'Last Updated' },
-]
+  { key: 'requestCode', label: 'Request Code' },
+  { key: 'vessel', label: 'Vessel' },
+  { key: 'item', label: 'Item Details' }, // Shows item name + qty approved + unit
+  { key: 'vendorsCount', label: 'Vendors' }, // Shows vendor count badge
+  { key: 'winner', label: 'Selected Option' }, // Shows winning vendor name + SAW score
+  { key: 'poStatus', label: 'PO' }, // Shows PO number + PO status if exists
+  { key: 'status', label: 'Status' }, // Draft / Completed / Approved
+  { key: 'updatedAt', label: 'Last Updated' },
+];
 ```
 
 **Winner Detection:**
+
 ```javascript
 const getWinner = (mocRow) => {
-  return mocRow.mocVendors?.find(v => v.isSelected) || null
-}
+  return mocRow.mocVendors?.find((v) => v.isSelected) || null;
+};
 // In template: displays vendor name + SAW score as percentage
 ```
 
 **PO Status Display:**
+
 ```html
 <!-- Shows first linked PO number + status with color coding -->
 <span>{{ row.purchaseOrders[0].poNumber }}</span>
-<span :class="{
+<span
+  :class="{
   'text-amber-600': status === 'Pending Approval',
   'text-sky-600':   status === 'Auto Approved',
   'text-emerald-600': status === 'Approved',
   'text-red-500':   status === 'Rejected',
-}">{{ status }}</span>
+}"
+  >{{ status }}</span
+>
 ```
 
 **Navigation to PO:**
+
 ```javascript
 const handleGoToPO = (mocId) => {
-  closeWizard()
-  router.push({ path: '/purchase-order', query: { moc_id: mocId } })
-}
+  closeWizard();
+  router.push({ path: '/purchase-order', query: { moc_id: mocId } });
+};
 ```
 
 ### 2. MOC Wizard Form Component
@@ -395,19 +420,25 @@ const handleGoToPO = (mocId) => {
 </select>
 
 <!-- Item cards grid – only shows items not yet in any MOC -->
-<div v-for="item in approvedItems" @click="selectRequestItem(item)"
-  :class="{ selected: wizardData.vesselRequestItemId === item.id }">
+<div
+  v-for="item in approvedItems"
+  @click="selectRequestItem(item)"
+  :class="{ selected: wizardData.vesselRequestItemId === item.id }"
+>
   <h5>{{ item.item?.name }}</h5>
   <span>Qty Approved: {{ item.qtyApproved }} {{ item.unit }}</span>
 </div>
 ```
 
 **Approved items filter:**
+
 ```javascript
-approvedItems.value = full.vesselRequestItems?.filter(i =>
-  (i.status === 'Approved' || i.status === 'Approved by system' || i.qtyApproved > 0) &&
-  (!i.mocs || i.mocs.length === 0)  // Not already in a MOC
-) || []
+approvedItems.value =
+  full.vesselRequestItems?.filter(
+    (i) =>
+      (i.status === 'Approved' || i.status === 'Approved by system' || i.qtyApproved > 0) &&
+      (!i.mocs || i.mocs.length === 0) // Not already in a MOC
+  ) || [];
 ```
 
 #### Step 2 – Vendor Comparison Matrix
@@ -440,6 +471,7 @@ approvedItems.value = full.vesselRequestItems?.filter(i =>
 ```
 
 **Vendor Data Validation:**
+
 ```javascript
 const validateVendorData = (requireAllFilled = true) => {
   const active = vendors.filter(v => v.vendorId !== null)
@@ -497,24 +529,28 @@ The frontend calculates SAW locally before calling the backend `scoreMoc` endpoi
 
 ```javascript
 const computeSAW = () => {
-  const active = wizardData.value.vendors.filter(v => v.vendorId !== null && Number(v.unitPrice) > 0)
-  if (active.length < 2) return []
+  const active = wizardData.value.vendors.filter(
+    (v) => v.vendorId !== null && Number(v.unitPrice) > 0
+  );
+  if (active.length < 2) return [];
 
   // Same algorithm as backend:
   // Cost: rPrice = minPrice / unitPrice
   // Benefit: rQty = availableQty / maxQty, rWar = warranty / maxWar, rDis = discount / maxDis
   // Score = 0.40*rPrice + 0.25*rQty + 0.20*rWar + 0.15*rDis
 
-  return scored.map(v => ({
-    ...v,
-    vendorName: masterVendors.find(mv => mv.id === v.vendorId)?.name,
-    normalized: { rPrice, rQty, rWar, rDis },
-    weighted:   { wPrice, wQty, wWar, wDis },
-    sawScore,
-    rank,
-    isWinner: sawScore === maxScore,
-  })).sort((a, b) => a.rank - b.rank)
-}
+  return scored
+    .map((v) => ({
+      ...v,
+      vendorName: masterVendors.find((mv) => mv.id === v.vendorId)?.name,
+      normalized: { rPrice, rQty, rWar, rDis },
+      weighted: { wPrice, wQty, wWar, wDis },
+      sawScore,
+      rank,
+      isWinner: sawScore === maxScore,
+    }))
+    .sort((a, b) => a.rank - b.rank);
+};
 ```
 
 **Save Actions:**
@@ -522,50 +558,56 @@ const computeSAW = () => {
 ```javascript
 // Build payload helper
 const buildPayload = (status) => ({
-  vesselRequestId:     Number(wizardData.value.vesselRequestId),
+  vesselRequestId: Number(wizardData.value.vesselRequestId),
   vesselRequestItemId: Number(wizardData.value.vesselRequestItemId),
   status,
-  vendors: toSend.map(v => ({
-    vendorId, unitPrice, availableQty, warranty, discount, remarks,
-    isSelected: false,  // Backend SAW decides isSelected for Completed
+  vendors: toSend.map((v) => ({
+    vendorId,
+    unitPrice,
+    availableQty,
+    warranty,
+    discount,
+    remarks,
+    isSelected: false, // Backend SAW decides isSelected for Completed
   })),
-})
+});
 
 // Save as Draft
 const saveDraft = async () => {
   // validateVendorData(false) – loose validation (allows incomplete data)
-  const payload = buildPayload('Draft')
+  const payload = buildPayload('Draft');
   // Calls createMoc or updateMoc depending on isEditMode
-}
+};
 
 // Complete with vendor + go to PO
 const completeWithVendorAndPO = async () => {
   // validateVendorData(true) – strict validation
   // Shows SweetAlert2 warning if selectedVendor differs from SAW winner
-  payload.selectedVendorId = selectedVendorId.value
-  const payload = buildPayload('Completed')
+  payload.selectedVendorId = selectedVendorId.value;
+  const payload = buildPayload('Completed');
   // Backend runs SAW and sets isSelected
-  emit('saved')
-  emit('go-to-po', savedMoc?.id)
+  emit('saved');
+  emit('go-to-po', savedMoc?.id);
   // Index.vue: router.push('/purchase-order?moc_id=...')
-}
+};
 ```
 
 **Edit Mode Initialization:**
+
 ```javascript
 const initForm = async () => {
   if (props.isEditMode && props.mocId) {
-    currentStep.value = 2  // Skip Step 1 in edit mode
-    await mocStore.fetchMocById(props.mocId)
-    const current = mocStore.currentMoc
+    currentStep.value = 2; // Skip Step 1 in edit mode
+    await mocStore.fetchMocById(props.mocId);
+    const current = mocStore.currentMoc;
     // Load vendors from DB, pad to minimum 3
-    while (loaded.length < 3) loaded.push(makeEmptyVendor())
-    wizardData.value = { vesselRequestId, vesselRequestItemId, status, vendors: loaded }
+    while (loaded.length < 3) loaded.push(makeEmptyVendor());
+    wizardData.value = { vesselRequestId, vesselRequestItemId, status, vendors: loaded };
   } else {
-    currentStep.value = 1
-    await fetchApprovedRequestsList()
+    currentStep.value = 1;
+    await fetchApprovedRequestsList();
   }
-}
+};
 ```
 
 ### 3. Pinia Store
@@ -601,17 +643,18 @@ export const useMocStore = defineStore('moc', {
 ```
 
 **Error Handling Pattern:**
+
 ```javascript
 // Supports Zod validation error array format
 try {
   // ...
 } catch (error) {
   if (error.errors && Array.isArray(error.errors)) {
-    this.error = error.errors.map(err => err.message).join(', ')
+    this.error = error.errors.map((err) => err.message).join(', ');
   } else {
-    this.error = error.error || 'Failed to ...'
+    this.error = error.error || 'Failed to ...';
   }
-  throw error  // Re-throw for component-level handling
+  throw error; // Re-throw for component-level handling
 }
 ```
 
@@ -638,12 +681,12 @@ export async function scoreMoc(id)                           // POST /moc/:id/sc
 
 ### Criteria & Weights
 
-| Criterion | Weight | Type | Formula |
-|-----------|--------|------|---------|
-| Unit Price (Harga) | **40%** | Cost (lower = better) | `r = min_price / vendor_price` |
-| Available Qty | **25%** | Benefit (higher = better) | `r = vendor_qty / max_qty` |
+| Criterion          | Weight  | Type                      | Formula                              |
+| ------------------ | ------- | ------------------------- | ------------------------------------ |
+| Unit Price (Harga) | **40%** | Cost (lower = better)     | `r = min_price / vendor_price`       |
+| Available Qty      | **25%** | Benefit (higher = better) | `r = vendor_qty / max_qty`           |
 | Warranty (Garansi) | **20%** | Benefit (higher = better) | `r = vendor_warranty / max_warranty` |
-| Discount | **15%** | Benefit (higher = better) | `r = vendor_discount / max_discount` |
+| Discount           | **15%** | Benefit (higher = better) | `r = vendor_discount / max_discount` |
 
 ### Formula
 
@@ -656,19 +699,20 @@ SAW Score = (r_price × 0.40) + (r_qty × 0.25) + (r_warranty × 0.20) + (r_disc
 Given 3 vendors:
 
 | Vendor | Price (IDR) | Qty | Warranty (mo) | Discount (%) |
-|--------|-------------|-----|----------------|--------------|
-| A | 500,000 | 100 | 12 | 5 |
-| B | 400,000 | 80 | 6 | 10 |
-| C | 600,000 | 120 | 18 | 3 |
+| ------ | ----------- | --- | ------------- | ------------ |
+| A      | 500,000     | 100 | 12            | 5            |
+| B      | 400,000     | 80  | 6             | 10           |
+| C      | 600,000     | 120 | 18            | 3            |
 
 **Normalization:**
+
 - `min_price = 400,000`, `max_qty = 120`, `max_war = 18`, `max_dis = 10`
 
-| Vendor | r_price | r_qty | r_war | r_dis | SAW Score |
-|--------|---------|-------|-------|-------|-----------|
-| A | 0.8000 | 0.8333 | 0.6667 | 0.5000 | 0.40×0.8 + 0.25×0.8333 + 0.20×0.6667 + 0.15×0.5 = **0.7458** |
-| B | 1.0000 | 0.6667 | 0.3333 | 1.0000 | 0.40×1.0 + 0.25×0.6667 + 0.20×0.3333 + 0.15×1.0 = **0.8834** |
-| C | 0.6667 | 1.0000 | 1.0000 | 0.3000 | 0.40×0.6667 + 0.25×1.0 + 0.20×1.0 + 0.15×0.3 = **0.7617** |
+| Vendor | r_price | r_qty  | r_war  | r_dis  | SAW Score                                                    |
+| ------ | ------- | ------ | ------ | ------ | ------------------------------------------------------------ |
+| A      | 0.8000  | 0.8333 | 0.6667 | 0.5000 | 0.40×0.8 + 0.25×0.8333 + 0.20×0.6667 + 0.15×0.5 = **0.7458** |
+| B      | 1.0000  | 0.6667 | 0.3333 | 1.0000 | 0.40×1.0 + 0.25×0.6667 + 0.20×0.3333 + 0.15×1.0 = **0.8834** |
+| C      | 0.6667  | 1.0000 | 1.0000 | 0.3000 | 0.40×0.6667 + 0.25×1.0 + 0.20×1.0 + 0.15×0.3 = **0.7617**    |
 
 → **Winner: Vendor B** (SAW = 0.8834)
 
@@ -757,6 +801,7 @@ Given 3 vendors:
 ### 1. Vendor Comparison Design
 
 **✅ DO:**
+
 - Require minimum 3 vendors (procurement best practice)
 - Show SAW breakdown per criterion (transparency)
 - Auto-select SAW winner but allow override
@@ -764,6 +809,7 @@ Given 3 vendors:
 - Show formatted numbers (Rp 1.000.000 format for prices)
 
 **❌ DON'T:**
+
 - Allow duplicate vendors in same MOC
 - Accept zero price as valid (>0 required)
 - Allow completing MOC without selecting a vendor
@@ -771,6 +817,7 @@ Given 3 vendors:
 ### 2. SAW Algorithm Best Practices
 
 **✅ DO:**
+
 - Run server-side scoring on completion (canonical truth in DB)
 - Run client-side preview for instant feedback (UX)
 - Show both normalized values AND weighted contributions
@@ -778,6 +825,7 @@ Given 3 vendors:
 - Explain formula to users (transparency card)
 
 **❌ DON'T:**
+
 - Trust only client-side SAW scores
 - Skip validation for minimum vendor count
 - Allow scoring with `< 2 vendors`
@@ -785,18 +833,21 @@ Given 3 vendors:
 ### 3. State Management
 
 **✅ DO:**
+
 - `fetchApprovedRequests()` before Step 1 to get fresh data
 - `fetchMocById()` before edit to load latest vendor data
 - Pad vendor array to minimum 3 when loading from DB
 - Clear `currentMoc` after closing wizard
 
 **❌ DON'T:**
+
 - Reuse stale vendor data from list view in wizard
 - Trust `availableForMocCount` from stale state – refresh before Step 1
 
 ### 4. UX Patterns
 
 **✅ DO:**
+
 - Show summary header bar on Steps 2 & 3 (request/vessel/item context)
 - Disable vendor inputs when MOC is Completed (read-only view)
 - Change button text: "Tutup" instead of "Cancel" for Completed MOCs
@@ -804,6 +855,7 @@ Given 3 vendors:
 - Show PO link info in list table (actionable connection to next step)
 
 **❌ DON'T:**
+
 - Allow editing Completed MOC vendor data (show read-only)
 - Navigate away without saving draft warning (currently not implemented)
 
@@ -814,6 +866,7 @@ Given 3 vendors:
 ### Manual Testing Checklist
 
 **Create MOC:**
+
 - [ ] "Create MOC" button opens wizard at Step 1
 - [ ] Only approved requests with available items shown in dropdown
 - [ ] Request items: only shows approved items not yet in a MOC
@@ -839,6 +892,7 @@ Given 3 vendors:
 - [ ] Winner vendor name + SAW% shown in "Selected Option" column
 
 **Edit MOC:**
+
 - [ ] Click any MOC row opens wizard at Step 2 (no Step 1)
 - [ ] Vendor data loaded from DB
 - [ ] Completed MOC: vendor inputs disabled (read-only)
@@ -846,6 +900,7 @@ Given 3 vendors:
 - [ ] Draft MOC: can edit and re-save
 
 **List View:**
+
 - [ ] Search by request code works
 - [ ] Search by vessel name works
 - [ ] Search by item name works
@@ -900,14 +955,14 @@ Given 3 vendors:
 
 ### API Endpoints Summary
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| POST | `/moc/list` | Get paginated MOC list (search + status filter) |
-| POST | `/moc` | Create new MOC (with vendors) |
-| GET | `/moc/:id` | Get single MOC with full relations |
-| PUT | `/moc/:id` | Update MOC (delete+re-insert vendors) |
-| DELETE | `/moc/:id` | Delete MOC (cascades to moc_vendors) |
-| POST | `/moc/:id/score` | Run SAW scoring and persist scores |
+| Method | Endpoint         | Purpose                                         |
+| ------ | ---------------- | ----------------------------------------------- |
+| POST   | `/moc/list`      | Get paginated MOC list (search + status filter) |
+| POST   | `/moc`           | Create new MOC (with vendors)                   |
+| GET    | `/moc/:id`       | Get single MOC with full relations              |
+| PUT    | `/moc/:id`       | Update MOC (delete+re-insert vendors)           |
+| DELETE | `/moc/:id`       | Delete MOC (cascades to moc_vendors)            |
+| POST   | `/moc/:id/score` | Run SAW scoring and persist scores              |
 
 ### Database Relations
 
@@ -924,10 +979,10 @@ MstVendor (selectedVendor) ─┘
 
 ```typescript
 const SAW_WEIGHTS = {
-  unitPrice:    0.40,  // 40% – most important (cost criterion)
-  availableQty: 0.25,  // 25% – availability
-  warranty:     0.20,  // 20% – reliability indicator
-  discount:     0.15,  // 15% – commercial benefit
+  unitPrice: 0.4, // 40% – most important (cost criterion)
+  availableQty: 0.25, // 25% – availability
+  warranty: 0.2, // 20% – reliability indicator
+  discount: 0.15, // 15% – commercial benefit
 };
 ```
 
@@ -962,4 +1017,4 @@ const SAW_WEIGHTS = {
 
 ---
 
-*MOC is the bridge between an approved supply request and an actual Purchase Order. Keep this document updated as the SAW algorithm weights or vendor comparison criteria evolve.*
+_MOC is the bridge between an approved supply request and an actual Purchase Order. Keep this document updated as the SAW algorithm weights or vendor comparison criteria evolve._

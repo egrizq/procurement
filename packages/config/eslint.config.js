@@ -4,9 +4,7 @@ export default {
     es2022: true,
     node: true,
   },
-  extends: [
-    'eslint:recommended',
-  ],
+  extends: ['eslint:recommended'],
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',

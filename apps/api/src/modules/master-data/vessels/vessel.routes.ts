@@ -1,42 +1,38 @@
-import express, { Router } from 'express';
-import vesselController from './vessel.controller.ts';
-import validate from '#shared/middlewares/validate.ts';
-import { getMasterSchema, addVesselSchema, updateVesselSchema } from './vessel.validation.ts';
-import apiAuth from '#modules/auth/auth.middleware.ts';
+import express, { Router } from "express";
+import vesselController from "./vessel.controller.ts";
+import validate from "#shared/middlewares/validate.ts";
+import {
+	getMasterSchema,
+	addVesselSchema,
+	updateVesselSchema,
+} from "./vessel.validation.ts";
+import apiAuth from "#modules/auth/auth.middleware.ts";
 
 const router: Router = express.Router();
 
 router.post(
-	'/',
+	"/",
 	apiAuth(),
 	validate(getMasterSchema),
-	vesselController.getMasterVessels
+	vesselController.getMasterVessels,
 );
 
 router.post(
-	'/create',
+	"/create",
 	apiAuth(),
 	validate(addVesselSchema),
-	vesselController.createVessel
+	vesselController.createVessel,
 );
 
-router.get(
-	'/:id',
-	apiAuth(),
-	vesselController.getVesselById
-);
+router.get("/:id", apiAuth(), vesselController.getVesselById);
 
 router.put(
-	'/:id',
+	"/:id",
 	apiAuth(),
 	validate(updateVesselSchema),
-	vesselController.updateVessel
+	vesselController.updateVessel,
 );
 
-router.delete(
-	'/:id',
-	apiAuth(),
-	vesselController.deleteVessel
-);
+router.delete("/:id", apiAuth(), vesselController.deleteVessel);
 
 export default router;

@@ -77,6 +77,7 @@ npm run dev
 ### Node Version Management
 
 **Using nvm (recommended):**
+
 ```bash
 # Install nvm (if not installed)
 # macOS/Linux: https://github.com/nvm-sh/nvm
@@ -91,6 +92,7 @@ nvm use
 ```
 
 **Without nvm:**
+
 - Download Node.js 20.19.0+ from https://nodejs.org
 - Verify: `node --version` (should show v20.19.0+)
 
@@ -99,12 +101,14 @@ nvm use
 **MySQL/MariaDB Installation:**
 
 **macOS (Homebrew):**
+
 ```bash
 brew install mysql
 brew services start mysql
 ```
 
 **Linux (Ubuntu/Debian):**
+
 ```bash
 sudo apt update
 sudo apt install mysql-server
@@ -112,10 +116,12 @@ sudo systemctl start mysql
 ```
 
 **Windows:**
+
 - Download from https://dev.mysql.com/downloads/mysql/
 - Or use XAMPP/WAMP
 
 **Create Database:**
+
 ```sql
 CREATE DATABASE procurement CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER 'procurement_user'@'localhost' IDENTIFIED BY 'your_password';
@@ -126,6 +132,7 @@ FLUSH PRIVILEGES;
 ### VS Code Setup
 
 **Install Extensions:**
+
 1. Open VS Code
 2. Press `Ctrl+Shift+X` (Windows/Linux) or `Cmd+Shift+X` (macOS)
 3. Search and install:
@@ -137,6 +144,7 @@ FLUSH PRIVILEGES;
    - Turbo Console Log
 
 **Workspace Settings (.vscode/settings.json):**
+
 ```json
 {
   "editor.formatOnSave": true,
@@ -283,6 +291,7 @@ Root
 ### Daily Development
 
 **1. Start Development Servers:**
+
 ```bash
 # From root - starts all apps and watches packages
 npm run dev
@@ -293,6 +302,7 @@ cd apps/web && npm run dev    # Web on port 5173
 ```
 
 **2. Work on Features:**
+
 ```bash
 # Create feature branch
 git checkout -b feature/vessel-approval
@@ -306,6 +316,7 @@ git commit -m "feat(api): add vessel approval endpoint"
 ```
 
 **3. Work on Shared Packages:**
+
 ```bash
 # Watch mode for auto-rebuild
 cd packages/types
@@ -316,6 +327,7 @@ npm run dev  # tsc --watch
 ```
 
 **4. Format and Lint:**
+
 ```bash
 # Format all code
 npm run format
@@ -326,6 +338,7 @@ npm run lint:fix
 ```
 
 **5. Build for Production:**
+
 ```bash
 # Build all packages and apps
 npm run build
@@ -338,6 +351,7 @@ cd apps/web && npm run build
 ### Branch Strategy
 
 **Branch Types:**
+
 - `main` - Production-ready code
 - `develop` - Integration branch
 - `feature/*` - New features
@@ -347,6 +361,7 @@ cd apps/web && npm run build
 - `docs/*` - Documentation updates
 
 **Naming Convention:**
+
 ```
 feature/vessel-approval-workflow
 bugfix/login-token-expiration
@@ -358,6 +373,7 @@ docs/update-api-endpoints
 ### Commit Message Convention
 
 **Format:**
+
 ```
 <type>(<scope>): <description>
 
@@ -367,6 +383,7 @@ docs/update-api-endpoints
 ```
 
 **Types:**
+
 - `feat` - New feature
 - `fix` - Bug fix
 - `docs` - Documentation changes
@@ -378,6 +395,7 @@ docs/update-api-endpoints
 - `ci` - CI/CD changes
 
 **Scopes:**
+
 - `api` - Backend API
 - `web` - Frontend Web
 - `types` - Types package
@@ -387,6 +405,7 @@ docs/update-api-endpoints
 - `db` - Database
 
 **Examples:**
+
 ```bash
 git commit -m "feat(api): add vessel request approval endpoint"
 git commit -m "fix(web): resolve token expiration handling"
@@ -402,12 +421,14 @@ git commit -m "chore(deps): update Drizzle to v7.3.1"
 ### Creating a New Package
 
 **Step 1: Create Package Directory**
+
 ```bash
 mkdir packages/new-package
 mkdir packages/new-package/src
 ```
 
 **Step 2: Create package.json**
+
 ```json
 {
   "name": "@procurement/new-package",
@@ -433,6 +454,7 @@ mkdir packages/new-package/src
 ```
 
 **Step 3: Create tsconfig.json**
+
 ```json
 {
   "extends": "../../tsconfig.json",
@@ -445,11 +467,13 @@ mkdir packages/new-package/src
 ```
 
 **Step 4: Create src/index.ts**
+
 ```typescript
 export * from './module.js';
 ```
 
 **Step 5: Install and Build**
+
 ```bash
 npm install  # From root
 cd packages/new-package
@@ -459,6 +483,7 @@ npm run build
 ### Using Packages in Apps
 
 **Add to App Dependencies:**
+
 ```bash
 # In apps/api/package.json or apps/web/package.json
 {
@@ -472,6 +497,7 @@ npm install  # From root
 ```
 
 **Import in Code:**
+
 ```javascript
 // ESM
 import { something } from '@procurement/new-package';
@@ -483,12 +509,14 @@ import { Something } from '@procurement/new-package/module.js';
 ### Updating Package Types
 
 **Workflow:**
+
 1. Edit type definition in `packages/types/src/*.ts`
 2. Save (watch mode auto-rebuilds)
 3. Apps detect change and rebuild
 4. New types available in API and Web
 
 **Example:**
+
 ```typescript
 // packages/types/src/vessel.ts
 
@@ -521,6 +549,7 @@ const vessel = {
 ### Module Structure
 
 Each API module follows this pattern:
+
 ```
 modules/{feature}/
 ├── {feature}.controller.js     # Request handlers
@@ -533,25 +562,26 @@ modules/{feature}/
 ### Creating a New Module
 
 **Step 1: Create Module Directory**
+
 ```bash
 cd apps/api/src/modules
 mkdir purchase-order
 ```
 
 **Step 2: Create Repository** (`purchase-order.repository.js`)
+
 ```javascript
 import drizzle from '#config/drizzle.js';
 
 export const findAll = async ({ page, limit, search }) => {
   const skip = (page - 1) * limit;
-  
-  const where = search ? {
-    OR: [
-      { poNumber: { contains: search } },
-      { vendorName: { contains: search } },
-    ],
-  } : {};
-  
+
+  const where = search
+    ? {
+        OR: [{ poNumber: { contains: search } }, { vendorName: { contains: search } }],
+      }
+    : {};
+
   const [data, total] = await Promise.all([
     drizzle.purchaseOrder.findMany({
       where,
@@ -561,7 +591,7 @@ export const findAll = async ({ page, limit, search }) => {
     }),
     drizzle.purchaseOrder.count({ where }),
   ]);
-  
+
   return { data, total };
 };
 
@@ -594,6 +624,7 @@ export const remove = async (id) => {
 ```
 
 **Step 3: Create Controller** (`purchase-order.controller.js`)
+
 ```javascript
 import * as repository from './purchase-order.repository.js';
 import asyncHandler from '#shared/utils/asyncHandler.js';
@@ -603,53 +634,54 @@ import { paginate } from '#shared/utils/paginate.js';
 
 export const getAll = asyncHandler(async (req, res) => {
   const { page, limit, search } = req.query;
-  
+
   const { data, total } = await repository.findAll({ page, limit, search });
-  
+
   const pagination = paginate(total, page, limit);
-  
+
   res.json(successResponse(data, 'Purchase orders retrieved successfully', pagination));
 });
 
 export const getById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  
+
   const po = await repository.findById(id);
-  
+
   if (!po) {
     throw new AppError('Purchase order not found', 404);
   }
-  
+
   res.json(successResponse(po, 'Purchase order retrieved successfully'));
 });
 
 export const create = asyncHandler(async (req, res) => {
   const data = req.body;
-  
+
   const po = await repository.create(data);
-  
+
   res.status(201).json(successResponse(po, 'Purchase order created successfully'));
 });
 
 export const update = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const data = req.body;
-  
+
   const po = await repository.update(id, data);
-  
+
   res.json(successResponse(po, 'Purchase order updated successfully'));
 });
 
 export const remove = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  
+
   await repository.remove(id);
-  
+
   res.json(successResponse(null, 'Purchase order deleted successfully'));
 });
 ```
 
 **Step 4: Create Validation** (`purchase-order.validation.js`)
+
 ```javascript
 import { z } from 'zod';
 
@@ -659,13 +691,15 @@ export const createPOSchema = z.object({
     poNumber: z.string().min(1),
     poDate: z.date().or(z.string().datetime()),
     deliveryDate: z.date().or(z.string().datetime()).optional(),
-    items: z.array(
-      z.object({
-        itemId: z.string().uuid(),
-        quantity: z.number().positive(),
-        unitPrice: z.number().positive(),
-      })
-    ).min(1),
+    items: z
+      .array(
+        z.object({
+          itemId: z.string().uuid(),
+          quantity: z.number().positive(),
+          unitPrice: z.number().positive(),
+        })
+      )
+      .min(1),
   }),
 });
 
@@ -682,6 +716,7 @@ export const updatePOSchema = z.object({
 ```
 
 **Step 5: Create Routes** (`purchase-order.routes.js`)
+
 ```javascript
 import express from 'express';
 import * as controller from './purchase-order.controller.js';
@@ -701,6 +736,7 @@ export default router;
 ```
 
 **Step 6: Register Routes** (`apps/api/src/routes/index.js`)
+
 ```javascript
 import express from 'express';
 import purchaseOrderRoutes from '#modules/purchase-order/purchase-order.routes.js';
@@ -717,6 +753,7 @@ export default router;
 ### API Testing
 
 **Manual Testing with curl:**
+
 ```bash
 # Get token
 TOKEN=$(curl -s http://localhost:3000/api/token \
@@ -741,6 +778,7 @@ curl -X POST http://localhost:3000/api/purchase-orders \
 ```
 
 **Testing with Postman/Insomnia:**
+
 1. Create collection for Procurement API
 2. Set environment variables: `BASE_URL`, `TOKEN`
 3. Create requests for each endpoint
@@ -753,6 +791,7 @@ curl -X POST http://localhost:3000/api/purchase-orders \
 ### Feature Structure
 
 Each feature follows this pattern:
+
 ```
 features/{feature}/
 ├── api.js              # API calls for this feature
@@ -767,6 +806,7 @@ features/{feature}/
 ### Creating a New Feature
 
 **Step 1: Create Feature Directory**
+
 ```bash
 cd apps/web/src/features
 mkdir purchase-order
@@ -775,6 +815,7 @@ mkdir purchase-order/component
 ```
 
 **Step 2: Create API Module** (`api.js`)
+
 ```javascript
 import http from '@/services/http';
 import { PURCHASE_ORDER_ROUTES } from '@procurement/config';
@@ -801,6 +842,7 @@ export const deletePurchaseOrder = (id) => {
 ```
 
 **Step 3: Create Store** (`store.js`)
+
 ```javascript
 import { defineStore } from 'pinia';
 import * as api from './api';
@@ -816,7 +858,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
       total: 0,
     },
   }),
-  
+
   actions: {
     async fetchPurchaseOrders(params = {}) {
       this.loading = true;
@@ -835,7 +877,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         this.loading = false;
       }
     },
-    
+
     async fetchPurchaseOrder(id) {
       this.loading = true;
       try {
@@ -848,7 +890,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         this.loading = false;
       }
     },
-    
+
     async createPurchaseOrder(data) {
       this.loading = true;
       try {
@@ -862,7 +904,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         this.loading = false;
       }
     },
-    
+
     async updatePurchaseOrder(id, data) {
       this.loading = true;
       try {
@@ -876,7 +918,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         this.loading = false;
       }
     },
-    
+
     async deletePurchaseOrder(id) {
       this.loading = true;
       try {
@@ -894,6 +936,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
 ```
 
 **Step 4: Create View Component** (`views/Index.vue`)
+
 ```vue
 <template>
   <div class="purchase-orders">
@@ -901,7 +944,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
       <h1>Purchase Orders</h1>
       <Button @click="openCreateDialog">Create PO</Button>
     </div>
-    
+
     <DataTable
       :value="poStore.purchaseOrders"
       :loading="poStore.loading"
@@ -919,13 +962,9 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         </template>
       </Column>
     </DataTable>
-    
+
     <Dialog v-model:visible="showDialog">
-      <FormPurchaseOrder
-        :data="selectedPO"
-        @submit="handleSubmit"
-        @cancel="closeDialog"
-      />
+      <FormPurchaseOrder :data="selectedPO" @submit="handleSubmit" @cancel="closeDialog" />
     </Dialog>
   </div>
 </template>
@@ -998,6 +1037,7 @@ const closeDialog = () => {
 ```
 
 **Step 5: Create Routes** (`routes.js`)
+
 ```javascript
 export default [
   {
@@ -1013,6 +1053,7 @@ export default [
 ```
 
 **Step 6: Register Routes** (`apps/web/src/app/router.js`)
+
 ```javascript
 import purchaseOrderRoutes from '@/features/purchase-order/routes';
 
@@ -1035,6 +1076,7 @@ const routes = [
 ### Schema Changes
 
 **Step 1: Edit Schema**
+
 ```drizzle
 // apps/api/src/db/schema/index.ts
 
@@ -1048,10 +1090,10 @@ model PurchaseOrder {
   total        Decimal  @db.Decimal(15, 2)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  
+
   vendor Vendor @relation(fields: [vendorId], references: [id])
   items  PurchaseOrderItem[]
-  
+
   @@map("purchase_orders")
 }
 
@@ -1066,6 +1108,7 @@ enum OrderStatus {
 ```
 
 **Step 2: Create Migration**
+
 ```bash
 cd apps/api
 npx drizzle-kit push --name add_purchase_order_model
@@ -1077,6 +1120,7 @@ npx drizzle-kit push --name add_purchase_order_model
 ```
 
 **Step 3: Review Migration**
+
 ```bash
 cat drizzle/migrations/<timestamp>_add_purchase_order_model/migration.sql
 
@@ -1086,6 +1130,7 @@ cat drizzle/migrations/<timestamp>_add_purchase_order_model/migration.sql
 ```
 
 **Step 4: Commit Migration**
+
 ```bash
 git add src/db/schema/index.ts drizzle/migrations/
 git commit -m "feat(db): add purchase order model"
@@ -1125,6 +1170,7 @@ npx drizzle validate
 ### Database Seeding
 
 **Create Seed File:** `apps/api/drizzle/seed.js`
+
 ```javascript
 import { Drizzle } from '@drizzle/client';
 
@@ -1145,9 +1191,9 @@ async function main() {
       status: 'ACTIVE',
     },
   });
-  
+
   console.log('Created admin:', admin);
-  
+
   // Create sample vessels
   const vessels = await Promise.all([
     drizzle.vessel.create({
@@ -1169,7 +1215,7 @@ async function main() {
       },
     }),
   ]);
-  
+
   console.log('Created vessels:', vessels);
 }
 
@@ -1184,6 +1230,7 @@ main()
 ```
 
 **Add to package.json:**
+
 ```json
 {
   "drizzle": {
@@ -1193,6 +1240,7 @@ main()
 ```
 
 **Run Seed:**
+
 ```bash
 cd apps/api
 npm run db:seed
@@ -1207,6 +1255,7 @@ npm run db:seed
 **Framework:** Vitest
 
 **Structure:**
+
 ```
 apps/api/src/modules/auth/
 ├── auth.controller.js
@@ -1216,6 +1265,7 @@ apps/api/src/modules/auth/
 ```
 
 **Example Test:**
+
 ```javascript
 // auth.controller.test.js
 import { describe, it, expect, vi } from 'vitest';
@@ -1232,15 +1282,15 @@ describe('Auth Controller', () => {
     const res = {
       json: vi.fn(),
     };
-    
+
     repository.findUser.mockResolvedValue({
       id: '1',
       username: 'admin',
       password: '$2b$10$...',
     });
-    
+
     await controller.login(req, res);
-    
+
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         success: true,
@@ -1259,6 +1309,7 @@ describe('Auth Controller', () => {
 **Framework:** Vitest + Supertest
 
 **Example:**
+
 ```javascript
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
@@ -1270,7 +1321,7 @@ describe('Vessel API', () => {
       .get('/api/vessels')
       .set('Authorization', 'Bearer <token>')
       .expect(200);
-    
+
     expect(response.body).toHaveProperty('success', true);
     expect(response.body.data).toBeInstanceOf(Array);
   });
@@ -1282,16 +1333,17 @@ describe('Vessel API', () => {
 **Framework:** Playwright
 
 **Example:**
+
 ```typescript
 import { test, expect } from '@playwright/test';
 
 test('user can login', async ({ page }) => {
   await page.goto('http://localhost:5173');
-  
+
   await page.fill('input[name="username"]', 'admin');
   await page.fill('input[name="password"]', 'password');
   await page.click('button[type="submit"]');
-  
+
   await expect(page).toHaveURL('/dashboard');
   await expect(page.locator('h1')).toContainText('Dashboard');
 });
@@ -1304,6 +1356,7 @@ test('user can login', async ({ page }) => {
 ### API Debugging
 
 **VS Code Launch Configuration** (`.vscode/launch.json`):
+
 ```json
 {
   "version": "0.2.0",
@@ -1323,12 +1376,14 @@ test('user can login', async ({ page }) => {
 ```
 
 **Debugging Steps:**
+
 1. Set breakpoints in VS Code
 2. Press F5 or click "Debug API"
 3. Make API request
 4. Inspect variables, step through code
 
 **Console Logging:**
+
 ```javascript
 import logger from '#config/logger.js';
 
@@ -1341,18 +1396,21 @@ logger.debug('Query params', { params: req.query });
 ### Frontend Debugging
 
 **Vue DevTools:**
+
 1. Install Vue DevTools browser extension
 2. Open DevTools (F12)
 3. Click "Vue" tab
 4. Inspect components, state, events
 
 **Browser DevTools:**
+
 - **Network Tab:** Monitor API requests/responses
 - **Console Tab:** View logs and errors
 - **Sources Tab:** Set breakpoints in source code
 - **Application Tab:** Inspect localStorage, cookies
 
 **Debugging in VS Code:**
+
 ```json
 {
   "type": "chrome",
@@ -1370,6 +1428,7 @@ logger.debug('Query params', { params: req.query });
 ### JavaScript/TypeScript
 
 **Follow Prettier Configuration:**
+
 - Semi-colons: Yes
 - Single quotes: Yes
 - Tab width: 2 spaces
@@ -1378,6 +1437,7 @@ logger.debug('Query params', { params: req.query });
 - Arrow function parens: always
 
 **Naming Conventions:**
+
 - **Files/Folders:** kebab-case (`vessel-request.controller.js`)
 - **Variables/Functions:** camelCase (`getUserById`)
 - **Classes:** PascalCase (`AppError`)
@@ -1385,6 +1445,7 @@ logger.debug('Query params', { params: req.query });
 - **Private fields:** Leading underscore (`_privateMethod`)
 
 **Import Organization:**
+
 ```javascript
 // 1. Node built-ins
 import fs from 'fs';
@@ -1408,6 +1469,7 @@ import { formatDate } from './utils.js';
 ```
 
 **Function Documentation:**
+
 ```javascript
 /**
  * Get vessel by ID
@@ -1427,10 +1489,12 @@ export const getVesselById = async (id) => {
 ### Vue/Template
 
 **Component Naming:**
+
 - **File names:** PascalCase (`FormVessel.vue`)
 - **Component usage:** PascalCase (`<FormVessel />`)
 
 **Script Setup Style:**
+
 ```vue
 <script setup>
 // 1. Imports
@@ -1473,28 +1537,19 @@ onMounted(async () => {
 ```
 
 **Template Style:**
+
 ```vue
 <template>
   <div class="form-vessel">
     <!-- Use v-show for toggle, v-if for conditional rendering -->
     <form v-if="!loading" @submit.prevent="handleSubmit">
       <!-- Bind props with :prop-name -->
-      <InputText
-        v-model="formData.name"
-        :disabled="loading"
-        placeholder="Vessel Name"
-      />
-      
+      <InputText v-model="formData.name" :disabled="loading" placeholder="Vessel Name" />
+
       <!-- Event handlers with @event-name -->
-      <Button
-        type="submit"
-        :disabled="!isValid"
-        @click="handleSubmit"
-      >
-        Submit
-      </Button>
+      <Button type="submit" :disabled="!isValid" @click="handleSubmit"> Submit </Button>
     </form>
-    
+
     <!-- Loading state -->
     <div v-else class="loading">
       <ProgressSpinner />

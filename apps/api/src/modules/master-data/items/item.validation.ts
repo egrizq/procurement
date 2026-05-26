@@ -1,1 +1,5 @@
-export { getMasterSchema, addItemSchema, updateItemSchema } from '@procurement/validators/master-data';
+export {
+	getMasterSchema,
+	addItemSchema,
+	updateItemSchema,
+} from "@procurement/validators/master-data";

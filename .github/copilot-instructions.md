@@ -8,10 +8,12 @@ Description: A web application for managing procurement processes efficiently. B
 ## Tech Stack
 
 **Monorepo Tooling**
+
 - Turborepo
 - npm workspaces
 
 **Frontend (`apps/web`)**
+
 - Vue.js 3 (Composition API)
 - Vite
 - Tailwind CSS
@@ -20,6 +22,7 @@ Description: A web application for managing procurement processes efficiently. B
 - Lucide Icons
 
 **Backend (`apps/api`)**
+
 - Node.js & TypeScript
 - Express.js
 - Drizzle ORM (MySQL2 driver)
@@ -28,6 +31,7 @@ Description: A web application for managing procurement processes efficiently. B
 - Pino (Logging)
 
 **Shared Packages (`packages/*`)**
+
 - `packages/types`: Shared TypeScript interfaces and types.
 - `packages/validators`: Shared Zod validation schemas.
 - `packages/config`: Shared ESLint/TypeScript configurations.
@@ -76,4 +80,3 @@ packages/
   validators/   # Shared Zod validation schemas
   config/       # Linting & build configs
 ```
- 

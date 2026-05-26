@@ -5,15 +5,17 @@ This project uses a **centralized `.env` file** at the workspace root.
 ## Setup
 
 1. Copy the example file:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Edit `.env` with your actual values:
+
    ```bash
    # Windows
    notepad .env
-   
+
    # Linux/Mac
    nano .env
    ```
@@ -21,6 +23,7 @@ This project uses a **centralized `.env` file** at the workspace root.
 ## Structure
 
 ### Single `.env` File Location
+
 ```
 Procurement/
 ├── .env              # ← All environment variables here
@@ -31,12 +34,15 @@ Procurement/
 ```
 
 ### Backend (API)
+
 The backend loads environment variables from **root `.env`** via dotenv configuration in `server.ts`:
+
 ```typescript
-dotenvConfig({ path: resolve(__dirname, '../../../.env') })
+dotenvConfig({ path: resolve(__dirname, '../../../.env') });
 ```
 
 **Variables used:**
+
 - `NODE_ENV` - Environment (development/production)
 - `PORT` - Server port (default: 3000)
 - `HOST` - Server host (default: localhost)
@@ -48,15 +54,18 @@ dotenvConfig({ path: resolve(__dirname, '../../../.env') })
 - `CORS_ORIGIN` - Allowed CORS origins (comma-separated)
 
 ### Frontend (Web)
+
 The frontend loads environment variables from **root `.env`** via Vite's `envDir` configuration:
+
 ```javascript
 // vite.config.js
 export default defineConfig({
-  envDir: '../..',  // Load from workspace root
-})
+  envDir: '../..', // Load from workspace root
+});
 ```
 
 **Variables used (must have `VITE_` prefix):**
+
 - `VITE_API_BASE_URL` - API endpoint URL
 - `VITE_TOKEN_SECRET` - Token storage key
 
@@ -75,19 +84,22 @@ npm run dev --workspace=@procurement/web
 ## Docker/Production
 
 Docker Compose files also reference the root `.env`:
+
 ```yaml
 # docker-compose.dev.yml
 services:
   api:
-    env_file: .env  # Loads from root
+    env_file: .env # Loads from root
 ```
 
 **Important Docker Behavior:**
+
 - **Local development**: API loads `.env` file directly using dotenv
 - **Docker containers**: Environment variables are injected by docker-compose (no `.env` file inside container)
 - The application automatically detects which method to use
 
 This means:
+
 - ✅ Keep your `.env` file in workspace root (for local dev)
 - ✅ Docker Compose reads `.env` and injects variables into containers
 - ✅ No need to copy `.env` into Docker images
@@ -98,7 +110,7 @@ This means:
 ✅ **Single source of truth** - All environment config in one place  
 ✅ **Easier management** - No duplicate variables across apps  
 ✅ **Docker-friendly** - Docker Compose uses root .env by default  
-✅ **Less confusion** - Clear where to set environment variables  
+✅ **Less confusion** - Clear where to set environment variables
 
 ## Migration from Old Structure
 

@@ -1,33 +1,32 @@
-import express, { Router } from 'express';
-import vendorController from './vendor.controller.ts';
-import validate from '#shared/middlewares/validate.ts';
-import { getMasterSchema, addVendorSchema } from './vendor.validation.ts';
-import apiAuth from '#modules/auth/auth.middleware.ts';
+import express, { Router } from "express";
+import vendorController from "./vendor.controller.ts";
+import validate from "#shared/middlewares/validate.ts";
+import { getMasterSchema, addVendorSchema } from "./vendor.validation.ts";
+import apiAuth from "#modules/auth/auth.middleware.ts";
 
 const router: Router = express.Router();
 
 router.post(
-	'/',
+	"/",
 	apiAuth(),
 	validate(getMasterSchema),
-	vendorController.getMasterVendors
+	vendorController.getMasterVendors,
 );
 
-router.post('/add', 
-	apiAuth(), 
-	validate(addVendorSchema), 
-	vendorController.addMstVendor
-);
-
-router.put('/:id',
+router.post(
+	"/add",
 	apiAuth(),
 	validate(addVendorSchema),
-	vendorController.updateMstVendor
+	vendorController.addMstVendor,
 );
 
-router.delete('/:id',
+router.put(
+	"/:id",
 	apiAuth(),
-	vendorController.deleteMstVendor
-);	
+	validate(addVendorSchema),
+	vendorController.updateMstVendor,
+);
+
+router.delete("/:id", apiAuth(), vendorController.deleteMstVendor);
 
 export default router;

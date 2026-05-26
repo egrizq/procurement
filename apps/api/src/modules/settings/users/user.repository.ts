@@ -1,6 +1,6 @@
-import db from '../../../config/drizzle';
-import { users } from '../../../db/schema/index.ts';
-import { like, desc, eq, sql, or, and } from 'drizzle-orm';
+import db from "../../../config/drizzle";
+import { users } from "../../../db/schema/index.ts";
+import { like, desc, eq, sql, or, and } from "drizzle-orm";
 
 // Columns to select (excludes password)
 const userColumns = {
@@ -23,8 +23,8 @@ class UserRepository {
 	async getUsers(
 		page: number = 1,
 		limit: number = 10,
-		search: string = '',
-		filters: { type?: string; department?: string; status?: string } = {}
+		search: string = "",
+		filters: { type?: string; department?: string; status?: string } = {},
 	) {
 		const conditions = [];
 
@@ -35,8 +35,8 @@ class UserRepository {
 				or(
 					like(users.username, searchPattern),
 					like(users.email, searchPattern),
-					like(users.fullName, searchPattern)
-				)
+					like(users.fullName, searchPattern),
+				),
 			);
 		}
 
@@ -51,7 +51,8 @@ class UserRepository {
 			conditions.push(eq(users.status, filters.status as any));
 		}
 
-		const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+		const whereCondition =
+			conditions.length > 0 ? and(...conditions) : undefined;
 
 		const itemsQuery = db.query.users.findMany({
 			where: whereCondition,
@@ -125,7 +126,7 @@ class UserRepository {
 		await db
 			.update(users)
 			.set({
-				status: 'Leave',
+				status: "Leave",
 				leaveDate: new Date(),
 			})
 			.where(eq(users.id, id));

@@ -30,6 +30,7 @@ The Procurement Vessel Management System is a comprehensive solution for managin
 ### Technology Stack
 
 #### Backend (API)
+
 - **Runtime:** Node.js v20.19.0 (ESM)
 - **Framework:** Express v5.2.1
 - **Database:** MySQL/MariaDB with Drizzle ORM v7.3.0
@@ -39,6 +40,7 @@ The Procurement Vessel Management System is a comprehensive solution for managin
 - **Process Manager:** PM2 v5.4.3 (cluster mode)
 
 #### Frontend (Web)
+
 - **Framework:** Vue.js v3.5.26 (Composition API)
 - **Build Tool:** Vite v7.3.1
 - **Styling:** Tailwind CSS v4.1.18
@@ -47,6 +49,7 @@ The Procurement Vessel Management System is a comprehensive solution for managin
 - **HTTP Client:** axios v1.13.4
 
 #### Shared Packages
+
 - **Types:** TypeScript type definitions
 - **Validators:** Shared Zod validation schemas
 - **Config:** Shared constants and configuration
@@ -136,6 +139,7 @@ npm run dev
 ### Default Credentials
 
 After seeding (optional), you can login with:
+
 - **Username:** admin
 - **Password:** (set during seed)
 
@@ -174,6 +178,7 @@ npm run db:seed          # Seed database
 ### Development Workflow
 
 1. **Start development servers:**
+
    ```bash
    npm run dev
    ```
@@ -184,17 +189,20 @@ npm run db:seed          # Seed database
    - Package changes trigger rebuilds
 
 3. **Format and lint:**
+
    ```bash
    npm run format
    npm run lint
    ```
 
 4. **Create feature branch:**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
 5. **Commit with conventional commits:**
+
    ```bash
    git commit -m "feat(api): add new endpoint"
    ```
@@ -221,17 +229,20 @@ npm run db:seed          # Seed database
 ### Backend Modules
 
 #### Authentication & Authorization
+
 - Token-based authentication with device tracking
 - User login/logout
 - Role-based access control (Admin, Office, Crew)
 
 #### Master Data Management
+
 - **Items:** Catalog of procurable items with categories
 - **Vendors:** Vendor database with contact information
 - **Vessels:** Fleet management with vessel details
 - **Categories:** Item categorization
 
 #### Vessel Requests
+
 - Create procurement requests per vessel
 - Multi-item requests with quantities
 - Approval workflow
@@ -239,6 +250,7 @@ npm run db:seed          # Seed database
 - Priority management
 
 #### Profile Management
+
 - User profile updates
 - Password changes
 - User preferences
@@ -246,23 +258,27 @@ npm run db:seed          # Seed database
 ### Frontend Features
 
 #### Dashboard
+
 - Overview of key metrics
 - Recent requests
 - Quick actions
 
 #### Master Data Interface
+
 - CRUD operations for items, vendors, vessels
 - Search and filtering
 - Pagination
 - Data validation
 
 #### Request Management
+
 - Create and submit requests
 - Track request status
 - Approve/reject requests (office/admin)
 - View request history
 
 #### Responsive Design
+
 - Mobile-friendly interface
 - Touch-optimized controls
 - Adaptive layouts
@@ -304,6 +320,7 @@ See [src/db/schema/index.ts](apps/api/src/db/schema/index.ts) for full schema de
 #### API Deployment
 
 **Using PM2 (recommended):**
+
 ```bash
 cd apps/api
 
@@ -317,6 +334,7 @@ npm run pm2:monit
 ```
 
 **PM2 Configuration** (`apps/api/ecosystem.config.js`):
+
 - Cluster mode with max CPU cores
 - Auto-restart on failure
 - Memory limit: 500MB per instance
@@ -333,6 +351,7 @@ npm run build
 ```
 
 **Nginx Configuration Example:**
+
 ```nginx
 server {
     listen 80;
@@ -358,6 +377,7 @@ server {
 ### Environment Variables
 
 #### API (.env)
+
 ```env
 NODE_ENV=production
 PORT=3000
@@ -377,6 +397,7 @@ API_TOKEN_SECRET=your_api_token_secret_here
 ```
 
 #### Web (.env)
+
 ```env
 VITE_API_BASE_URL=http://localhost:3000/api
 VITE_TOKEN_SECRET=procurement_token
@@ -435,6 +456,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 
 **Types:**
+
 - `feat` - New feature
 - `fix` - Bug fix
 - `docs` - Documentation changes
@@ -445,6 +467,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `chore` - Build process or tooling changes
 
 **Scopes:**
+
 - `api` - Backend API
 - `web` - Frontend
 - `types` - Types package
@@ -454,6 +477,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `deps` - Dependencies
 
 **Examples:**
+
 ```
 feat(api): add vessel approval endpoint
 fix(web): resolve token expiration handling
@@ -482,18 +506,21 @@ Testing infrastructure is planned for future implementation.
 ## Roadmap
 
 ### Phase 1: Turborepo Migration ✅
+
 - [x] Set up Turborepo structure
 - [x] Migrate backend to ESM
 - [x] Create shared packages
 - [x] Unified tooling and configuration
 
 ### Phase 2: Testing Infrastructure 🔄
+
 - [ ] Set up Vitest
 - [ ] Write unit tests for critical modules
 - [ ] Add integration tests
 - [ ] Set up E2E testing with Playwright
 
 ### Phase 3: Enhanced Features 📋
+
 - [ ] Purchase order management
 - [ ] Good receipt tracking
 - [ ] Advanced reporting
@@ -502,6 +529,7 @@ Testing infrastructure is planned for future implementation.
 - [ ] File attachments for requests
 
 ### Phase 4: Performance & Optimization 📋
+
 - [ ] API response caching
 - [ ] Database query optimization
 - [ ] Frontend code splitting
@@ -509,6 +537,7 @@ Testing infrastructure is planned for future implementation.
 - [ ] PWA capabilities
 
 ### Phase 5: DevOps & CI/CD 📋
+
 - [ ] GitHub Actions workflow
 - [ ] Automated testing pipeline
 - [ ] Automated deployments
@@ -522,6 +551,7 @@ Testing infrastructure is planned for future implementation.
 ### Common Issues
 
 **Port Already in Use:**
+
 ```bash
 # Find and kill process
 lsof -i :3000  # macOS/Linux
@@ -529,6 +559,7 @@ netstat -ano | findstr :3000  # Windows
 ```
 
 **Database Connection Failed:**
+
 ```bash
 # Check MySQL running
 sudo systemctl status mysql  # Linux
@@ -539,6 +570,7 @@ mysql -u procurement_user -p procurement
 ```
 
 **Module Not Found:**
+
 ```bash
 # Reinstall dependencies
 rm -rf node_modules package-lock.json
@@ -547,6 +579,7 @@ npm install
 ```
 
 **Drizzle Client Not Generated:**
+
 ```bash
 cd apps/api
 npx drizzle-kit generate
@@ -565,6 +598,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Support
 
 For questions, issues, or contributions:
+
 - Create an issue on GitHub
 - Contact the development team
 - Refer to documentation in `/docs` directory

@@ -47,7 +47,7 @@ export const useMocStore = defineStore('moc', {
         return data.moc
       } catch (error) {
         if (error.errors && Array.isArray(error.errors)) {
-          this.error = error.errors.map(err => err.message).join(', ')
+          this.error = error.errors.map((err) => err.message).join(', ')
         } else {
           this.error = error.error || 'Failed to create MOC.'
         }
@@ -67,8 +67,8 @@ export const useMocStore = defineStore('moc', {
         }
         return data.moc
       } catch (error) {
-         if (error.errors && Array.isArray(error.errors)) {
-          this.error = error.errors.map(err => err.message).join(', ')
+        if (error.errors && Array.isArray(error.errors)) {
+          this.error = error.errors.map((err) => err.message).join(', ')
         } else {
           this.error = error.error || 'Failed to update MOC.'
         }
@@ -93,7 +93,7 @@ export const useMocStore = defineStore('moc', {
         const idx = this.mocs.findIndex((m) => m.id === id)
         if (idx !== -1) this.mocs[idx] = data.moc
         if (this.currentMoc && this.currentMoc.id === id) this.currentMoc = data.moc
-        return data  // { moc, breakdown }
+        return data // { moc, breakdown }
       } catch (error) {
         if (error.errors && Array.isArray(error.errors)) {
           this.error = error.errors.map((e) => e.message).join(', ')

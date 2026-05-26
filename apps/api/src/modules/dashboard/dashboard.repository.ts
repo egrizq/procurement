@@ -1,5 +1,11 @@
-import db from '../../config/drizzle';
-import { mstItems, mstVendors, mstVessels, vesselRequests, users } from "../../db/schema/index.ts";
+import db from "../../config/drizzle";
+import {
+	mstItems,
+	mstVendors,
+	mstVessels,
+	vesselRequests,
+	users,
+} from "../../db/schema/index.ts";
 import { sql, eq, desc } from "drizzle-orm";
 
 class DashboardRepository {
@@ -20,22 +26,23 @@ class DashboardRepository {
 		const activeVesselsQuery = db
 			.select({ count: sql<number>`count(*)` })
 			.from(mstVessels)
-			.where(eq(mstVessels.status, 'Publish'))
+			.where(eq(mstVessels.status, "Publish"))
 			.then((res) => Number(res[0]?.count || 0));
 
 		// Get pending requests (status = 'Waiting')
 		const pendingRequestsQuery = db
 			.select({ count: sql<number>`count(*)` })
 			.from(vesselRequests)
-			.where(eq(vesselRequests.status, 'Waiting'))
+			.where(eq(vesselRequests.status, "Waiting"))
 			.then((res) => Number(res[0]?.count || 0));
 
-		const [totalItems, activeVendors, activeVessels, pendingRequests] = await Promise.all([
-			totalItemsQuery,
-			activeVendorsQuery,
-			activeVesselsQuery,
-			pendingRequestsQuery,
-		]);
+		const [totalItems, activeVendors, activeVessels, pendingRequests] =
+			await Promise.all([
+				totalItemsQuery,
+				activeVendorsQuery,
+				activeVesselsQuery,
+				pendingRequestsQuery,
+			]);
 
 		return {
 			totalItems,

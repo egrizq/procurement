@@ -32,7 +32,7 @@ export const useVendorStore = defineStore('vendor', {
       try {
         vendorData.category = parseInt(vendorData.category)
         await apiMasterVendor.updateMstVendor(vendorId, vendorData)
-        const index = this.vendors.findIndex(vendor => vendor.id === vendorId)
+        const index = this.vendors.findIndex((vendor) => vendor.id === vendorId)
         if (index !== -1) {
           this.vendors[index] = { ...this.vendors[index], ...vendorData }
         }
@@ -44,7 +44,7 @@ export const useVendorStore = defineStore('vendor', {
     async deleteVendor(vendorId) {
       try {
         await apiMasterVendor.deleteMstVendor(vendorId)
-        this.vendors = this.vendors.filter(vendor => vendor.id !== vendorId)
+        this.vendors = this.vendors.filter((vendor) => vendor.id !== vendorId)
       } catch (error) {
         this.error = error.error
       }
