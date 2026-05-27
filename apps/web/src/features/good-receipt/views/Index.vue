@@ -70,6 +70,7 @@
         :items-per-page="itemsPerPage"
         :pagination="pagination"
         @update:current-page="currentPage = $event"
+        @row-click="openDetail"
         :is-loading="isLoading"
       >
         <template #cell-grNumber="{ value }">
