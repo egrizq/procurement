@@ -235,6 +235,39 @@
                 <p class="font-bold text-xs uppercase tracking-wider">Alasan Ketidaksesuaian</p>
                 <p class="text-sm leading-relaxed">{{ detailGR.discrepancyReason }}</p>
               </div>
+
+              <!-- Attachments Section -->
+              <div v-if="detailGR.attachments && detailGR.attachments.length > 0" class="pt-4 border-t border-gray-100 space-y-2">
+                <p class="font-bold text-xs text-gray-700 uppercase tracking-wider">Media / Dokumen Bukti</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div
+                    v-for="(url, idx) in detailGR.attachments"
+                    :key="idx"
+                    class="group relative bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center gap-2.5 hover:bg-slate-100/50 transition-all duration-150"
+                  >
+                    <img
+                      v-if="isImageUrl(url)"
+                      :src="getFullUrl(url)"
+                      class="w-10 h-10 object-cover rounded border border-slate-200 shrink-0"
+                    />
+                    <div v-else class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded flex items-center justify-center shrink-0 border border-slate-100">
+                      <FileText class="w-5 h-5" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <a
+                        :href="getFullUrl(url)"
+                        target="_blank"
+                        class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline truncate block"
+                      >
+                        Lihat File
+                      </a>
+                      <span class="text-[10px] text-gray-400 block truncate" :title="getFilenameFromUrl(url)">
+                        {{ getFilenameFromUrl(url) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Footer -->
@@ -326,6 +359,32 @@ const statusClass = (status) => ({
   Accepted: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   Rejected: 'bg-red-50 text-red-700 border-red-200',
 }[status] || 'bg-gray-50 text-gray-600 border-gray-200')
+
+const isImageUrl = (url) => {
+  if (!url) return false
+  return /\.(jpeg|jpg|gif|png|webp|svg)$/i.test(url)
+}
+
+const getFullUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+  const baseUrl = apiBaseUrl.replace(/\/api$/, '')
+  return `${baseUrl}${url}`
+}
+
+const getFilenameFromUrl = (url) => {
+  if (!url) return ''
+  const parts = url.split('/')
+  const fullFilename = parts[parts.length - 1]
+  // Strip unique suffix prefix: uniqueSuffix-filename.ext
+  // e.g. 1700000-2384920-my_file.pdf or similar
+  const match = fullFilename.match(/^\d+-\d+-(.+)$/)
+  if (match) return match[1]
+  const matchSimple = fullFilename.match(/^\d+-(.+)$/)
+  if (matchSimple) return matchSimple[1]
+  return fullFilename
+}
 
 // Load Data
 const fetchGoodReceipts = async () => {

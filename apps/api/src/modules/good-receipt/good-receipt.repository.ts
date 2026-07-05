@@ -77,6 +77,7 @@ class GoodReceiptRepository {
 		isSameItem: boolean;
 		reason?: string | null;
 		createdBy: number;
+		attachments?: string[] | null;
 	}) {
 		// Check if PO exists and is Approved/Auto Approved
 		const po = await db.query.purchaseOrders.findFirst({
@@ -122,6 +123,7 @@ class GoodReceiptRepository {
 				status,
 				discrepancyReason: data.isSameItem ? null : data.reason || null,
 				createdBy: data.createdBy,
+				attachments: data.attachments ? JSON.stringify(data.attachments) : null,
 			});
 
 			insertedId = inserted.insertId;
@@ -192,7 +194,21 @@ class GoodReceiptRepository {
 				createdByUser: { columns: { id: true, fullName: true } },
 			},
 		});
-		return result || null;
+		if (!result) return null;
+
+		let attachments: string[] = [];
+		try {
+			if (result.attachments) {
+				attachments = JSON.parse(result.attachments);
+			}
+		} catch (e) {
+			attachments = [];
+		}
+
+		return {
+			...result,
+			attachments,
+		};
 	}
 
 	async getGoodReceipts(
@@ -278,7 +294,23 @@ class GoodReceiptRepository {
 			.then((res) => Number(res[0]?.count || 0));
 
 		const [items, total] = await Promise.all([itemsQuery, countQuery]);
-		return { items, total };
+
+		const parsedItems = items.map((item) => {
+			let attachments: string[] = [];
+			try {
+				if (item.attachments) {
+					attachments = JSON.parse(item.attachments);
+				}
+			} catch (e) {
+				attachments = [];
+			}
+			return {
+				...item,
+				attachments,
+			};
+		});
+
+		return { items: parsedItems, total };
 	}
 }
 

@@ -7,6 +7,14 @@ import MstItemRepository from "#modules/master-data/items/item.repository.ts";
 import MstVesselRepository from "#modules/master-data/vessels/vessel.repository.ts";
 import VesselRequestRepository from "./vessel-request.repository.ts";
 import { generateVesselRequestPdf } from "./vessel-request.pdf.ts";
+import {
+	notifyUsersByType,
+	createNotification,
+} from "#shared/utils/notificationService.ts";
+import { createAuditLog, getClientIp } from "#shared/utils/auditLog.ts";
+import db from "../../config/drizzle.ts";
+import { vesselRequests } from "../../db/schema/index.ts";
+import { eq } from "drizzle-orm";
 
 const vesselRequestRepo = new VesselRequestRepository();
 const mstItemRepo = new MstItemRepository();
@@ -190,6 +198,27 @@ const create = asyncHandler(async (req: Request, res: Response) => {
 		throw new AppError("Failed to create vessel request items", 500);
 	}
 
+	// Notify managers/admins about the new vessel request
+	await notifyUsersByType(["Manager", "Admin"], {
+		type: "vessel_request_submitted",
+		title: "New Vessel Request",
+		message: `A new vessel request (${requestCode}) has been submitted and requires your review.`,
+		entityType: "vessel_request",
+		entityId: vesselRequest.id,
+	});
+
+	// Audit log
+	createAuditLog({
+		userId,
+		action: "CREATE",
+		module: "vessel_request",
+		entityId: vesselRequest.id,
+		entityCode: requestCode,
+		description: `Vessel request ${requestCode} dibuat dengan status '${validationResult.status}'.`,
+		afterData: { status: validationResult.status, vesselId: req.body.vesselId, itemCount: req.body.items?.length },
+		ipAddress: getClientIp(req),
+	});
+
 	return success(
 		res,
 		{ vesselRequest, vesselRequestItems, validation: validationResult },
@@ -278,6 +307,12 @@ const review = asyncHandler(async (req: Request, res: Response) => {
 
 	const { action, rejectReason, itemsAdjustment } = req.body;
 
+	// Fetch the requestedBy field (not included in getVesselRequestById columns)
+	const rawVr = await db.query.vesselRequests.findFirst({
+		where: eq(vesselRequests.id, id),
+		columns: { requestedBy: true, requestCode: true },
+	});
+
 	const updated = await vesselRequestRepo.reviewRequest(
 		id,
 		userId,
@@ -286,8 +321,37 @@ const review = asyncHandler(async (req: Request, res: Response) => {
 		itemsAdjustment,
 	);
 
+	// Notify the original requester about the review outcome
+	if (rawVr?.requestedBy) {
+		const isApproved = action === "approve";
+		await createNotification({
+			userId: rawVr.requestedBy,
+			type: isApproved ? "vessel_request_approved" : "vessel_request_rejected",
+			title: isApproved ? "Vessel Request Approved" : "Vessel Request Rejected",
+			message: isApproved
+				? `Your vessel request (${rawVr.requestCode}) has been approved.`
+				: `Your vessel request (${rawVr.requestCode}) was rejected. Reason: ${rejectReason ?? "N/A"}.`,
+			entityType: "vessel_request",
+			entityId: id,
+		});
+	}
+
+	// Audit log
+	createAuditLog({
+		userId,
+		action: "REVIEW",
+		module: "vessel_request",
+		entityId: id,
+		entityCode: rawVr?.requestCode ?? undefined,
+		description: `Vessel request ${rawVr?.requestCode ?? `#${id}`} di-review: '${action}' ${rejectReason ? `(Alasan: ${rejectReason})` : ""}.`,
+		beforeData: { status: vesselRequest.status },
+		afterData: { action, rejectReason: rejectReason ?? null },
+		ipAddress: getClientIp(req),
+	});
+
 	return success(res, updated, 200);
 });
+
 
 const generatePdf = asyncHandler(async (req: Request, res: Response) => {
 	const id = Number(req.params.id);

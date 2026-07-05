@@ -8,6 +8,11 @@ import db from "../../config/drizzle";
 import { mocs } from "../../db/schema/index.ts";
 import { eq } from "drizzle-orm";
 import { generatePurchaseOrderPdf } from "./purchase-order.pdf.ts";
+import {
+	notifyUsersByType,
+	createNotification,
+} from "#shared/utils/notificationService.ts";
+import { createAuditLog, getClientIp } from "#shared/utils/auditLog.ts";
 
 const poRepo = new PurchaseOrderRepository();
 
@@ -39,6 +44,30 @@ const createPO = asyncHandler(async (req: Request, res: Response) => {
 			itemId,
 			createdBy: userId,
 		});
+
+		// Notify managers/admins about the new PO
+		await notifyUsersByType(["Manager", "Admin"], {
+			type: "purchase_order_created",
+			title: "New Purchase Order",
+			message: `Purchase Order ${po?.poNumber} has been created and requires approval.`,
+			entityType: "purchase_order",
+			...(po?.id !== undefined ? { entityId: po.id } : {}),
+		});
+
+		// Audit log
+		if (po?.id) {
+			createAuditLog({
+				userId,
+				action: "CREATE",
+				module: "purchase_order",
+				entityId: po.id,
+				entityCode: po.poNumber,
+				description: `Purchase Order ${po.poNumber} dibuat untuk MOC #${mocId}.`,
+				afterData: { poNumber: po.poNumber, status: po.status, vendorId, unitPrice, qty, mocId },
+				ipAddress: getClientIp(req),
+			});
+		}
+
 		return success(res, { purchaseOrder: po }, 201);
 	} catch (err: any) {
 		throw new AppError(err.message || "Failed to create Purchase Order", 400);
@@ -76,6 +105,33 @@ const approvePO = asyncHandler(async (req: Request, res: Response) => {
 
 	try {
 		const po = await poRepo.approvePO(Number(id), userId);
+
+		// Notify the PO creator
+		const creatorId = po?.createdByUser?.id;
+		if (creatorId) {
+			await createNotification({
+				userId: creatorId,
+				type: "purchase_order_approved",
+				title: "Purchase Order Approved",
+				message: `Purchase Order ${po.poNumber} has been approved.`,
+				entityType: "purchase_order",
+				entityId: po.id,
+			});
+		}
+
+		// Audit log
+		createAuditLog({
+			userId,
+			action: "APPROVE",
+			module: "purchase_order",
+			entityId: po.id,
+			entityCode: po.poNumber,
+			description: `Purchase Order ${po.poNumber} disetujui.`,
+			beforeData: { status: "Pending Approval" },
+			afterData: { status: po.status },
+			ipAddress: getClientIp(req),
+		});
+
 		return success(res, { purchaseOrder: po });
 	} catch (err: any) {
 		throw new AppError(err.message || "Failed to approve Purchase Order", 400);
@@ -89,6 +145,33 @@ const rejectPO = asyncHandler(async (req: Request, res: Response) => {
 
 	try {
 		const po = await poRepo.rejectPO(Number(id), userId, rejectionReason);
+
+		// Notify the PO creator
+		const creatorId = po?.createdByUser?.id;
+		if (creatorId) {
+			await createNotification({
+				userId: creatorId,
+				type: "purchase_order_rejected",
+				title: "Purchase Order Rejected",
+				message: `Purchase Order ${po.poNumber} was rejected. Reason: ${rejectionReason ?? "N/A"}.`,
+				entityType: "purchase_order",
+				entityId: po.id,
+			});
+		}
+
+		// Audit log
+		createAuditLog({
+			userId,
+			action: "REJECT",
+			module: "purchase_order",
+			entityId: po.id,
+			entityCode: po.poNumber,
+			description: `Purchase Order ${po.poNumber} ditolak. Alasan: ${rejectionReason ?? "N/A"}.`,
+			beforeData: { status: "Pending Approval" },
+			afterData: { status: po.status, rejectionReason: rejectionReason ?? null },
+			ipAddress: getClientIp(req),
+		});
+
 		return success(res, { purchaseOrder: po });
 	} catch (err: any) {
 		throw new AppError(err.message || "Failed to reject Purchase Order", 400);

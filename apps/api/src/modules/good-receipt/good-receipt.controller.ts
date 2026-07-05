@@ -4,12 +4,14 @@ import { success } from "#shared/utils/response.ts";
 import AppError from "#shared/utils/error.ts";
 import getPaginationMeta from "#shared/utils/paginate.ts";
 import GoodReceiptRepository from "./good-receipt.repository.ts";
+import { notifyUsersByType } from "#shared/utils/notificationService.ts";
+import { createAuditLog, getClientIp } from "#shared/utils/auditLog.ts";
 
 const grRepo = new GoodReceiptRepository();
 
 const createGoodReceipt = asyncHandler(async (req: Request, res: Response) => {
 	const userId = req.apiToken!.userId;
-	const { purchaseOrderId, isSameItem, reason } = req.body;
+	const { purchaseOrderId, isSameItem, reason, attachments } = req.body;
 
 	try {
 		const gr = await grRepo.createGoodReceipt({
@@ -17,7 +19,32 @@ const createGoodReceipt = asyncHandler(async (req: Request, res: Response) => {
 			isSameItem,
 			reason,
 			createdBy: userId,
+			attachments,
 		});
+
+		// Notify managers/admins about the good receipt
+		await notifyUsersByType(["Manager", "Admin"], {
+			type: "good_receipt_submitted",
+			title: "Good Receipt Submitted",
+			message: `Good Receipt ${gr?.grNumber} has been submitted for PO #${purchaseOrderId}.`,
+			entityType: "good_receipt",
+			...(gr?.id !== undefined ? { entityId: gr.id } : {}),
+		});
+
+		// Audit log
+		if (gr?.id) {
+			createAuditLog({
+				userId,
+				action: "CREATE",
+				module: "good_receipt",
+				entityId: gr.id,
+				entityCode: gr.grNumber,
+				description: `Good Receipt ${gr.grNumber} dibuat untuk PO #${purchaseOrderId}. Status: '${gr.status}'.`,
+				afterData: { grNumber: gr.grNumber, status: gr.status, isSameItem, purchaseOrderId },
+				ipAddress: getClientIp(req),
+			});
+		}
+
 		return success(res, { goodReceipt: gr }, 201);
 	} catch (err: any) {
 		throw new AppError(err.message || "Failed to create Good Receipt", 400);

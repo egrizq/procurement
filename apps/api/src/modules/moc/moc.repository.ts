@@ -2,6 +2,7 @@ import db from "../../config/drizzle";
 import {
 	mocs,
 	mocVendors,
+	mocSawWeightRequests,
 	vesselRequests,
 	vesselRequestItems,
 	mstItems,
@@ -20,7 +21,7 @@ const SAW_WEIGHTS = {
 	discount: 0.15, // benefit → higher is better
 };
 
-function calculateSAW(vendors: any[]): any[] {
+function calculateSAW(vendors: any[], weights: typeof SAW_WEIGHTS = SAW_WEIGHTS): any[] {
 	if (!vendors || vendors.length === 0) return vendors;
 
 	const minPrice = Math.min(...vendors.map((v) => v.unitPrice || 1));
@@ -35,10 +36,10 @@ function calculateSAW(vendors: any[]): any[] {
 		const rDis = maxDis > 0 ? (v.discount || 0) / maxDis : 0;
 
 		const score =
-			SAW_WEIGHTS.unitPrice * rPrice +
-			SAW_WEIGHTS.availableQty * rQty +
-			SAW_WEIGHTS.warranty * rWar +
-			SAW_WEIGHTS.discount * rDis;
+			weights.unitPrice * rPrice +
+			weights.availableQty * rQty +
+			weights.warranty * rWar +
+			weights.discount * rDis;
 
 		return { ...v, sawScore: parseFloat(score.toFixed(4)) };
 	});
@@ -54,9 +55,11 @@ function calculateSAW(vendors: any[]): any[] {
  * Returns full SAW breakdown detail: normalized, weighted, ranked.
  * Used for the scoring analysis UI display.
  */
-function calculateSAWWithBreakdown(vendors: any[]) {
-	if (!vendors || vendors.length === 0)
-		return { vendors: [], weights: SAW_WEIGHTS };
+function calculateSAWWithBreakdown(
+	vendors: any[],
+	weights: typeof SAW_WEIGHTS = SAW_WEIGHTS,
+) {
+	if (!vendors || vendors.length === 0) return { vendors: [], weights };
 
 	const minPrice = Math.min(...vendors.map((v) => v.unitPrice || 1));
 	const maxQty = Math.max(...vendors.map((v) => v.availableQty || 0));
@@ -72,10 +75,10 @@ function calculateSAWWithBreakdown(vendors: any[]) {
 		const rDis =
 			maxDis > 0 ? parseFloat(((v.discount || 0) / maxDis).toFixed(4)) : 0;
 
-		const wPrice = parseFloat((SAW_WEIGHTS.unitPrice * rPrice).toFixed(4));
-		const wQty = parseFloat((SAW_WEIGHTS.availableQty * rQty).toFixed(4));
-		const wWar = parseFloat((SAW_WEIGHTS.warranty * rWar).toFixed(4));
-		const wDis = parseFloat((SAW_WEIGHTS.discount * rDis).toFixed(4));
+		const wPrice = parseFloat((weights.unitPrice * rPrice).toFixed(4));
+		const wQty = parseFloat((weights.availableQty * rQty).toFixed(4));
+		const wWar = parseFloat((weights.warranty * rWar).toFixed(4));
+		const wDis = parseFloat((weights.discount * rDis).toFixed(4));
 
 		const sawScore = parseFloat((wPrice + wQty + wWar + wDis).toFixed(4));
 
@@ -98,11 +101,44 @@ function calculateSAWWithBreakdown(vendors: any[]) {
 
 	return {
 		vendors: ranked,
-		weights: SAW_WEIGHTS,
+		weights,
 		minPrice,
 		maxQty,
 		maxWar,
 		maxDis,
+	};
+}
+
+/**
+ * Resolves the SAW weights to use for a given MOC: the manager-approved
+ * custom weight set if one is active, otherwise the module default.
+ */
+async function getActiveWeightsForMoc(mocId: number): Promise<typeof SAW_WEIGHTS> {
+	const moc = await db.query.mocs.findFirst({
+		where: eq(mocs.id, mocId),
+		columns: { activeSawWeightRequestId: true },
+	});
+	if (!moc?.activeSawWeightRequestId) return SAW_WEIGHTS;
+
+	const activeRequest = await db.query.mocSawWeightRequests.findFirst({
+		where: and(
+			eq(mocSawWeightRequests.id, moc.activeSawWeightRequestId),
+			eq(mocSawWeightRequests.status, "Approved"),
+		),
+		columns: {
+			unitPriceWeight: true,
+			availableQtyWeight: true,
+			warrantyWeight: true,
+			discountWeight: true,
+		},
+	});
+	if (!activeRequest) return SAW_WEIGHTS;
+
+	return {
+		unitPrice: Number(activeRequest.unitPriceWeight),
+		availableQty: Number(activeRequest.availableQtyWeight),
+		warranty: Number(activeRequest.warrantyWeight),
+		discount: Number(activeRequest.discountWeight),
 	};
 }
 
@@ -161,6 +197,11 @@ class MocRepository {
 				},
 				selectedVendor: { columns: { id: true, name: true } },
 				purchaseOrders: { columns: { id: true, poNumber: true, status: true } },
+				sawWeightRequests: {
+					orderBy: [desc(mocSawWeightRequests.createdAt)],
+					limit: 5,
+				},
+				activeSawWeightRequest: true,
 			},
 		});
 
@@ -295,7 +336,8 @@ class MocRepository {
 			throw new Error("At least 2 vendors are required to run SAW scoring");
 		}
 
-		const breakdown = calculateSAWWithBreakdown(vendors);
+		const weights = await getActiveWeightsForMoc(id);
+		const breakdown = calculateSAWWithBreakdown(vendors, weights);
 
 		await db.transaction(async (tx) => {
 			for (const v of breakdown.vendors) {
@@ -308,6 +350,105 @@ class MocRepository {
 
 		const updatedMoc = await this.getMocById(id);
 		return { moc: updatedMoc, breakdown };
+	}
+
+	/**
+	 * Staff submits a proposed custom SAW weight set for a Draft MOC,
+	 * to be reviewed by a Manager.
+	 */
+	async submitSawWeightRequest(
+		mocId: number,
+		userId: number,
+		weights: {
+			unitPriceWeight: number;
+			availableQtyWeight: number;
+			warrantyWeight: number;
+			discountWeight: number;
+			reason?: string;
+		},
+	) {
+		const moc = await db.query.mocs.findFirst({ where: eq(mocs.id, mocId) });
+		if (!moc) throw new Error("MOC not found");
+		if (moc.status !== "Draft") {
+			throw new Error("SAW weight requests can only be submitted for Draft MOCs");
+		}
+
+		const existingPending = await db.query.mocSawWeightRequests.findFirst({
+			where: and(
+				eq(mocSawWeightRequests.mocId, mocId),
+				eq(mocSawWeightRequests.status, "Pending"),
+			),
+		});
+		if (existingPending) {
+			throw new Error("This MOC already has a pending SAW weight request");
+		}
+
+		const [inserted] = await db.insert(mocSawWeightRequests).values({
+			mocId,
+			unitPriceWeight: String(weights.unitPriceWeight),
+			availableQtyWeight: String(weights.availableQtyWeight),
+			warrantyWeight: String(weights.warrantyWeight),
+			discountWeight: String(weights.discountWeight),
+			reason: weights.reason || null,
+			status: "Pending",
+			requestedBy: userId,
+		});
+
+		return await db.query.mocSawWeightRequests.findFirst({
+			where: eq(mocSawWeightRequests.id, inserted.insertId),
+		});
+	}
+
+	/**
+	 * Manager approves or rejects a pending SAW weight request.
+	 * On approval, the request becomes the MOC's active weight set;
+	 * scoring is not re-run automatically — staff must re-run it manually.
+	 */
+	async reviewSawWeightRequest(
+		requestId: number,
+		userId: number,
+		action: "Approve" | "Reject",
+		rejectReason?: string,
+	) {
+		const request = await db.query.mocSawWeightRequests.findFirst({
+			where: eq(mocSawWeightRequests.id, requestId),
+		});
+		if (!request) throw new Error("SAW weight request not found");
+		if (request.status !== "Pending") {
+			throw new Error("Only Pending requests can be reviewed");
+		}
+
+		const newStatus = action === "Approve" ? "Approved" : "Rejected";
+
+		await db.transaction(async (tx) => {
+			await tx
+				.update(mocSawWeightRequests)
+				.set({
+					status: newStatus,
+					reviewedBy: userId,
+					reviewedAt: new Date(),
+					rejectReason: action === "Reject" ? rejectReason ?? null : null,
+					updatedAt: new Date(),
+				})
+				.where(eq(mocSawWeightRequests.id, requestId));
+
+			if (action === "Approve") {
+				await tx
+					.update(mocs)
+					.set({ activeSawWeightRequestId: requestId, updatedAt: new Date() })
+					.where(eq(mocs.id, request.mocId));
+			}
+		});
+
+		const updatedRequest = await db.query.mocSawWeightRequests.findFirst({
+			where: eq(mocSawWeightRequests.id, requestId),
+		});
+
+		return {
+			request: updatedRequest,
+			mocId: request.mocId,
+			requesterUserId: request.requestedBy,
+		};
 	}
 }
 

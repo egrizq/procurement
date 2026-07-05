@@ -8,6 +8,7 @@ export const createGoodReceiptSchema = z.object({
         required_error: 'Checklist status is required',
       }),
       reason: z.string().optional().nullable(),
+      attachments: z.array(z.string()).optional().nullable(),
     })
     .refine(
       (data) => {

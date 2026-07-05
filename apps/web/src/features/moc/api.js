@@ -34,3 +34,16 @@ export async function scoreMoc(id) {
   const { data } = await http.post(`/moc/${id}/score`)
   return data
 }
+
+export async function submitSawWeightRequest(mocId, payload) {
+  const { data } = await http.post(`/moc/${mocId}/saw-weight-request`, payload)
+  return data
+}
+
+export async function reviewSawWeightRequest(requestId, action, rejectReason) {
+  const { data } = await http.put(`/moc/saw-weight-request/${requestId}/review`, {
+    action,
+    rejectReason,
+  })
+  return data
+}

@@ -12,6 +12,10 @@ import mocRoutes from "#modules/moc/moc.routes.ts";
 import dashboardRoutes from "#modules/dashboard/index.ts";
 import purchaseOrderRoutes from "#modules/purchase-order/purchase-order.routes.ts";
 import goodReceiptRoutes from "#modules/good-receipt/good-receipt.routes.ts";
+import uploadRoutes from "#modules/upload/upload.routes.ts";
+import notificationRoutes from "#modules/notification/notification.routes.ts";
+import auditLogRoutes from "#modules/audit-log/audit-log.routes.ts";
+import path from "path";
 
 const router: Router = express.Router();
 
@@ -28,5 +32,11 @@ router.use("/settings/module-access", moduleAccessRoutes);
 router.use("/moc", mocRoutes);
 router.use("/purchase-orders", purchaseOrderRoutes);
 router.use("/good-receipts", goodReceiptRoutes);
+router.use("/upload", uploadRoutes);
+router.use("/notifications", notificationRoutes);
+router.use("/audit-logs", auditLogRoutes);
+
+// Serve static uploaded files under /api/uploads
+router.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 export default router;

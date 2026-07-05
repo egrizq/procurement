@@ -25,6 +25,7 @@ export const goodReceipts = mysqlTable(
 		isSameItem: boolean("is_same_item").notNull(),
 		status: mysqlEnum("status", grStatusEnum).notNull(),
 		discrepancyReason: text("discrepancy_reason"),
+		attachments: text("attachments"),
 		createdBy: int("created_by")
 			.notNull()
 			.references(() => users.id),

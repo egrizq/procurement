@@ -1,41 +1,48 @@
 {
-	"version": "7",
-	"dialect": "mysql",
-	"entries": [
-		{
-			"idx": 0,
-			"version": "5",
-			"when": 1779588738860,
-			"tag": "0001_safe_firestar",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "5",
-			"when": 1779589379703,
-			"tag": "0001_famous_speed",
-			"breakpoints": true
-		},
-		{
-			"idx": 2,
-			"version": "5",
-			"when": 1779589648666,
-			"tag": "0002_solid_malice",
-			"breakpoints": true
-		},
-		{
-			"idx": 3,
-			"version": "5",
-			"when": 1779591646750,
-			"tag": "0003_talented_songbird",
-			"breakpoints": true
-		},
-		{
-			"idx": 4,
-			"version": "5",
-			"when": 1779704386732,
-			"tag": "0004_worried_earthquake",
-			"breakpoints": true
-		}
-	]
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1779588738860,
+      "tag": "0001_safe_firestar",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1779589379703,
+      "tag": "0001_famous_speed",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1779589648666,
+      "tag": "0002_solid_malice",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1779591646750,
+      "tag": "0003_talented_songbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1779704386732,
+      "tag": "0004_worried_earthquake",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1783209278432,
+      "tag": "0005_premium_mysterio",
+      "breakpoints": true
+    }
+  ]
 }

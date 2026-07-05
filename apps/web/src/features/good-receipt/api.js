@@ -19,3 +19,16 @@ export async function getGoodReceiptById(id) {
   const { data } = await http.get(`/good-receipts/${id}`)
   return data
 }
+
+export async function uploadFiles(files) {
+  const formData = new FormData()
+  for (let i = 0; i < files.length; i++) {
+    formData.append('files', files[i])
+  }
+  const { data } = await http.post('/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+  return data
+}

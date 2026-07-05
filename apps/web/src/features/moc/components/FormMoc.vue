@@ -374,7 +374,284 @@
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-500 space-y-1">
           <p class="font-semibold text-slate-700 flex items-center gap-1.5"><Info :size="13" /> Formula SAW</p>
           <p>• <b>Cost</b> (Harga): r = nilai_min ÷ nilai_vendor &nbsp;|&nbsp; <b>Benefit</b> (Qty, Garansi, Diskon): r = nilai_vendor ÷ nilai_max</p>
-          <p>• <b>S</b> = (r_harga × 40%) + (r_qty × 25%) + (r_garansi × 20%) + (r_diskon × 15%)</p>
+          <p>• <b>S</b> = (r_harga × {{ Math.round(activeWeights.unitPrice * 100) }}%) + (r_qty × {{ Math.round(activeWeights.availableQty * 100) }}%) + (r_garansi × {{ Math.round(activeWeights.warranty * 100) }}%) + (r_diskon × {{ Math.round(activeWeights.discount * 100) }}%)</p>
+        </div>
+
+        <!-- Step-by-step calculation (per vendor, expandable) -->
+        <div>
+          <h4 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <ListOrdered :size="16" class="text-indigo-500" />
+            Rincian Perhitungan per Vendor
+          </h4>
+
+          <!-- Reference values used for normalization -->
+          <div class="bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 mb-3 flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-slate-600">
+            <span>Nilai acuan normalisasi:</span>
+            <span><b class="text-rose-600">min(Harga)</b> = Rp {{ formatNumber(sawReference.minPrice) }}</span>
+            <span><b class="text-blue-600">max(Qty)</b> = {{ sawReference.maxQty }} unit</span>
+            <span><b class="text-emerald-600">max(Garansi)</b> = {{ sawReference.maxWar }} bln</span>
+            <span><b class="text-violet-600">max(Diskon)</b> = {{ sawReference.maxDis }}%</span>
+          </div>
+
+          <div class="space-y-2">
+            <div
+              v-for="v in sawResults" :key="`calc-${v.vendorId}`"
+              class="border border-slate-200 rounded-xl overflow-hidden"
+            >
+              <!-- Toggle header -->
+              <button
+                type="button"
+                @click="toggleSawDetail(v.vendorId)"
+                class="w-full flex items-center justify-between px-4 py-2.5 bg-white hover:bg-slate-50 transition-colors text-left"
+              >
+                <span class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  {{ medalOf(v.rank) }} {{ v.vendorName }}
+                  <span class="text-slate-400 font-normal">— Skor {{ (v.sawScore * 100).toFixed(2) }}%</span>
+                </span>
+                <ChevronDown :size="14" class="text-slate-400 transition-transform" :class="expandedSawVendors.has(v.vendorId) ? 'rotate-180' : ''" />
+              </button>
+
+              <!-- Detail body -->
+              <div v-if="expandedSawVendors.has(v.vendorId)" class="px-4 py-3 bg-slate-50/70 border-t border-slate-200 space-y-4">
+
+                <!-- 1. Normalisasi -->
+                <div>
+                  <p class="text-xs font-semibold text-slate-600 mb-1.5">1. Normalisasi</p>
+                  <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+                    <table class="w-full text-[11px]">
+                      <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200">
+                          <th class="px-3 py-2 text-left font-semibold text-slate-500">Kriteria</th>
+                          <th class="px-3 py-2 text-left font-semibold text-slate-500">Nilai Vendor</th>
+                          <th class="px-3 py-2 text-left font-semibold text-slate-500">Acuan</th>
+                          <th class="px-3 py-2 text-left font-semibold text-slate-500">Formula</th>
+                          <th class="px-3 py-2 text-right font-semibold text-slate-500">Hasil (r)</th>
+                        </tr>
+                      </thead>
+                      <tbody class="font-mono">
+                        <tr class="border-b border-slate-100">
+                          <td class="px-3 py-2 font-sans font-medium text-rose-600">Harga</td>
+                          <td class="px-3 py-2">Rp {{ formatNumber(v.unitPrice) }}</td>
+                          <td class="px-3 py-2">min = Rp {{ formatNumber(sawReference.minPrice) }}</td>
+                          <td class="px-3 py-2 text-slate-500">min ÷ harga</td>
+                          <td class="px-3 py-2 text-right font-bold text-rose-700">{{ v.normalized.rPrice.toFixed(4) }}</td>
+                        </tr>
+                        <tr class="border-b border-slate-100">
+                          <td class="px-3 py-2 font-sans font-medium text-blue-600">Qty</td>
+                          <td class="px-3 py-2">{{ v.availableQty }} unit</td>
+                          <td class="px-3 py-2">max = {{ sawReference.maxQty }}</td>
+                          <td class="px-3 py-2 text-slate-500">qty ÷ max</td>
+                          <td class="px-3 py-2 text-right font-bold text-blue-700">{{ v.normalized.rQty.toFixed(4) }}</td>
+                        </tr>
+                        <tr class="border-b border-slate-100">
+                          <td class="px-3 py-2 font-sans font-medium text-emerald-600">Garansi</td>
+                          <td class="px-3 py-2">{{ v.warranty }} bln</td>
+                          <td class="px-3 py-2">max = {{ sawReference.maxWar }}</td>
+                          <td class="px-3 py-2 text-slate-500">garansi ÷ max</td>
+                          <td class="px-3 py-2 text-right font-bold text-emerald-700">{{ v.normalized.rWar.toFixed(4) }}</td>
+                        </tr>
+                        <tr>
+                          <td class="px-3 py-2 font-sans font-medium text-violet-600">Diskon</td>
+                          <td class="px-3 py-2">{{ v.discount }}%</td>
+                          <td class="px-3 py-2">max = {{ sawReference.maxDis }}</td>
+                          <td class="px-3 py-2 text-slate-500">diskon ÷ max</td>
+                          <td class="px-3 py-2 text-right font-bold text-violet-700">{{ v.normalized.rDis.toFixed(4) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- 2. Perkalian Bobot -->
+                <div>
+                  <p class="text-xs font-semibold text-slate-600 mb-1.5">2. Perkalian Bobot</p>
+                  <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+                    <table class="w-full text-[11px]">
+                      <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200">
+                          <th class="px-3 py-2 text-left font-semibold text-slate-500">Kriteria</th>
+                          <th class="px-3 py-2 text-left font-semibold text-slate-500">Hasil Normalisasi (r)</th>
+                          <th class="px-3 py-2 text-left font-semibold text-slate-500">Bobot</th>
+                          <th class="px-3 py-2 text-right font-semibold text-slate-500">Nilai Terbobot (w)</th>
+                        </tr>
+                      </thead>
+                      <tbody class="font-mono">
+                        <tr class="border-b border-slate-100">
+                          <td class="px-3 py-2 font-sans font-medium text-rose-600">Harga</td>
+                          <td class="px-3 py-2">{{ v.normalized.rPrice.toFixed(4) }}</td>
+                          <td class="px-3 py-2">{{ Math.round(activeWeights.unitPrice * 100) }}%</td>
+                          <td class="px-3 py-2 text-right font-bold text-rose-700">{{ v.weighted.wPrice.toFixed(4) }}</td>
+                        </tr>
+                        <tr class="border-b border-slate-100">
+                          <td class="px-3 py-2 font-sans font-medium text-blue-600">Qty</td>
+                          <td class="px-3 py-2">{{ v.normalized.rQty.toFixed(4) }}</td>
+                          <td class="px-3 py-2">{{ Math.round(activeWeights.availableQty * 100) }}%</td>
+                          <td class="px-3 py-2 text-right font-bold text-blue-700">{{ v.weighted.wQty.toFixed(4) }}</td>
+                        </tr>
+                        <tr class="border-b border-slate-100">
+                          <td class="px-3 py-2 font-sans font-medium text-emerald-600">Garansi</td>
+                          <td class="px-3 py-2">{{ v.normalized.rWar.toFixed(4) }}</td>
+                          <td class="px-3 py-2">{{ Math.round(activeWeights.warranty * 100) }}%</td>
+                          <td class="px-3 py-2 text-right font-bold text-emerald-700">{{ v.weighted.wWar.toFixed(4) }}</td>
+                        </tr>
+                        <tr>
+                          <td class="px-3 py-2 font-sans font-medium text-violet-600">Diskon</td>
+                          <td class="px-3 py-2">{{ v.normalized.rDis.toFixed(4) }}</td>
+                          <td class="px-3 py-2">{{ Math.round(activeWeights.discount * 100) }}%</td>
+                          <td class="px-3 py-2 text-right font-bold text-violet-700">{{ v.weighted.wDis.toFixed(4) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- 3. Total Skor SAW -->
+                <div>
+                  <p class="text-xs font-semibold text-slate-600 mb-1.5">3. Total Skor SAW</p>
+                  <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+                    <table class="w-full text-[11px]">
+                      <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200">
+                          <th class="px-3 py-2 text-right font-semibold text-rose-600">Harga</th>
+                          <th class="px-3 py-2 text-right font-semibold text-blue-600">Qty</th>
+                          <th class="px-3 py-2 text-right font-semibold text-emerald-600">Garansi</th>
+                          <th class="px-3 py-2 text-right font-semibold text-violet-600">Diskon</th>
+                          <th class="px-3 py-2 text-right font-bold text-indigo-700 bg-indigo-50/50">Skor SAW</th>
+                        </tr>
+                      </thead>
+                      <tbody class="font-mono">
+                        <tr>
+                          <td class="px-3 py-2 text-right">{{ v.weighted.wPrice.toFixed(4) }}</td>
+                          <td class="px-3 py-2 text-right">{{ v.weighted.wQty.toFixed(4) }}</td>
+                          <td class="px-3 py-2 text-right">{{ v.weighted.wWar.toFixed(4) }}</td>
+                          <td class="px-3 py-2 text-right">{{ v.weighted.wDis.toFixed(4) }}</td>
+                          <td class="px-3 py-2 text-right bg-indigo-50/30">
+                            <b class="text-sm text-indigo-700">{{ v.sawScore.toFixed(4) }}</b>
+                            <span class="text-slate-400 ml-1">({{ (v.sawScore * 100).toFixed(2) }}%)</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── SAW Weight Adjustment Request (Staff) ─────────── -->
+        <div v-if="canRequestSawWeightChange || showWeightRequestForm" class="border border-indigo-100 rounded-xl overflow-hidden">
+          <div class="bg-indigo-50/60 px-4 py-3 flex items-center justify-between">
+            <span class="text-sm font-bold text-indigo-900 flex items-center gap-1.5">
+              <Sliders :size="15" /> Request Perubahan Bobot SAW
+            </span>
+            <button
+              v-if="!showWeightRequestForm"
+              @click="openWeightRequestForm"
+              type="button"
+              class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 border border-indigo-200 hover:border-indigo-300 bg-white px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+            >
+              Ajukan ke Manager
+            </button>
+          </div>
+
+          <div v-if="showWeightRequestForm" class="p-4 space-y-3 bg-white">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">Harga (%)</label>
+                <input v-model.number="weightRequestForm.unitPrice" type="number" min="0" max="100"
+                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">Qty (%)</label>
+                <input v-model.number="weightRequestForm.availableQty" type="number" min="0" max="100"
+                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">Garansi (%)</label>
+                <input v-model.number="weightRequestForm.warranty" type="number" min="0" max="100"
+                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">Diskon (%)</label>
+                <input v-model.number="weightRequestForm.discount" type="number" min="0" max="100"
+                  class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500" />
+              </div>
+            </div>
+            <p class="text-xs font-semibold" :class="weightRequestTotal === 100 ? 'text-emerald-600' : 'text-red-500'">
+              Total: {{ weightRequestTotal }}% {{ weightRequestTotal === 100 ? '' : '(harus 100%)' }}
+            </p>
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-1">Alasan (opsional)</label>
+              <textarea v-model="weightRequestForm.reason" rows="2"
+                class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Alasan pengajuan perubahan bobot..."></textarea>
+            </div>
+            <div class="flex justify-end gap-2 pt-1">
+              <button @click="showWeightRequestForm = false" type="button"
+                class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                Batal
+              </button>
+              <button @click="submitWeightRequest" type="button" :disabled="isSubmittingWeightRequest || weightRequestTotal !== 100"
+                class="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                {{ isSubmittingWeightRequest ? 'Mengirim...' : 'Ajukan' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── Pending SAW Weight Request banner ─────────────── -->
+        <div v-if="pendingSawWeightRequest && !canReviewSawWeightRequest" class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800">
+          Permintaan perubahan bobot SAW sedang menunggu review Manager.
+        </div>
+
+        <!-- ─── Manager Review Card ───────────────────────────── -->
+        <div v-if="canReviewSawWeightRequest" class="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+          <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 font-semibold text-gray-900 border-l-4 border-l-indigo-500 text-sm">
+            Manager Review — Permintaan Bobot SAW
+          </div>
+          <div class="p-4 space-y-3">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              <div><span class="text-gray-400 block">Harga</span><span class="font-bold">{{ Math.round(pendingSawWeightRequest.unitPriceWeight * 100) }}%</span></div>
+              <div><span class="text-gray-400 block">Qty</span><span class="font-bold">{{ Math.round(pendingSawWeightRequest.availableQtyWeight * 100) }}%</span></div>
+              <div><span class="text-gray-400 block">Garansi</span><span class="font-bold">{{ Math.round(pendingSawWeightRequest.warrantyWeight * 100) }}%</span></div>
+              <div><span class="text-gray-400 block">Diskon</span><span class="font-bold">{{ Math.round(pendingSawWeightRequest.discountWeight * 100) }}%</span></div>
+            </div>
+            <p v-if="pendingSawWeightRequest.reason" class="text-xs text-gray-600">
+              <span class="font-semibold">Alasan:</span> {{ pendingSawWeightRequest.reason }}
+            </p>
+
+            <div v-if="isRejectingWeightRequest" class="space-y-3 pt-2">
+              <label class="block text-sm font-semibold text-gray-700">Alasan Penolakan <span class="text-red-500">*</span></label>
+              <textarea v-model="weightRejectReason" rows="3"
+                class="block w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-red-500 focus:border-red-500 focus:outline-none"
+                placeholder="Masukkan alasan penolakan..."></textarea>
+              <div class="flex gap-2 justify-end">
+                <button @click="isRejectingWeightRequest = false; weightRejectReason = ''"
+                  class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 cursor-pointer transition-colors"
+                  :disabled="isReviewingWeightRequest">
+                  Batal
+                </button>
+                <button @click="reviewWeightRequest('Reject')"
+                  class="px-4 py-2 border border-transparent rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 cursor-pointer disabled:opacity-50 transition-colors"
+                  :disabled="isReviewingWeightRequest || !weightRejectReason.trim()">
+                  Konfirmasi Tolak
+                </button>
+              </div>
+            </div>
+            <div v-else class="flex justify-end gap-3 pt-2">
+              <button @click="isRejectingWeightRequest = true"
+                class="px-4 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-red-600 bg-white hover:bg-red-50 cursor-pointer transition-colors"
+                :disabled="isReviewingWeightRequest">
+                Reject
+              </button>
+              <button @click="reviewWeightRequest('Approve')"
+                class="px-4 py-2 border border-transparent rounded-lg text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 cursor-pointer disabled:opacity-50 transition-colors"
+                :disabled="isReviewingWeightRequest">
+                Approve
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- ─── Vendor Picker ──────────────────────────────── -->
@@ -533,11 +810,12 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, Trash2, CheckCircle, Scale, BarChart2, Trophy, Check, Info, UserCheck, AlertTriangle, ShoppingCart } from 'lucide-vue-next'
+import { Plus, Trash2, CheckCircle, Scale, BarChart2, Trophy, Check, Info, UserCheck, AlertTriangle, ShoppingCart, Sliders, ListOrdered, ChevronDown } from 'lucide-vue-next'
 import FormDialog from '@/components/base/form/Form.vue'
 import { useMocStore } from '../store.js'
 import { useRequestStore } from '../../request/store.js'
 import { useVendorStore } from '../../master-data/vendors/store.js'
+import useProfileStore from '@/features/profile/store'
 import { showSuccess, showError } from '@/services/notification.js'
 import { createPurchaseOrder } from '../../purchase-order/api.js'
 import Swal from 'sweetalert2'
@@ -555,6 +833,7 @@ const emit = defineEmits(['close', 'saved', 'go-to-po'])
 const mocStore    = useMocStore()
 const requestStore = useRequestStore()
 const vendorStore  = useVendorStore()
+const profileStore = useProfileStore()
 
 // ── State ────────────────────────────────────────────────────────
 const currentStep   = ref(1)
@@ -567,7 +846,19 @@ const approvedItems       = ref([])
 
 // SAW results (computed in goToScoring)
 const sawResults = ref([])
+const sawReference = ref({ minPrice: 0, maxQty: 0, maxWar: 0, maxDis: 0 })
+const expandedSawVendors = ref(new Set())
 const selectedVendorId = ref(null)
+
+const toggleSawDetail = (vendorId) => {
+  const next = new Set(expandedSawVendors.value)
+  if (next.has(vendorId)) {
+    next.delete(vendorId)
+  } else {
+    next.add(vendorId)
+  }
+  expandedSawVendors.value = next
+}
 
 // Computed winner from SAW
 const sawWinner = computed(() => sawResults.value.find((v) => v.rank === 1) || null)
@@ -610,14 +901,115 @@ const summaryApprovedQty = computed(() => {
   return item ? `${item.qtyApproved || item.qtyRequested} ${item.unit}` : '-'
 })
 
-const isCompleted = computed(() => wizardData.value.status === 'Completed')
+const isCompleted = computed(() => wizardData.value.status === 'Completed' || wizardData.value.status === 'Approved')
 
-const sawWeightLabels = [
-  { label: 'Harga',  pct: '40%', cls: 'bg-rose-50 border-rose-200 text-rose-700'     },
-  { label: 'Qty',    pct: '25%', cls: 'bg-blue-50 border-blue-200 text-blue-700'     },
-  { label: 'Garansi',pct: '20%', cls: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
-  { label: 'Diskon', pct: '15%', cls: 'bg-violet-50 border-violet-200 text-violet-700' },
-]
+const DEFAULT_SAW_WEIGHTS = { unitPrice: 0.40, availableQty: 0.25, warranty: 0.20, discount: 0.15 }
+
+// The weight set actually in effect for this MOC: an approved custom
+// request if one exists, otherwise the system default.
+const activeWeights = computed(() => {
+  const approved = mocStore.currentMoc?.activeSawWeightRequest
+  if (approved && approved.status === 'Approved') {
+    return {
+      unitPrice: Number(approved.unitPriceWeight),
+      availableQty: Number(approved.availableQtyWeight),
+      warranty: Number(approved.warrantyWeight),
+      discount: Number(approved.discountWeight),
+    }
+  }
+  return DEFAULT_SAW_WEIGHTS
+})
+
+const sawWeightLabels = computed(() => [
+  { label: 'Harga',   pct: `${Math.round(activeWeights.value.unitPrice * 100)}%`,    cls: 'bg-rose-50 border-rose-200 text-rose-700' },
+  { label: 'Qty',     pct: `${Math.round(activeWeights.value.availableQty * 100)}%`, cls: 'bg-blue-50 border-blue-200 text-blue-700' },
+  { label: 'Garansi', pct: `${Math.round(activeWeights.value.warranty * 100)}%`,     cls: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
+  { label: 'Diskon',  pct: `${Math.round(activeWeights.value.discount * 100)}%`,     cls: 'bg-violet-50 border-violet-200 text-violet-700' },
+])
+
+// ── SAW weight adjustment request (staff submit / manager review) ────────────
+const isManager = computed(() => profileStore.profile?.type === 'Manager')
+
+const pendingSawWeightRequest = computed(() =>
+  mocStore.currentMoc?.sawWeightRequests?.find(r => r.status === 'Pending') || null
+)
+
+const canRequestSawWeightChange = computed(() =>
+  props.isEditMode && !isCompleted.value && !pendingSawWeightRequest.value
+)
+
+const canReviewSawWeightRequest = computed(() =>
+  isManager.value && !!pendingSawWeightRequest.value
+)
+
+const showWeightRequestForm = ref(false)
+const isSubmittingWeightRequest = ref(false)
+const weightRequestForm = ref({ unitPrice: 40, availableQty: 25, warranty: 20, discount: 15, reason: '' })
+
+const weightRequestTotal = computed(() =>
+  Number(weightRequestForm.value.unitPrice || 0) +
+  Number(weightRequestForm.value.availableQty || 0) +
+  Number(weightRequestForm.value.warranty || 0) +
+  Number(weightRequestForm.value.discount || 0)
+)
+
+const openWeightRequestForm = () => {
+  weightRequestForm.value = {
+    unitPrice: Math.round(activeWeights.value.unitPrice * 100),
+    availableQty: Math.round(activeWeights.value.availableQty * 100),
+    warranty: Math.round(activeWeights.value.warranty * 100),
+    discount: Math.round(activeWeights.value.discount * 100),
+    reason: '',
+  }
+  showWeightRequestForm.value = true
+}
+
+const submitWeightRequest = async () => {
+  if (weightRequestTotal.value !== 100) {
+    showError('Total bobot harus 100%.')
+    return
+  }
+  isSubmittingWeightRequest.value = true
+  try {
+    await mocStore.submitSawWeightRequest(props.mocId, {
+      unitPriceWeight: Number(weightRequestForm.value.unitPrice) / 100,
+      availableQtyWeight: Number(weightRequestForm.value.availableQty) / 100,
+      warrantyWeight: Number(weightRequestForm.value.warranty) / 100,
+      discountWeight: Number(weightRequestForm.value.discount) / 100,
+      reason: weightRequestForm.value.reason || undefined,
+    })
+    showSuccess('Permintaan perubahan bobot SAW berhasil diajukan ke Manager.')
+    showWeightRequestForm.value = false
+  } catch (err) {
+    showError(mocStore.error || err?.message || 'Gagal mengajukan permintaan perubahan bobot.')
+  } finally {
+    isSubmittingWeightRequest.value = false
+  }
+}
+
+const isReviewingWeightRequest = ref(false)
+const isRejectingWeightRequest = ref(false)
+const weightRejectReason = ref('')
+
+const reviewWeightRequest = async (action) => {
+  if (action === 'Reject' && !weightRejectReason.value.trim()) return
+  isReviewingWeightRequest.value = true
+  try {
+    await mocStore.reviewSawWeightRequest(
+      pendingSawWeightRequest.value.id,
+      action,
+      action === 'Reject' ? weightRejectReason.value : undefined,
+      props.mocId,
+    )
+    showSuccess(action === 'Approve' ? 'Permintaan bobot SAW disetujui.' : 'Permintaan bobot SAW ditolak.')
+    isRejectingWeightRequest.value = false
+    weightRejectReason.value = ''
+  } catch (err) {
+    showError(mocStore.error || err?.message || 'Gagal memproses permintaan bobot.')
+  } finally {
+    isReviewingWeightRequest.value = false
+  }
+}
 
 // ── Helpers ───────────────────────────────────────────────────────
 const formatNumber = (num) => {
@@ -637,16 +1029,18 @@ const computeSAW = () => {
   const maxWar   = Math.max(...active.map(v => Number(v.warranty) || 0))
   const maxDis   = Math.max(...active.map(v => Number(v.discount) || 0))
 
+  sawReference.value = { minPrice, maxQty, maxWar, maxDis }
+
   const scored = active.map(v => {
     const rPrice = minPrice / (Number(v.unitPrice) || 1)
     const rQty   = maxQty > 0 ? (Number(v.availableQty) || 0) / maxQty : 0
     const rWar   = maxWar > 0 ? (Number(v.warranty)     || 0) / maxWar : 0
     const rDis   = maxDis > 0 ? (Number(v.discount)     || 0) / maxDis : 0
 
-    const wPrice = 0.40 * rPrice
-    const wQty   = 0.25 * rQty
-    const wWar   = 0.20 * rWar
-    const wDis   = 0.15 * rDis
+    const wPrice = activeWeights.value.unitPrice * rPrice
+    const wQty   = activeWeights.value.availableQty * rQty
+    const wWar   = activeWeights.value.warranty * rWar
+    const wDis   = activeWeights.value.discount * rDis
 
     const sawScore = parseFloat((wPrice + wQty + wWar + wDis).toFixed(4))
     const vendor   = masterVendors.value.find(mv => mv.id === v.vendorId)
@@ -767,6 +1161,7 @@ const selectRequestItem = (item) => {
 // ── Form init ─────────────────────────────────────────────────────
 const initForm = async () => {
   sawResults.value = []
+  expandedSawVendors.value = new Set()
   selectedVendorId.value = null
   if (props.isEditMode && props.mocId) {
     currentStep.value = 2

@@ -12,6 +12,7 @@ import { usersTypeEnum, departmentEnum, userStatusEnum } from "./enums";
 import { mstVessels } from "./vessels";
 import { relations } from "drizzle-orm";
 import { vesselRequests } from "./vessel-requests";
+import { auditLogs } from "./audit-logs";
 
 export const users = mysqlTable(
 	"users",
@@ -47,4 +48,5 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 	vesselRequestsReviewed: many(vesselRequests, {
 		relationName: "vessel_requests_reviewed_byTousers",
 	}),
+	auditLogs: many(auditLogs),
 }));

@@ -140,6 +140,16 @@
         <span>Good Receipt</span>
       </router-link>
 
+      <!-- Audit Log -->
+      <router-link
+        to="/audit-log"
+        class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-700"
+        :class="isActive('/audit-log') ? 'bg-gray-700' : ''"
+      >
+        <ScrollText :size="20" />
+        <span>Audit Log</span>
+      </router-link>
+
       <!-- Settings -->
       <div v-if="canOpenSettings" class="space-y-1">
         <button
@@ -226,7 +236,8 @@ import {
   Settings,
   Scale,
   ShieldCheck,
-  UserCog
+  UserCog,
+  ScrollText
 } from 'lucide-vue-next'
 
 const props = defineProps({

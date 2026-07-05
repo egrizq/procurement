@@ -94,3 +94,50 @@ export const mocByIdSchema = z.object({
     id: z.string(),
   }),
 });
+
+export const submitSawWeightRequestSchema = z.object({
+  params: z.object({
+    id: z.string(),
+  }),
+  body: z
+    .object({
+      unitPriceWeight: z.number('Unit price weight is not valid').min(0).max(1),
+      availableQtyWeight: z.number('Available qty weight is not valid').min(0).max(1),
+      warrantyWeight: z.number('Warranty weight is not valid').min(0).max(1),
+      discountWeight: z.number('Discount weight is not valid').min(0).max(1),
+      reason: z.string().optional(),
+    })
+    .refine(
+      (w) =>
+        Math.abs(
+          w.unitPriceWeight + w.availableQtyWeight + w.warrantyWeight + w.discountWeight - 1
+        ) < 0.001,
+      {
+        message: 'Weights must sum to 100%',
+        path: ['unitPriceWeight'],
+      }
+    ),
+});
+
+export const reviewSawWeightRequestSchema = z.object({
+  params: z.object({
+    requestId: z.string(),
+  }),
+  body: z
+    .object({
+      action: z.enum(['Approve', 'Reject'], 'Action must be either Approve or Reject'),
+      rejectReason: z.string().optional(),
+    })
+    .refine(
+      (data) => {
+        if (data.action === 'Reject' && !data.rejectReason) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: 'Reject reason is required when rejecting a request',
+        path: ['rejectReason'],
+      }
+    ),
+});

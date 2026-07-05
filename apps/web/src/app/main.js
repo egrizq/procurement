@@ -9,6 +9,7 @@ import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
 
 import { useTokenStore } from '@/features/token/store'
+import { useNotificationStore } from '@/features/notification/store'
 import { showError } from '@/services/notification'
 
 async function initializeApp() {
@@ -32,6 +33,11 @@ async function initializeApp() {
   if (!tokenStore.data) {
     // showError(tokenStore.error)
     router.push('/login')
+  } else {
+    // User is authenticated — boot the notification system
+    const notificationStore = useNotificationStore()
+    notificationStore.fetchUnreadCount()
+    notificationStore.connectSSE()
   }
 
   app.mount('#app')

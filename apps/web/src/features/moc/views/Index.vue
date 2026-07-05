@@ -90,25 +90,6 @@
           </span>
         </template>
 
-        <template #cell-poStatus="{ row }">
-          <div v-if="row.purchaseOrders && row.purchaseOrders.length > 0" class="flex flex-col gap-0.5">
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-              <ShoppingCart :size="10" />
-              {{ row.purchaseOrders[0].poNumber }}
-            </span>
-            <span
-              class="text-[10px] font-semibold"
-              :class="{
-                'text-amber-600': row.purchaseOrders[0].status === 'Pending Approval',
-                'text-sky-600': row.purchaseOrders[0].status === 'Auto Approved',
-                'text-emerald-600': row.purchaseOrders[0].status === 'Approved',
-                'text-red-500': row.purchaseOrders[0].status === 'Rejected',
-              }"
-            >{{ row.purchaseOrders[0].status }}</span>
-          </div>
-          <span v-else class="text-xs text-gray-400 italic">Belum ada PO</span>
-        </template>
-
         <template #cell-updatedAt="{ value }">
           <span class="text-xs text-gray-500">{{ formatDate(value) }}</span>
         </template>
@@ -180,7 +161,6 @@ const columns = [
   { key: 'item', label: 'Item Details' },
   { key: 'vendorsCount', label: 'Vendors' },
   { key: 'winner', label: 'Selected Option' },
-  { key: 'poStatus', label: 'PO' },
   { key: 'status', label: 'Status' },
   { key: 'updatedAt', label: 'Last Updated' },
 ]

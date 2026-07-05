@@ -46,17 +46,8 @@
         <div
           class="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0"
         >
-          <!-- Notifications button -->
-          <button
-            v-if="showNotifications"
-            type="button"
-            @click="$emit('notification-click')"
-            class="relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
-          >
-            <span class="absolute -inset-1.5"></span>
-            <span class="sr-only">View notifications</span>
-            <Bell :size="24" />
-          </button>
+          <!-- Notifications -->
+          <NotificationDropdown v-if="showNotifications" />
 
           <!-- Profile dropdown -->
           <div v-if="showProfile" class="relative ml-3">
@@ -137,8 +128,9 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { Menu, X, Bell, User, Home } from 'lucide-vue-next'
+import { Menu, X, User, Home } from 'lucide-vue-next'
 import * as apiAUTH from '../../features/auth/api.js'
+import NotificationDropdown from '../base/NotificationDropdown.vue'
 
 const props = defineProps({
   navLinks: {

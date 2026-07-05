@@ -104,6 +104,32 @@ export const useMocStore = defineStore('moc', {
       }
     },
 
+    async submitSawWeightRequest(mocId, payload) {
+      try {
+        const data = await mocAPI.submitSawWeightRequest(mocId, payload)
+        if (this.currentMoc?.id === mocId) await this.fetchMocById(mocId)
+        return data.sawWeightRequest
+      } catch (error) {
+        if (error.errors && Array.isArray(error.errors)) {
+          this.error = error.errors.map((e) => e.message).join(', ')
+        } else {
+          this.error = error.error || error.message || 'Failed to submit SAW weight request.'
+        }
+        throw error
+      }
+    },
+
+    async reviewSawWeightRequest(requestId, action, rejectReason, mocId) {
+      try {
+        const data = await mocAPI.reviewSawWeightRequest(requestId, action, rejectReason)
+        if (mocId && this.currentMoc?.id === mocId) await this.fetchMocById(mocId)
+        return data.sawWeightRequest
+      } catch (error) {
+        this.error = error.error || error.message || 'Failed to review SAW weight request.'
+        throw error
+      }
+    },
+
     clearError() {
       this.error = null
     },

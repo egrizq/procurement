@@ -147,6 +147,66 @@
               <ClipboardCheck class="w-4 h-4 text-emerald-600" />
               <span>Good Receipt akan disimpan dengan status <strong>Accepted</strong>.</span>
             </div>
+
+            <!-- Upload Media Section -->
+            <div class="space-y-2 pt-4 border-t border-gray-100">
+              <label class="block text-sm font-semibold text-gray-700">
+                Unggah Dokumen / Foto Bukti (Opsional)
+              </label>
+              <div
+                class="border-2 border-dashed border-gray-200 hover:border-indigo-500 rounded-xl p-6 transition-colors duration-150 flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-slate-50/50"
+                @click="triggerFileInput"
+                @dragover.prevent
+                @drop.prevent="handleFileDrop"
+              >
+                <input
+                  ref="fileInput"
+                  type="file"
+                  multiple
+                  accept="image/*,application/pdf"
+                  class="hidden"
+                  @change="handleFileChange"
+                />
+                <UploadCloud class="w-8 h-8 text-gray-400 mb-2" />
+                <span class="text-sm font-semibold text-gray-600">Klik untuk upload atau drag & drop file</span>
+                <span class="text-xs text-gray-400 mt-1">Maks. 5MB per file (PNG, JPG, PDF)</span>
+              </div>
+
+              <!-- Selected Files List -->
+              <div v-if="selectedFiles.length > 0" class="mt-3 space-y-2">
+                <div
+                  v-for="(file, idx) in selectedFiles"
+                  :key="idx"
+                  class="flex items-center justify-between p-2.5 bg-white border border-gray-200 rounded-lg shadow-sm"
+                >
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <img
+                      v-if="isImage(file)"
+                      :src="getFilePreviewUrl(file)"
+                      class="w-10 h-10 object-cover rounded border border-gray-100 shrink-0"
+                    />
+                    <div v-else class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded flex items-center justify-center shrink-0">
+                      <FileText class="w-5 h-5" />
+                    </div>
+                    <div class="min-w-0">
+                      <p class="text-xs font-semibold text-gray-700 truncate" :title="file.name">
+                        {{ file.name }}
+                      </p>
+                      <p class="text-[10px] text-gray-400">
+                        {{ formatFileSize(file.size) }}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    @click="removeFile(idx)"
+                    class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -163,9 +223,13 @@ import {
   Package,
   ClipboardCheck,
   AlertTriangle,
+  UploadCloud,
+  Trash2,
+  FileText,
 } from 'lucide-vue-next'
 import FormDialog from '@/components/base/form/Form.vue'
 import { useGoodReceiptStore } from '../store'
+import { uploadFiles } from '../api.js'
 import { showError, showSuccess } from '@/services/notification'
 
 const props = defineProps({
@@ -181,6 +245,8 @@ const grStore = useGoodReceiptStore()
 
 const loading = ref(false)
 const isLoadingPOs = ref(false)
+const selectedFiles = ref([])
+const fileInput = ref(null)
 
 const grForm = ref({
   purchaseOrderId: null,
@@ -217,6 +283,52 @@ const resetForm = () => {
     isSameItem: true,
     reason: '',
   }
+  selectedFiles.value = []
+}
+
+const triggerFileInput = () => {
+  fileInput.value.click()
+}
+
+const handleFileChange = (e) => {
+  const files = Array.from(e.target.files)
+  addFiles(files)
+}
+
+const handleFileDrop = (e) => {
+  const files = Array.from(e.dataTransfer.files)
+  addFiles(files)
+}
+
+const addFiles = (files) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']
+  for (const file of files) {
+    if (file.size > 5 * 1024 * 1024) {
+      showError(`File ${file.name} melebihi batas 5MB.`)
+      continue
+    }
+    if (!allowedTypes.includes(file.type)) {
+      showError(`File ${file.name} harus berupa gambar (JPG, PNG, WEBP, GIF) atau PDF.`)
+      continue
+    }
+    selectedFiles.value.push(file)
+  }
+}
+
+const removeFile = (idx) => {
+  selectedFiles.value.splice(idx, 1)
+}
+
+const isImage = (file) => file.type.startsWith('image/')
+
+const getFilePreviewUrl = (file) => URL.createObjectURL(file)
+
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
 watch(
@@ -247,10 +359,17 @@ const handleSubmit = async () => {
 
   loading.value = true
   try {
+    let uploadedUrls = null
+    if (selectedFiles.value.length > 0) {
+      const uploadResult = await uploadFiles(selectedFiles.value)
+      uploadedUrls = uploadResult.files.map((f) => f.url)
+    }
+
     await grStore.createGoodReceipt({
       purchaseOrderId: grForm.value.purchaseOrderId,
       isSameItem: grForm.value.isSameItem,
       reason: grForm.value.isSameItem ? null : grForm.value.reason,
+      attachments: uploadedUrls,
     })
     showSuccess('Good Receipt berhasil disimpan!')
     emit('submit-completed')
