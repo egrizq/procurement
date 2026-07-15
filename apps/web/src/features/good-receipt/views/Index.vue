@@ -145,105 +145,35 @@
     />
 
     <!-- Detail Dialog -->
-    <Teleport to="body">
-      <Transition name="modal-fade">
-        <div v-if="detailGR" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="detailGR = null">
-          <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="detailGR = null" />
-          <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
-            <!-- Header -->
-            <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-700 to-slate-800">
-              <div>
-                <h2 class="text-white font-bold text-lg leading-tight">{{ detailGR.grNumber }}</h2>
-                <p class="text-slate-300 text-xs">Detail Good Receipt</p>
-              </div>
-              <button @click="detailGR = null" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
-                <X :size="16" />
-              </button>
-            </div>
-
-            <!-- Body -->
-            <div class="p-6 space-y-4 text-sm">
-              <div class="flex justify-between items-center border-b pb-2">
-                <span class="text-gray-400 font-medium">Status</span>
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border" :class="statusClass(detailGR.status)">
-                  {{ detailGR.status }}
-                </span>
-              </div>
-
-              <div class="flex justify-between border-b pb-2">
-                <span class="text-gray-400">Referensi PO</span>
-                <strong class="text-indigo-700 font-mono">{{ detailGR.purchaseOrder?.poNumber || '-' }}</strong>
-              </div>
-
-              <div class="flex justify-between border-b pb-2">
-                <span class="text-gray-400">Kapal</span>
-                <strong>{{ detailGR.purchaseOrder?.moc?.vesselRequest?.vessel?.name || '-' }}</strong>
-              </div>
-
-              <div class="flex justify-between border-b pb-2">
-                <span class="text-gray-400">Request Code</span>
-                <strong>{{ detailGR.purchaseOrder?.moc?.vesselRequest?.requestCode || '-' }}</strong>
-              </div>
-
-              <div class="flex justify-between border-b pb-2">
-                <span class="text-gray-400">Vendor</span>
-                <strong>{{ detailGR.purchaseOrder?.vendor?.name || '-' }}</strong>
-              </div>
-
-              <div class="flex justify-between border-b pb-2">
-                <span class="text-gray-400">Item</span>
-                <strong>{{ detailGR.purchaseOrder?.vesselRequestItem?.item?.name || '-' }}</strong>
-              </div>
-
-              <div class="flex justify-between border-b pb-2">
-                <span class="text-gray-400">Quantity</span>
-                <strong>{{ detailGR.purchaseOrder?.qty || 0 }} {{ detailGR.purchaseOrder?.vesselRequestItem?.unit || 'Pcs' }}</strong>
-              </div>
-
-              <div class="flex justify-between border-b pb-2">
-                <span class="text-gray-400">Harga Satuan</span>
-                <strong>Rp {{ formatNumber(detailGR.purchaseOrder?.unitPrice || 0) }}</strong>
-              </div>
-
-              <div class="flex justify-between border-b pb-2">
-                <span class="text-gray-400">Total Harga</span>
-                <strong class="text-slate-900 font-bold">Rp {{ formatNumber(detailGR.purchaseOrder?.totalAmount || 0) }}</strong>
-              </div>
-
-              <div class="flex justify-between border-b pb-2">
-                <span class="text-gray-400">Dicek Oleh</span>
-                <strong>{{ detailGR.createdByUser?.fullName || '-' }}</strong>
-              </div>
-
-              <div class="flex justify-between border-b pb-2">
-                <span class="text-gray-400">Tanggal Cek</span>
-                <strong>{{ formatDate(detailGR.createdAt) }}</strong>
-              </div>
-
-              <div class="flex justify-between border-b pb-2">
-                <span class="text-gray-400">Kesesuaian Barang</span>
-                <span
-                  class="font-semibold px-2 py-0.5 rounded text-xs"
-                  :class="detailGR.isSameItem ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'"
-                >
-                  {{ detailGR.isSameItem ? 'Sesuai' : 'Tidak Sesuai' }}
-                </span>
-              </div>
+    <FormDialog
+      :is-open="Boolean(detailGR)"
+      title="Detail Good Receipt"
+      :show-footer="false"
+      size="lg"
+      @close="detailGR = null"
+    >
+      <div v-if="detailGR" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div v-for="field in detailFields" :key="field.label">
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+            <input :value="field.value" type="text" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" />
+          </div>
+        </div>
 
               <!-- Discrepancy Reason -->
-              <div v-if="!detailGR.isSameItem && detailGR.discrepancyReason" class="bg-red-50 border border-red-100 rounded-xl p-4 text-red-700 space-y-1">
-                <p class="font-bold text-xs uppercase tracking-wider">Alasan Ketidaksesuaian</p>
-                <p class="text-sm leading-relaxed">{{ detailGR.discrepancyReason }}</p>
-              </div>
+        <div v-if="!detailGR.isSameItem && detailGR.discrepancyReason">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Alasan Ketidaksesuaian</label>
+          <textarea :value="detailGR.discrepancyReason" rows="3" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"></textarea>
+        </div>
 
               <!-- Attachments Section -->
-              <div v-if="detailGR.attachments && detailGR.attachments.length > 0" class="pt-4 border-t border-gray-100 space-y-2">
-                <p class="font-bold text-xs text-gray-700 uppercase tracking-wider">Media / Dokumen Bukti</p>
+        <div v-if="detailGR.attachments && detailGR.attachments.length > 0" class="pt-4 border-t border-gray-200 space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Media / Dokumen Bukti</label>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div
                     v-for="(url, idx) in detailGR.attachments"
                     :key="idx"
-                    class="group relative bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex items-center gap-2.5 hover:bg-slate-100/50 transition-all duration-150"
+                    class="bg-white border border-gray-300 rounded-lg p-2.5 flex items-center gap-2.5"
                   >
                     <img
                       v-if="isImageUrl(url)"
@@ -268,21 +198,8 @@
                   </div>
                 </div>
               </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="px-6 py-4 border-t border-gray-100 bg-slate-50 flex justify-end">
-              <button
-                @click="detailGR = null"
-                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
         </div>
-      </Transition>
-    </Teleport>
+    </FormDialog>
   </div>
 </template>
 
@@ -294,10 +211,10 @@ import {
   CheckCircle2,
   XCircle,
   FileText,
-  X,
 } from 'lucide-vue-next'
 import SearchFilter from '@/components/base/data-table/SearchFilter.vue'
 import DataTable from '@/components/base/data-table/DataTable.vue'
+import FormDialog from '@/components/base/form/Form.vue'
 import FormGR from '../component/FormGR.vue'
 import { useGoodReceiptStore } from '../store'
 
@@ -355,6 +272,26 @@ const formatDate = (dateString) => {
   })
 }
 
+const detailFields = computed(() => {
+  if (!detailGR.value) return []
+  const po = detailGR.value.purchaseOrder
+  return [
+    { label: 'Nomor Good Receipt', value: detailGR.value.grNumber || '-' },
+    { label: 'Status', value: detailGR.value.status || '-' },
+    { label: 'Referensi PO', value: po?.poNumber || '-' },
+    { label: 'Kapal', value: po?.moc?.vesselRequest?.vessel?.name || '-' },
+    { label: 'Request Code', value: po?.moc?.vesselRequest?.requestCode || '-' },
+    { label: 'Vendor', value: po?.vendor?.name || '-' },
+    { label: 'Item', value: po?.vesselRequestItem?.item?.name || '-' },
+    { label: 'Quantity', value: `${po?.qty || 0} ${po?.vesselRequestItem?.unit || 'Pcs'}` },
+    { label: 'Harga Satuan', value: `Rp ${formatNumber(po?.unitPrice || 0)}` },
+    { label: 'Total Harga', value: `Rp ${formatNumber(po?.totalAmount || 0)}` },
+    { label: 'Dicek Oleh', value: detailGR.value.createdByUser?.fullName || '-' },
+    { label: 'Tanggal Cek', value: formatDate(detailGR.value.createdAt) },
+    { label: 'Kesesuaian Barang', value: detailGR.value.isSameItem ? 'Sesuai' : 'Tidak Sesuai' },
+  ]
+})
+
 const statusClass = (status) => ({
   Accepted: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   Rejected: 'bg-red-50 text-red-700 border-red-200',
@@ -369,8 +306,7 @@ const getFullUrl = (url) => {
   if (!url) return ''
   if (url.startsWith('http://') || url.startsWith('https://')) return url
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
-  const baseUrl = apiBaseUrl.replace(/\/api$/, '')
-  return `${baseUrl}${url}`
+  return `${apiBaseUrl.replace(/\/$/, '')}/${url.replace(/^\//, '')}`
 }
 
 const getFilenameFromUrl = (url) => {
