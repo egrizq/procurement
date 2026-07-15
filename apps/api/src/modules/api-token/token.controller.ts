@@ -23,7 +23,7 @@ const createApiToken = asyncHandler(async (req: Request, res: Response) => {
 	if (findToken) {
 		const data = {
 			token: hashedToken,
-			expiredAt: ApiTokenRepository.TOKEN_EXP_MS,
+			expiredAt: ApiTokenRepository.getTokenExpiry(),
 		};
 
 		const response = await apiTokenRepo.updateToken(findToken.token, data);

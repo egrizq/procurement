@@ -3,7 +3,11 @@ import { apiTokens } from "../../db/schema/index.ts";
 import { eq, and, gt } from "drizzle-orm";
 
 class ApiTokenRepository {
-	static TOKEN_EXP_MS = new Date(Date.now() + 24 * 60 * 60 * 1000);
+	private static readonly TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+
+	static getTokenExpiry(): Date {
+		return new Date(Date.now() + ApiTokenRepository.TOKEN_TTL_MS);
+	}
 
 	async findToken(where: { where: any }) {
 		const w = where.where;
@@ -32,7 +36,7 @@ class ApiTokenRepository {
 			token: tokenHash,
 			deviceId: deviceId,
 			deviceName: deviceName,
-			expiredAt: ApiTokenRepository.TOKEN_EXP_MS,
+			expiredAt: ApiTokenRepository.getTokenExpiry(),
 		});
 
 		const result = await db
