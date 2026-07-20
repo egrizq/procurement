@@ -27,9 +27,9 @@ export const useAuditLogStore = defineStore('auditLog', {
         if (this.filters.from) params.from = this.filters.from
         if (this.filters.to) params.to = this.filters.to
 
-        const res = await getAuditLogs(params)
-        this.logs = res.data?.auditLogs ?? []
-        this.pagination = res.data?.pagination ?? null
+        const data = await getAuditLogs(params)
+        this.logs = data.auditLogs ?? []
+        this.pagination = data.pagination ?? null
       } catch (err) {
         this.error = err?.response?.data?.message ?? 'Gagal memuat audit log'
       } finally {
@@ -41,8 +41,8 @@ export const useAuditLogStore = defineStore('auditLog', {
       this.loading = true
       this.error = null
       try {
-        const res = await getAuditLogById(id)
-        this.selectedLog = res.data?.auditLog ?? null
+        const data = await getAuditLogById(id)
+        this.selectedLog = data.auditLog ?? null
       } catch (err) {
         this.error = err?.response?.data?.message ?? 'Gagal memuat detail log'
       } finally {
