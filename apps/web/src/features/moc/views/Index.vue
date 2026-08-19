@@ -94,17 +94,15 @@
           <span class="text-xs text-gray-500">{{ formatDate(value) }}</span>
         </template>
 
-        <!-- <template #cell-actions="{ row }">
-          <div class="flex items-center gap-2">
-            <button
-              @click.stop="confirmDeleteMoc(row)"
-              class="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
-              title="Delete MOC"
-            >
-              <Trash2 :size="16" />
-            </button>
-          </div>
-        </template> -->
+        <template #cell-actions="{ row }">
+          <button
+            class="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors"
+            title="Download RFQ"
+            @click.stop="handleDownloadRfq(row)"
+          >
+            <Download :size="16" />
+          </button>
+        </template>
       </DataTable>
     </div>
 
@@ -122,13 +120,14 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, Trash2, Users, CheckCircle, Edit, Scale, ShoppingCart, BarChart2 } from 'lucide-vue-next'
+import { Plus, Trash2, Users, CheckCircle, Edit, Scale, ShoppingCart, BarChart2, Download } from 'lucide-vue-next'
 import SearchFilter from '@/components/base/data-table/SearchFilter.vue'
 import DataTable from '@/components/base/data-table/DataTable.vue'
 import FormMoc from '../components/FormMoc.vue'
 import { useMocStore } from '../store.js'
 import { useRequestStore } from '../../request/store.js'
 import { useVendorStore } from '../../master-data/vendors/store.js'
+import { downloadRfqPdf } from '../api.js'
 import { showInfo, showSuccess, showError } from '@/services/notification.js'
 import Swal from 'sweetalert2'
 
@@ -163,6 +162,7 @@ const columns = [
   { key: 'winner', label: 'Selected Option' },
   { key: 'status', label: 'Status' },
   { key: 'updatedAt', label: 'Last Updated' },
+  { key: 'actions', label: 'Actions' },
 ]
 
 // Fetch MOC drafts
@@ -204,6 +204,20 @@ const formatDate = (dateString) => {
 // Get the winning vendor comparison detail
 const getWinner = (mocRow) => {
   return mocRow.mocVendors?.find(v => v.isSelected) || null
+}
+
+const handleDownloadRfq = async (mocRow) => {
+  try {
+    const pdf = await downloadRfqPdf(mocRow.id)
+    const url = URL.createObjectURL(pdf)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `RequestForQuotation-MOC-${mocRow.id}.pdf`
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    showError(error?.error || 'Failed to generate RFQ PDF.')
+  }
 }
 
 // Open modal for creating MOC

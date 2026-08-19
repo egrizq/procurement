@@ -4,6 +4,7 @@ import { success } from "#shared/utils/response.ts";
 import AppError from "#shared/utils/error.ts";
 import getPaginationMeta from "#shared/utils/paginate.ts";
 import MocRepository from "./moc.repository.ts";
+import { generateRequestForQuotationPdf } from "./moc.rfq.ts";
 import {
 	notifyUsersByType,
 	createNotification,
@@ -158,6 +159,26 @@ const scoreMoc = asyncHandler(async (req: Request, res: Response) => {
 	}
 });
 
+const generateRfqPdf = asyncHandler(async (req: Request, res: Response) => {
+	const id = Number(req.params.id);
+	if (Number.isNaN(id)) throw new AppError("Invalid MOC ID", 400);
+
+	const mocRepo = new MocRepository();
+	const moc = await mocRepo.getMocForRfq(id);
+	if (!moc) throw new AppError("MOC not found", 404);
+	if ((moc.mocVendors?.length ?? 0) === 0) {
+		throw new AppError("Add at least one vendor before generating an RFQ", 400);
+	}
+
+	const pdfBuffer = await generateRequestForQuotationPdf(moc);
+	res.setHeader("Content-Type", "application/pdf");
+	res.setHeader(
+		"Content-Disposition",
+		`attachment; filename=RequestForQuotation-MOC-${moc.id}.pdf`,
+	);
+	res.send(pdfBuffer);
+});
+
 const submitSawWeightRequest = asyncHandler(async (req: Request, res: Response) => {
 	const { id } = req.params;
 	const userId = req.apiToken!.userId;
@@ -267,6 +288,7 @@ export default {
 	updateMoc,
 	deleteMoc,
 	scoreMoc,
+	generateRfqPdf,
 	submitSawWeightRequest,
 	reviewSawWeightRequest,
 };

@@ -35,6 +35,10 @@ export async function scoreMoc(id) {
   return data
 }
 
+export async function downloadRfqPdf(mocId) {
+  return http.get(`/moc/${mocId}/rfq-pdf`, { responseType: 'blob' })
+}
+
 export async function submitSawWeightRequest(mocId, payload) {
   const { data } = await http.post(`/moc/${mocId}/saw-weight-request`, payload)
   return data

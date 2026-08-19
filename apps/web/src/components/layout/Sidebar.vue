@@ -142,6 +142,7 @@
 
       <!-- Audit Log -->
       <router-link
+        v-if="canOpen('audit-logs')"
         to="/audit-log"
         class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-700"
         :class="isActive('/audit-log') ? 'bg-gray-700' : ''"

@@ -21,6 +21,7 @@ router.get("/:id", validate(mocByIdSchema), controller.getMocById);
 router.put("/:id", validate(mocSchema), controller.updateMoc);
 router.delete("/:id", validate(mocByIdSchema), controller.deleteMoc);
 router.post("/:id/score", validate(mocByIdSchema), controller.scoreMoc);
+router.get("/:id/rfq-pdf", validate(mocByIdSchema), controller.generateRfqPdf);
 router.post(
 	"/:id/saw-weight-request",
 	validate(submitSawWeightRequestSchema),

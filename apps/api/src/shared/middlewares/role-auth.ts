@@ -15,6 +15,7 @@ const KNOWN_MODULE_SLUGS = [
 	"moc",
 	"purchase-orders",
 	"good-receipt",
+	"audit-logs",
 	"settings",
 	"settings/users",
 	"settings/module-access",

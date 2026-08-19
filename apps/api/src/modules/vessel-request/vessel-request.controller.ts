@@ -323,7 +323,7 @@ const review = asyncHandler(async (req: Request, res: Response) => {
 
 	// Notify the original requester about the review outcome
 	if (rawVr?.requestedBy) {
-		const isApproved = action === "approve";
+		const isApproved = action === "Approve";
 		await createNotification({
 			userId: rawVr.requestedBy,
 			type: isApproved ? "vessel_request_approved" : "vessel_request_rejected",

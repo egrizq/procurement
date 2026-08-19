@@ -62,7 +62,7 @@ const navLinks = [
 
 const profileMenuItems = [
   { label: 'Your Profile', href: '#', action: 'profile' },
-  { label: 'Settings', href: '#', action: 'settings' },
+  // { label: 'Settings', href: '#', action: 'settings' },
   { label: 'Sign out', href: '#', action: 'signout' },
 ]
 

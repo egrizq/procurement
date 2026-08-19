@@ -65,6 +65,7 @@
       :is-open="isValidationOpen"
       title="Validation Warnings"
       size="lg"
+      :show-footer="false"
       @close="closeValidation"
     >
       <template #default>
@@ -93,24 +94,6 @@
         </div>
       </template>
 
-      <template #footer>
-        <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
-          <button
-            @click="closeValidation"
-            type="button"
-            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Go Back & Edit
-          </button>
-          <button
-            @click="confirmFormSubmit"
-            type="button"
-            class="px-4 py-2 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors"
-          >
-            Tetap Ajukan Request
-          </button>
-        </div>
-      </template>
     </FormDialog>
   </div>
 </template>
@@ -257,7 +240,6 @@ const closeForm = () => {
 
 const isValidationOpen = ref(false)
 const validationWarnings = ref([])
-const pendingFormData = ref(null)
 
 const handleFormSubmit = async (formData) => {
   try {
@@ -268,7 +250,6 @@ const handleFormSubmit = async (formData) => {
     
     if (itemsWithWarnings.length > 0) {
       validationWarnings.value = itemsWithWarnings
-      pendingFormData.value = formData
       isValidationOpen.value = true
     } else {
       // Proceed directly if no warnings
@@ -279,16 +260,8 @@ const handleFormSubmit = async (formData) => {
   }
 }
 
-const confirmFormSubmit = async () => {
-  isValidationOpen.value = false
-  if (pendingFormData.value) {
-    await proceedCreate(pendingFormData.value)
-  }
-}
-
 const closeValidation = () => {
   isValidationOpen.value = false
-  pendingFormData.value = null
 }
 
 const proceedCreate = async (formData) => {

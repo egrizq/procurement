@@ -208,6 +208,26 @@ class MocRepository {
 		return result || null;
 	}
 
+	async getMocForRfq(id: number) {
+		return await db.query.mocs.findFirst({
+			where: eq(mocs.id, id),
+			with: {
+				user: { columns: { id: true, fullName: true } },
+				vesselRequest: {
+					with: { vessel: { columns: { id: true, name: true } } },
+				},
+				vesselRequestItem: {
+					with: { item: { columns: { id: true, name: true, itemCode: true } } },
+				},
+				mocVendors: {
+					with: {
+						vendor: { columns: { id: true, name: true, email: true, phone: true } },
+					},
+				},
+			},
+		});
+	}
+
 	async getMocs(
 		page: number = 1,
 		limit: number = 10,

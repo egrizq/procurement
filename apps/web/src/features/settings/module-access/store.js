@@ -13,6 +13,7 @@ export const MODULES = [
   { slug: 'moc', label: 'MOC' },
   { slug: 'purchase-orders', label: 'Purchase Order' },
   { slug: 'good-receipt', label: 'Good Receipt' },
+  { slug: 'audit-logs', label: 'Audit Log' },
   { slug: 'settings', label: 'Settings' },
   { slug: 'settings/users', label: 'Manage Users', parent: 'settings' },
   { slug: 'settings/module-access', label: 'Role Access', parent: 'settings' },
@@ -74,12 +75,10 @@ export const useModuleAccessStore = defineStore('module-access', {
       )
     },
     canOpen(moduleSlug) {
-      return this.myModules.length === 0 || this.myModules.includes(moduleSlug)
+      return this.myModules.includes(moduleSlug)
     },
     canOpenAny(moduleSlugs) {
-      return (
-        this.myModules.length === 0 || moduleSlugs.some((moduleSlug) => this.canOpen(moduleSlug))
-      )
+      return moduleSlugs.some((moduleSlug) => this.canOpen(moduleSlug))
     },
   },
 })

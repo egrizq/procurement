@@ -190,6 +190,7 @@ async function seed() {
 			{ userType: "Admin", moduleSlug: "moc" },
 			{ userType: "Admin", moduleSlug: "purchase-order" },
 			{ userType: "Admin", moduleSlug: "good-receipt" },
+			{ userType: "Admin", moduleSlug: "audit-logs" },
 			{ userType: "Admin", moduleSlug: "settings" },
 			{ userType: "Admin", moduleSlug: "settings/users" },
 			{ userType: "Admin", moduleSlug: "settings/module-access" },
@@ -204,6 +205,7 @@ async function seed() {
 			{ userType: "Manager", moduleSlug: "moc" },
 			{ userType: "Manager", moduleSlug: "purchase-order" },
 			{ userType: "Manager", moduleSlug: "good-receipt" },
+			{ userType: "Manager", moduleSlug: "audit-logs" },
 			{ userType: "Manager", moduleSlug: "settings" },
 			{ userType: "Manager", moduleSlug: "settings/vessel-item-standards" },
 			// Staff - basic access
